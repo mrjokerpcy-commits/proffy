@@ -96,7 +96,7 @@ const SEMESTERS = [
 ];
 
 // TODO: derive from user's plan
-const USER_PLAN = "free"; // "free" | "pro" | "max"
+const USER_PLAN: "free" | "pro" | "max" = "free"; // TODO: derive from session
 
 export default function Sidebar({ courses, activeCourseId, flashcardsDue: initialFcDue = 0, onOpenFlashcards, onOpenNotes }: Props) {
   const pathname = usePathname();
