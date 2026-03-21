@@ -7,6 +7,7 @@ import { Pool } from "pg";
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "placeholder" });
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

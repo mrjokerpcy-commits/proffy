@@ -4,6 +4,7 @@ import { sendVerificationEmail } from "@/lib/email";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;

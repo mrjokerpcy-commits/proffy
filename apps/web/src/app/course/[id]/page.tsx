@@ -7,6 +7,7 @@ import ChatWindow from "@/components/chat/ChatWindow";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 export default async function CoursePage({ params }: { params: { id: string } }) {

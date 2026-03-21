@@ -7,6 +7,7 @@ import NewCourseClient from "./NewCourseClient";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 export default async function NewCoursePage() {
