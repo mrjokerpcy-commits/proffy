@@ -733,11 +733,48 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
         // Multi-turn loop to handle tool use
         let totalInputTokens = 0;
         let totalOutputTokens = 0;
-        let msgs: Anthropic.MessageParam[] = [
-          ...history.map((h: { role: string; content: string }) => ({
+
+        // Compact history when long — summarize old messages so input tokens stay small
+        // This lets users send many more messages before hitting their daily limit
+        let rawHistory: { role: "user" | "assistant"; content: string }[] = history.map(
+          (h: { role: string; content: string }) => ({
             role: h.role as "user" | "assistant",
             content: h.content,
-          })),
+          })
+        );
+
+        let compacted = false;
+        if (rawHistory.length >= 12) {
+          // Summarize the first half of the history using Haiku (cheap)
+          const toSummarize = rawHistory.slice(0, rawHistory.length - 6);
+          const recent = rawHistory.slice(rawHistory.length - 6);
+          try {
+            send({ type: "thinking", text: "Summarizing earlier conversation…" });
+            const summaryRes = await anthropic.messages.create({
+              model: "claude-haiku-4-5-20251001",
+              max_tokens: 512,
+              system: "Summarize this conversation excerpt in 3-5 concise bullet points. Focus on: what course/topics were discussed, what the student learned or struggled with, any decisions made (course created, study plan discussed, etc.). Be factual and brief. Output only the bullets.",
+              messages: toSummarize,
+            });
+            const summaryText = summaryRes.content[0].type === "text" ? summaryRes.content[0].text : "";
+            totalInputTokens += summaryRes.usage.input_tokens;
+            totalOutputTokens += summaryRes.usage.output_tokens;
+            rawHistory = [
+              { role: "user", content: `[Earlier conversation summary]\n${summaryText}` },
+              { role: "assistant", content: "Understood, I have context from our earlier conversation." },
+              ...recent,
+            ];
+            compacted = true;
+          } catch {
+            // Fall back to simple truncation if compacting fails
+            rawHistory = rawHistory.slice(-10);
+          }
+        }
+
+        if (compacted) send({ type: "compacted" });
+
+        let msgs: Anthropic.MessageParam[] = [
+          ...rawHistory,
           { role: "user", content: message },
         ];
 

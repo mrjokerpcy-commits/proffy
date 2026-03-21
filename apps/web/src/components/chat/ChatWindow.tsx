@@ -57,6 +57,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const [usedTokens, setUsedTokens] = useState(initialUsedTokens);
   const [btwDismissed, setBtwDismissed] = useState(false);
   const [hasFirstResponse, setHasFirstResponse] = useState(initialMessages.length > 1);
+  const [wasCompacted, setWasCompacted] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -145,6 +146,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             const data = JSON.parse(line.slice(6));
             if (data.type === "thinking") {
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, thinkingText: data.text } : m));
+            } else if (data.type === "compacted") {
+              setWasCompacted(true);
             } else if (data.type === "done") {
               if (data.usedMsgs !== undefined) setUsedMsgs(data.usedMsgs);
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
@@ -229,6 +232,16 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
       {/* ── Messages ── */}
       <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
         <div style={{ padding: "20px 0 8px", display: "flex", flexDirection: "column", gap: "18px" }}>
+          {wasCompacted && (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 20px", margin: "4px 0" }}>
+              <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
+              <span style={{ fontSize: "11px", color: "var(--text-disabled)", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "5px" }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                Earlier conversation summarized to save context
+              </span>
+              <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
+            </div>
+          )}
           {messages.map((msg, i) => (
             <MessageBubble
               key={msg.id}
