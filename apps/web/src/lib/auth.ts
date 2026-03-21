@@ -8,10 +8,6 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
 });
 
-if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("NEXTAUTH_SECRET environment variable must be set in production");
-}
-
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET ?? "dev-secret-change-in-prod",
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 }, // 30 days
