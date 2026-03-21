@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user, account }) {
-      if (user) {
+      if (user && account?.provider !== "google") {
         token.id = user.id;
       }
       // Handle Google OAuth — upsert user in DB
