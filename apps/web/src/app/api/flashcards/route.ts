@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import Anthropic from "@anthropic-ai/sdk";
 import { Pool } from "pg";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "placeholder" });
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
 });
