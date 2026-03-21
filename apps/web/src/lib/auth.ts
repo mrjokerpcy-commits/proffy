@@ -55,14 +55,18 @@ export const authOptions: NextAuthOptions = {
       }
       // Handle Google OAuth — upsert user in DB
       if (account?.provider === "google" && user) {
-        const { rows } = await pool.query(
-          `INSERT INTO users (email, name, image)
-           VALUES ($1, $2, $3)
-           ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image
-           RETURNING id`,
-          [user.email, user.name, user.image]
-        );
-        token.id = rows[0].id;
+        try {
+          const { rows } = await pool.query(
+            `INSERT INTO users (email, name, image)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image
+             RETURNING id`,
+            [user.email, user.name, user.image]
+          );
+          token.id = rows[0].id;
+        } catch (err) {
+          console.error("Google OAuth DB upsert failed:", err);
+        }
       }
       return token;
     },
