@@ -434,8 +434,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
 
               {/* Plans */}
               {([
-                { key: "pro", name: "Pro", price: "₪79", color: "var(--blue)", border: "rgba(79,142,247,0.35)", bg: "rgba(79,142,247,0.07)", features: ["Unlimited messages & courses", "Smart flashcards + study plan", "Exam prep mode", "Answers cited from your slides"] },
-                { key: "max", name: "Max", price: "₪149", color: "var(--purple)", border: "rgba(167,139,250,0.35)", bg: "rgba(167,139,250,0.07)", features: ["Everything in Pro", "Exam predictions", "Study groups", "Telegram bot + priority support"] },
+                { key: "pro", name: "Pro", price: "₪79", color: "var(--blue)", border: "rgba(79,142,247,0.35)", bg: "rgba(79,142,247,0.07)", features: ["Unlimited messages & courses", "Smarter AI (Claude Sonnet)", "General AI — coding, writing, anything", "Upload slides — answers from your material", "Professor pattern analysis"] },
+                { key: "max", name: "Max", price: "₪149", color: "var(--purple)", border: "rgba(167,139,250,0.35)", bg: "rgba(167,139,250,0.07)", features: ["Everything in Pro", "Higher daily usage (~60-70 msgs)", "Exam predictions & topic likelihoods", "Deep professor fingerprinting", "Priority support"] },
               ] as const).map(plan => (
                 <div key={plan.key} style={{ borderRadius: "12px", border: `1px solid ${plan.border}`, background: plan.bg, padding: "16px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
