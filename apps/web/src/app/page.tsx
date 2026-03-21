@@ -125,8 +125,10 @@ function StudyIllustration() {
 // ─── Main page ─────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const session = await getServerSession(authOptions);
-  if (session) redirect("/dashboard");
+  try {
+    const session = await getServerSession(authOptions);
+    if (session) redirect("/dashboard");
+  } catch {}
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}>
