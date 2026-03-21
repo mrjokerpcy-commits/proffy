@@ -21,7 +21,7 @@ export default function CursorGlow() {
       // Hover expand on interactive elements
       const target = document.elementFromPoint(e.clientX, e.clientY);
       const isHover = !!target?.closest("a, button, [role='button'], input, textarea, select, label");
-      el.classList.toggle("hovering", isHover);
+      el!.classList.toggle("hovering", isHover);
     }
 
     function onPointerDown(e: PointerEvent) {
@@ -40,7 +40,7 @@ export default function CursorGlow() {
       const lerpFactor = dragging.current ? 1 : 0.2;
       cur.current.x += (pos.current.x - cur.current.x) * lerpFactor;
       cur.current.y += (pos.current.y - cur.current.y) * lerpFactor;
-      el.style.transform = `translate3d(${cur.current.x}px, ${cur.current.y}px, 0)`;
+      el!.style.transform = `translate3d(${cur.current.x}px, ${cur.current.y}px, 0)`;
       rafRef.current = requestAnimationFrame(loop);
     }
 
