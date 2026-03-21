@@ -17,8 +17,8 @@ const pool = new Pool({
 // Free: max messages/day. Pro/Max: max tokens/day (input+output)
 const PLAN_MSG_LIMIT = 10; // free only
 const PLAN_TOKEN_LIMITS: Record<string, number> = {
-  pro: 200_000,  // ~100-150 avg messages
-  max: 1_000_000, // ~500-700 avg messages
+  pro: 250_000,  // ~30-35 msgs/day — competitive with Claude.ai Pro
+  max: 500_000,  // ~60-70 msgs/day — beats Claude.ai, justifies premium price
 };
 
 const ALLOWED_UNIS = new Set(["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other"]);
@@ -580,7 +580,7 @@ Current student plan: **${plan}**
 - Auto-saved flashcards and notes from chat responses
 - Exam countdown per course
 
-**PRO${plan === "pro" ? " ✓ (current)" : ""}** — ₪29/month
+**PRO${plan === "pro" ? " ✓ (current)" : ""}** — ₪79/month
 - Everything in Free, unlimited messages (token-based), Claude Sonnet (much smarter)
 - 🔒→✅ **General AI assistant**: help with anything — coding, writing, career, life
 - 🔒→✅ **Unlimited courses**
@@ -589,14 +589,14 @@ Current student plan: **${plan}**
 - 🔒→✅ **Study plan generator**: week-by-week table based on exam date + hours
 - 🔒→✅ **Professor style analysis**: what question types a professor tends to ask
 
-**MAX${plan === "max" ? " ✓ (current)" : ""}** — ₪59/month
-- Everything in Pro, 1M tokens/day
+**MAX${plan === "max" ? " ✓ (current)" : ""}** — ₪149/month
+- Everything in Pro, higher daily usage allowance
 - 🔒→✅ **Exam predictions**: "Based on past exams, these topics are most likely..."
 - 🔒→✅ **Deep professor patterns**: exam weighting per topic with % likelihood
 - 🔒→✅ **Unlimited /btw uses**
 
 ### When to suggest upgrading:
-- If a FREE user asks to upload a file → "Uploading slides is a Pro feature (₪29/month) — it lets me answer directly from your course material. Want to upgrade?"
+- If a FREE user asks to upload a file → "Uploading slides is a Pro feature (₪79/month) — it lets me answer directly from your course material. Want to upgrade?"
 - If a FREE user asks for help with non-study topics → explain it's Pro only, briefly
 - If a FREE user hits 10 messages → "You've hit today's free limit. Pro gives you unlimited messages and a smarter AI."
 - If a FREE user asks to add a 4th course → "You've used all 3 free course slots. Upgrade to Pro for unlimited courses."
@@ -745,10 +745,10 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
           const claudeStream = anthropic.messages.stream({
             model: plan === "free" ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
             max_tokens: plan === "free" ? 1024 : 2048,
-            system: systemPrompt,
+            system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
             messages: msgs,
             tools: TOOLS,
-          });
+          } as Parameters<typeof anthropic.messages.stream>[0]);
 
           let turnText = "";
           for await (const chunk of claudeStream) {

@@ -19,19 +19,22 @@ export default async function DashboardPage() {
 
   const uid = session.user.id;
 
-  const [coursesRes, usageRes, planRes, fcRes, notesRes] = await Promise.all([
+  const [coursesRes, usageRes, planRes, fcRes, notesRes, userRes] = await Promise.all([
     pool.query("SELECT * FROM courses WHERE user_id = $1 ORDER BY created_at DESC", [uid]),
     pool.query("SELECT questions, tokens_input, tokens_output FROM usage WHERE user_id = $1 AND date = CURRENT_DATE", [uid]),
     pool.query("SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active'", [uid]),
     pool.query("SELECT COUNT(*) as c FROM flashcards WHERE user_id = $1 AND next_review_at <= NOW()", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
     pool.query("SELECT COUNT(*) as c FROM course_notes WHERE user_id = $1", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
+    pool.query("SELECT onboarding_done FROM users WHERE id = $1", [uid]).catch(() => ({ rows: [{ onboarding_done: true }] })),
   ]);
+
+  if (!userRes.rows[0]?.onboarding_done) redirect("/onboarding");
 
   const courses      = coursesRes.rows;
   const todayQ       = usageRes.rows[0]?.questions ?? 0;
   const todayTokens  = (usageRes.rows[0]?.tokens_input ?? 0) + (usageRes.rows[0]?.tokens_output ?? 0);
   const userPlan     = planRes.rows[0]?.plan ?? "free";
-  const TOKEN_LIMITS: Record<string, number> = { pro: 200_000, max: 1_000_000 };
+  const TOKEN_LIMITS: Record<string, number> = { pro: 250_000, max: 500_000 };
   const tokenLimit   = TOKEN_LIMITS[userPlan] ?? null;
   const fcDue        = parseInt(fcRes.rows[0]?.c ?? "0", 10);
   const notesCount = parseInt(notesRes.rows[0]?.c ?? "0", 10);

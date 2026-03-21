@@ -173,10 +173,10 @@ export default async function HomePage() {
 
       {/* ── Nav ── */}
       <nav
+        className="landing-nav"
         style={{
           position: "relative", zIndex: 10,
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "1.25rem 3rem",
           borderBottom: "1px solid var(--border)",
           backdropFilter: "blur(20px)",
           background: "rgba(5,5,10,0.75)",
@@ -205,7 +205,7 @@ export default async function HomePage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "7rem 2rem 5rem" }}>
+      <section className="landing-hero" style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
 
         {/* Badge */}
         <div
@@ -232,7 +232,7 @@ export default async function HomePage() {
         </p>
 
         {/* CTA row */}
-        <div style={{ marginTop: "2.5rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+        <div className="landing-hero-cta" style={{ marginTop: "2.5rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
           <Link
             href="/register"
             className="btn-primary"
@@ -246,7 +246,7 @@ export default async function HomePage() {
         </div>
 
         {/* ── Product mockup ── */}
-        <div style={{ marginTop: "5rem", width: "100%", maxWidth: "960px", textAlign: "left" }}>
+        <div className="landing-mockup" style={{ marginTop: "5rem", width: "100%", maxWidth: "960px", textAlign: "left" }}>
           <div style={{
             borderRadius: "16px", overflow: "hidden",
             background: "var(--bg-surface)", border: "1px solid var(--border-light)",
@@ -472,7 +472,7 @@ export default async function HomePage() {
           </h2>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "2rem" }}>
+        <div className="landing-grid-3" style={{ gap: "2rem" }}>
           {[
             {
               step: "01",
@@ -537,7 +537,7 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "1rem" }}>
+        <div className="landing-grid-3-2">
           {[
             {
               icon: (
@@ -656,7 +656,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "1.25rem" }}>
+          <div className="landing-grid-3" style={{ gap: "1.25rem" }}>
             {[
               {
                 quote: "I uploaded Cohen's slides and it predicted 3 out of 4 exam questions. Passed with 94.",
@@ -734,7 +734,7 @@ export default async function HomePage() {
           <p style={{ fontSize: "1.1rem", color: "var(--text-secondary)" }}>Cancel anytime. No contracts.</p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+        <div className="landing-grid-3" style={{ gap: "1rem" }}>
           {[
             {
               name: "Free",

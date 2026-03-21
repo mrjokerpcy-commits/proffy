@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import Sidebar from "./Sidebar";
 import RightPanel from "./RightPanel";
@@ -17,25 +17,41 @@ interface Props {
 }
 
 export default function AppShell({ children, courses, activeCourse, flashcardsDue, professorPatterns, studentInsights, userPlan = "free" }: Props) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [rightOpen, setRightOpen] = useState(true);
+
+  useEffect(() => {
+    const check = () => { if (window.innerWidth < 768) setSidebarOpen(false); };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [openPanel, setOpenPanel] = useState<"flashcards" | "notes" | null>(null);
 
   return (
     <div style={{ display: "flex", height: "100vh", background: "var(--bg-base)", color: "var(--text-primary)", overflow: "hidden", position: "relative" }}>
+
+      {/* ── Mobile overlay when sidebar open ── */}
+      {sidebarOpen && isMobile && (
+        <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 15, background: "rgba(0,0,0,0.5)" }} />
+      )}
 
       {/* ── Sidebar ── */}
       <div style={{
         width: sidebarOpen ? "240px" : "0px",
         flexShrink: 0, transition: "width 0.2s cubic-bezier(0.4,0,0.2,1)",
         overflow: "hidden",
+        position: isMobile ? "fixed" : "relative",
+        top: 0, left: 0, height: "100%",
+        zIndex: isMobile ? 20 : "auto",
       }}>
         <Sidebar
           courses={courses}
           activeCourseId={activeCourse?.id}
           flashcardsDue={flashcardsDue}
-          onOpenFlashcards={() => setOpenPanel("flashcards")}
-          onOpenNotes={() => setOpenPanel("notes")}
+          onOpenFlashcards={() => { setOpenPanel("flashcards"); if (isMobile) setSidebarOpen(false); }}
+          onOpenNotes={() => { setOpenPanel("notes"); if (isMobile) setSidebarOpen(false); }}
         />
       </div>
 
@@ -44,7 +60,7 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
         onClick={() => setSidebarOpen(v => !v)}
         style={{
           position: "absolute",
-          left: sidebarOpen ? "232px" : "0px",
+          left: sidebarOpen && !isMobile ? "232px" : "0px",
           top: "50%", transform: "translateY(-50%)",
           zIndex: 20, transition: "left 0.2s cubic-bezier(0.4,0,0.2,1)",
           width: "18px", height: "40px",
@@ -52,12 +68,12 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
           borderRadius: "0 6px 6px 0",
           background: "var(--bg-elevated)",
           border: "1px solid var(--border)",
-          borderLeft: sidebarOpen ? "1px solid var(--border)" : "none",
+          borderLeft: sidebarOpen && !isMobile ? "1px solid var(--border)" : "none",
           cursor: "pointer", color: "var(--text-muted)",
         }}
       >
         <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          {sidebarOpen ? (
+          {sidebarOpen && !isMobile ? (
             <><path d="M5 1L1 6L5 11"/></>
           ) : (
             <><path d="M1 1L5 6L1 11"/></>
@@ -70,8 +86,8 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
         {children}
       </main>
 
-      {/* ── Right panel ── */}
-      {activeCourse && rightOpen && (
+      {/* ── Right panel — hidden on mobile ── */}
+      {activeCourse && rightOpen && !isMobile && (
         <div style={{
           width: "256px", flexShrink: 0,
           borderLeft: "1px solid var(--border)",
