@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other"];
-
 function LogoMark() {
   return (
     <svg width="34" height="34" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -29,7 +27,7 @@ export default function RegisterClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
-  const [form, setForm] = useState({ name: "", email: "", password: "", university: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -148,15 +146,6 @@ export default function RegisterClient() {
             onFocus={e => (e.target.style.borderColor = "var(--blue)")}
             onBlur={e => (e.target.style.borderColor = "var(--border)")}
           />
-          <select value={form.university} onChange={e => setForm(f => ({ ...f, university: e.target.value }))}
-            style={{ ...inputStyle, color: form.university ? "var(--text-primary)" : "var(--text-muted)" }}
-            onFocus={e => (e.target.style.borderColor = "var(--blue)")}
-            onBlur={e => (e.target.style.borderColor = "var(--border)")}
-          >
-            <option value="">Select university</option>
-            {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
-          </select>
-
           <button type="submit" disabled={loading}
             style={{
               padding: "0.75rem", borderRadius: "0.875rem", fontSize: "0.925rem", fontWeight: 700,

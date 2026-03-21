@@ -47,9 +47,10 @@ function arg(flag: string, required = true): string {
 }
 
 const ALL_SHARED  = process.argv.includes("--all-shared"); // ingest everything shared with this service account
-const FOLDER_ID   = ALL_SHARED ? "" : arg("--folder");
+const LIST_ONLY   = process.argv.includes("--list-only");  // just list/count files, no ingestion
+const FOLDER_ID   = (ALL_SHARED || LIST_ONLY) ? "" : arg("--folder");
 const COURSE_NAME = arg("--course", false);
-const UNIVERSITY  = arg("--university", !ALL_SHARED);
+const UNIVERSITY  = arg("--university", !(ALL_SHARED || LIST_ONLY));
 const PROFESSOR   = arg("--professor", false);
 const DOC_TYPE    = arg("--type", false) || "slides"; // slides | exam | notes | textbook
 // trust_level: "official" = professor/faculty uploaded (default for admin-run ingest)
@@ -390,8 +391,49 @@ async function listSharedFolders(): Promise<DriveFile[]> {
   return folders;
 }
 
+// ── Count files shared with service account (no ingestion) ────────────────────
+async function countSharedFiles() {
+  console.log(`\n Proffy Drive — Listing all files shared with service account`);
+  console.log(`   Service account: ${serviceAccount.client_email}\n`);
+
+  const sharedFolders = await listSharedFolders();
+  if (sharedFolders.length === 0) {
+    console.log("No folders shared with this service account.");
+    console.log("Share folders with: " + serviceAccount.client_email);
+    return;
+  }
+
+  console.log(`Found ${sharedFolders.length} shared top-level folder(s):\n`);
+
+  let grandTotal = 0;
+  for (const folder of sharedFolders) {
+    const files = await listAllFilesRecursive(folder.id, 1);
+    const exportable = files.filter(f => EXPORTABLE.has(f.mimeType));
+    console.log(`  [${exportable.length} files] ${folder.name} (${folder.id})`);
+    for (const f of exportable) console.log(`    - ${f.name} (${f.mimeType})`);
+    grandTotal += exportable.length;
+  }
+
+  console.log(`\nTotal ingestable files: ${grandTotal}`);
+}
+
+async function listAllFilesRecursive(folderId: string, _depth = 0): Promise<DriveFile[]> {
+  const all = await listDriveFiles(folderId);
+  const files = all.filter(f => f.mimeType !== FOLDER_MIME);
+  const subs  = all.filter(f => f.mimeType === FOLDER_MIME);
+  for (const sub of subs) {
+    files.push(...await listAllFilesRecursive(sub.id, _depth + 1));
+  }
+  return files;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
+  if (LIST_ONLY) {
+    await countSharedFiles();
+    return;
+  }
+
   await ensureCollection();
 
   if (ALL_SHARED) {

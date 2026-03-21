@@ -34,17 +34,25 @@ interface Answers {
   learningStyle: string;
 }
 
-const TOTAL_STEPS = 8;
+const STEPS = [
+  { key: "name",          question: (a: Answers) => "What should we call you?",                                         skippable: false },
+  { key: "university",    question: (a: Answers) => a.name ? `${a.name.split(" ")[0]}, which university are you at?` : "Which university are you at?", skippable: true },
+  { key: "semester",      question: () => "Which semester are you in?",                                                 skippable: true },
+  { key: "field",         question: () => "What are you studying?",                                                     skippable: true },
+  { key: "challenge",     question: () => "What's your biggest study challenge?",                                       skippable: true },
+  { key: "learningStyle", question: () => "How do you learn best?",                                                     skippable: true },
+  { key: "hours",         question: () => "How many hours a week can you study?",                                       skippable: true },
+  { key: "goal",          question: () => "What's your main goal?",                                                     skippable: true },
+] as const;
 
-// ── Animated logo ──────────────────────────────────────────────────────────
+const TOTAL_STEPS = STEPS.length + 1; // +1 for done screen
+
+// ── Logo ───────────────────────────────────────────────────────────────────
 function AnimatedLogo({ active }: { active: boolean }) {
   return (
     <motion.div
-      animate={active ? {
-        rotate: [0, -8, 8, -5, 5, -2, 2, 0],
-        scale: [1, 1.08, 1.08, 1.05, 1.05, 1.02, 1.02, 1],
-      } : { rotate: 0, scale: 1 }}
-      transition={active ? { duration: 1.2, ease: "easeInOut", repeat: Infinity, repeatDelay: 1.5 } : { duration: 0.3 }}
+      animate={active ? { rotate: [0, -8, 8, -5, 5, 0], scale: [1, 1.08, 1.08, 1.05, 1, 1] } : { rotate: 0, scale: 1 }}
+      transition={active ? { duration: 1.2, ease: "easeInOut", repeat: Infinity, repeatDelay: 2 } : { duration: 0.3 }}
       style={{ display: "inline-flex", filter: active ? "drop-shadow(0 0 12px rgba(79,142,247,0.6))" : "none", transition: "filter 0.3s" }}
     >
       <svg width="48" height="48" viewBox="0 0 32 32" fill="none">
@@ -64,138 +72,155 @@ function AnimatedLogo({ active }: { active: boolean }) {
   );
 }
 
-// ── Typewriter hook ────────────────────────────────────────────────────────
-function useTypewriter(text: string, speed = 25) {
+// ── Typewriter hook ─────────────────────────────────────────────────────────
+function useTypewriter(text: string, speed = 22) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setDisplayed("");
     setDone(false);
     let i = 0;
+    let timer: ReturnType<typeof setTimeout>;
     function type() {
       if (i < text.length) {
         i++;
         setDisplayed(text.slice(0, i));
-        timer.current = setTimeout(type, speed);
+        timer = setTimeout(type, speed);
       } else {
         setDone(true);
       }
     }
-    timer.current = setTimeout(type, 150);
-    return () => { if (timer.current) clearTimeout(timer.current); };
+    timer = setTimeout(type, 120);
+    return () => clearTimeout(timer);
   }, [text, speed]);
 
   return { displayed, done };
 }
 
-// ── Eraser hook ────────────────────────────────────────────────────────────
-function useEraser(text: string, active: boolean, speed = 16, onDone?: () => void) {
+// ── Eraser hook — uses ref for onDone to avoid stale closure ────────────────
+function useEraser(text: string, active: boolean, speed = 12, onDone?: () => void) {
   const [displayed, setDisplayed] = useState(text);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const doneCalled = useRef(false);
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; });
 
   useEffect(() => {
-    if (!active) { setDisplayed(text); doneCalled.current = false; return; }
+    if (!active) {
+      setDisplayed(text);
+      return;
+    }
     let len = text.length;
-    doneCalled.current = false;
+    let done = false;
+    let timer: ReturnType<typeof setTimeout>;
     function erase() {
       if (len > 0) {
         len--;
         setDisplayed(text.slice(0, len));
-        timer.current = setTimeout(erase, speed);
-      } else if (!doneCalled.current) {
-        doneCalled.current = true;
-        onDone?.();
+        timer = setTimeout(erase, speed);
+      } else if (!done) {
+        done = true;
+        onDoneRef.current?.();
       }
     }
-    timer.current = setTimeout(erase, 60);
-    return () => { if (timer.current) clearTimeout(timer.current); };
+    timer = setTimeout(erase, 50);
+    return () => clearTimeout(timer);
   }, [active, text]);
 
   return displayed;
 }
 
-// ── Question display ───────────────────────────────────────────────────────
-function QuestionText({ text, erasing, onEraseDone, onTypeDone }: {
-  text: string; erasing: boolean; onEraseDone: () => void; onTypeDone: () => void;
-}) {
+// ── Animated question ────────────────────────────────────────────────────────
+function QuestionText({
+  text, erasing, onEraseDone, onTypeDone,
+}: { text: string; erasing: boolean; onEraseDone: () => void; onTypeDone: () => void }) {
   const { displayed: typed, done: typeDone } = useTypewriter(text);
-  const erased = useEraser(erasing ? typed || text : "", erasing, 14, onEraseDone);
+  const erased = useEraser(erasing ? (typed || text) : "", erasing, 12, onEraseDone);
+  const shown = erasing ? erased : typed;
 
   useEffect(() => { if (typeDone) onTypeDone(); }, [typeDone]);
 
-  const shown = erasing ? erased : typed;
-  const showCursor = !typeDone || erasing;
-
   return (
-    <span style={{ fontSize: "clamp(1.4rem, 4vw, 1.9rem)", fontWeight: 800, letterSpacing: "-0.025em", color: "var(--text-primary)", lineHeight: 1.2 }}>
+    <span style={{ fontSize: "clamp(1.35rem, 4vw, 1.85rem)", fontWeight: 800, letterSpacing: "-0.025em", color: "var(--text-primary)", lineHeight: 1.2 }}>
       {shown}
-      {showCursor && (
-        <span style={{ display: "inline-block", width: "3px", height: "1.1em", background: "linear-gradient(180deg,#4f8ef7,#a78bfa)", marginLeft: "3px", verticalAlign: "text-bottom", borderRadius: "2px", animation: "blink 0.7s step-end infinite" }} />
+      {(!typeDone || erasing) && (
+        <span style={{
+          display: "inline-block", width: "3px", height: "1.05em",
+          background: "linear-gradient(180deg, #4f8ef7, #a78bfa)",
+          marginLeft: "3px", verticalAlign: "text-bottom", borderRadius: "2px",
+          animation: "blink 0.7s step-end infinite",
+        }} />
       )}
     </span>
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
+// ── Main ─────────────────────────────────────────────────────────────────────
 export default function OnboardingClient({ userName }: { userName: string }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({
-    name: userName || "",
-    university: "", semester: "", field: "",
+    name: userName || "", university: "", semester: "", field: "",
     challenge: "", hours: "", goal: "", learningStyle: "",
   });
   const [saving, setSaving] = useState(false);
   const [erasing, setErasing] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const pendingAnswer = useRef<{ key: keyof Answers; value: string } | null>(null);
+  const pendingStep = useRef<number | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
-  const isLast = step === TOTAL_STEPS - 1;
 
-  const questions = [
-    "What should we call you?",
-    answers.name ? `${answers.name.split(" ")[0]}, which university are you at?` : "Which university are you at?",
-    "Which semester are you in?",
-    "What are you studying?",
-    "What's your biggest study challenge?",
-    "How do you learn best?",
-    "How many hours a week can you study?",
-    "What's your main goal?",
-  ];
-
-  const currentQuestion = questions[step] ?? "";
+  const isDone = step === STEPS.length;
+  const currentStepDef = STEPS[step];
+  const currentQuestion = currentStepDef ? currentStepDef.question(answers) : "";
 
   function handleTypeDone() { setWaiting(true); }
 
-  function handleEraseDone() {
+  const handleEraseDone = useCallback(() => {
     if (pendingAnswer.current) {
       const { key, value } = pendingAnswer.current;
       pendingAnswer.current = null;
       setAnswers(a => ({ ...a, [key]: value }));
     }
+    const nextStep = pendingStep.current !== null ? pendingStep.current : null;
+    pendingStep.current = null;
     setErasing(false);
     setWaiting(false);
-    if (step + 1 >= TOTAL_STEPS - 1) {
-      setStep(TOTAL_STEPS - 1);
+    if (nextStep !== null) {
+      setStep(nextStep);
     } else {
       setStep(s => s + 1);
     }
-  }
+  }, []);
 
-  function answer(key: keyof Answers, value: string) {
+  function answer(key: keyof Answers, value: string, jumpTo?: number) {
     if (!waiting) return;
     pendingAnswer.current = { key, value };
+    pendingStep.current = jumpTo ?? null;
     setWaiting(false);
     setErasing(true);
-    // Save incrementally so progress survives page refresh
     fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [key]: value }),
     }).catch(() => {});
+  }
+
+  function skip() {
+    if (!waiting) return;
+    const key = currentStepDef?.key as keyof Answers;
+    pendingAnswer.current = { key, value: "" };
+    pendingStep.current = null;
+    setWaiting(false);
+    setErasing(true);
+  }
+
+  async function skipAll() {
+    await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ onboarded: true }),
+    }).catch(() => {});
+    router.push("/dashboard");
   }
 
   async function finish() {
@@ -208,15 +233,13 @@ export default function OnboardingClient({ userName }: { userName: string }) {
     router.push("/dashboard");
   }
 
-  const optionStyle = (selected: boolean): React.CSSProperties => ({
+  const optBtn = (selected = false): React.CSSProperties => ({
     padding: "12px 16px", borderRadius: "12px",
     border: `1px solid ${selected ? "rgba(79,142,247,0.55)" : "rgba(255,255,255,0.09)"}`,
     background: selected ? "rgba(79,142,247,0.1)" : "rgba(255,255,255,0.03)",
     color: selected ? "var(--blue)" : "var(--text-secondary)",
-    cursor: waiting ? "pointer" : "default",
-    transition: "all 0.12s", textAlign: "left" as const,
+    cursor: "pointer", transition: "all 0.12s", textAlign: "left" as const,
     fontSize: "14px", fontWeight: selected ? 600 : 400,
-    opacity: waiting ? 1 : 0.5,
   });
 
   return (
@@ -225,37 +248,52 @@ export default function OnboardingClient({ userName }: { userName: string }) {
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       padding: "5rem 1.5rem 2rem", position: "relative", overflow: "hidden",
     }}>
-      {/* Ambient */}
-      <div style={{ position: "fixed", top: "10%", left: "50%", transform: "translateX(-50%)", width: "700px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(79,142,247,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
+
+      {/* Ambient glow */}
+      <div style={{ position: "fixed", top: "10%", left: "50%", transform: "translateX(-50%)", width: "700px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(79,142,247,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
 
       {/* Progress bar */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "3px", background: "rgba(255,255,255,0.06)", zIndex: 10 }}>
         <motion.div
-          animate={{ width: `${(step / (TOTAL_STEPS - 1)) * 100}%` }}
+          animate={{ width: `${(step / STEPS.length) * 100}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}
           style={{ height: "100%", background: "linear-gradient(90deg, var(--blue), var(--purple))" }}
         />
       </div>
 
+      {/* Header */}
+      <div style={{ position: "fixed", top: "1.4rem", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: "10px", zIndex: 10 }}>
+        <AnimatedLogo active={!waiting && !isDone} />
+        <span style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+          Proffy{" "}
+          <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--accent)", background: "rgba(99,102,241,0.13)", border: "1px solid rgba(99,102,241,0.28)", borderRadius: "4px", padding: "1px 5px" }}>BETA</span>
+        </span>
+      </div>
+
       {/* Step counter */}
-      {!isLast && (
-        <div style={{ position: "fixed", top: "1.6rem", right: "2rem", fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
-          {step + 1} / {TOTAL_STEPS - 1}
+      {!isDone && (
+        <div style={{ position: "fixed", top: "1.6rem", right: "2rem", fontSize: "12px", color: "var(--text-muted)", fontWeight: 500, zIndex: 10 }}>
+          {step + 1} / {STEPS.length}
         </div>
       )}
 
-      {/* Logo header */}
-      <div style={{ position: "fixed", top: "1.4rem", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: "10px" }}>
-        <AnimatedLogo active={!waiting && !isLast} />
-        <span style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-          Proffy <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--accent)", background: "rgba(99,102,241,0.13)", border: "1px solid rgba(99,102,241,0.28)", borderRadius: "4px", padding: "1px 5px" }}>BETA</span>
-        </span>
-      </div>
+      {/* Skip setup (top left) */}
+      {!isDone && (
+        <button
+          onClick={skipAll}
+          style={{ position: "fixed", top: "1.5rem", left: "2rem", fontSize: "12px", color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", zIndex: 10, padding: "4px 8px", borderRadius: "6px", transition: "color 0.15s" }}
+          onMouseEnter={e => (e.currentTarget.style.color = "var(--text-secondary)")}
+          onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}
+        >
+          Skip setup
+        </button>
+      )}
 
       <div style={{ width: "100%", maxWidth: "520px", position: "relative", zIndex: 1 }}>
 
         {/* Question */}
-        {!isLast && (
+        {!isDone && (
           <div style={{ minHeight: "80px", marginBottom: "2.5rem" }}>
             <QuestionText
               text={currentQuestion}
@@ -266,15 +304,15 @@ export default function OnboardingClient({ userName }: { userName: string }) {
           </div>
         )}
 
-        {/* Answer panels — fade in when waiting */}
         <AnimatePresence mode="wait">
-          {!isLast && waiting && (
+          {/* ── Answer panels ── */}
+          {!isDone && waiting && (
             <motion.div
               key={step}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.18 }}
             >
 
               {/* Step 0: Name */}
@@ -288,15 +326,12 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                     placeholder="Your first name"
                     maxLength={80}
                     onKeyDown={e => { if (e.key === "Enter") { const v = nameRef.current?.value.trim() ?? ""; if (v) answer("name", v); } }}
-                    style={{
-                      flex: 1, padding: "13px 16px", borderRadius: "12px",
-                      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)",
-                      color: "var(--text-primary)", fontSize: "15px", outline: "none", fontFamily: "inherit",
-                    }}
+                    style={{ flex: 1, padding: "13px 16px", borderRadius: "12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-primary)", fontSize: "15px", outline: "none", fontFamily: "inherit" }}
                   />
                   <button
                     onClick={() => { const v = nameRef.current?.value.trim() ?? ""; if (v) answer("name", v); }}
-                    style={{ padding: "13px 18px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg,#4f8ef7,#a78bfa)", color: "#fff", fontSize: "16px", fontWeight: 700, cursor: "pointer" }}>
+                    style={{ padding: "13px 18px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg,#4f8ef7,#a78bfa)", color: "#fff", fontSize: "16px", fontWeight: 700, cursor: "pointer" }}
+                  >
                     →
                   </button>
                 </div>
@@ -304,10 +339,13 @@ export default function OnboardingClient({ userName }: { userName: string }) {
 
               {/* Step 1: University */}
               {step === 1 && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
-                  {UNIVERSITIES.map(u => (
-                    <button key={u} onClick={() => answer("university", u)} style={{ ...optionStyle(false), padding: "18px 8px", textAlign: "center", fontWeight: 600, fontSize: "13px" }}>{u}</button>
-                  ))}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+                    {UNIVERSITIES.map(u => (
+                      <button key={u} onClick={() => answer("university", u)} style={{ ...optBtn(), padding: "18px 8px", textAlign: "center", fontWeight: 600, fontSize: "13px" }}>{u}</button>
+                    ))}
+                  </div>
+                  <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>Skip for now</button>
                 </div>
               )}
 
@@ -315,18 +353,21 @@ export default function OnboardingClient({ userName }: { userName: string }) {
               {step === 2 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {SEMESTERS.map(s => (
-                    <button key={s.val} onClick={() => answer("semester", s.val)} style={{ ...optionStyle(false), padding: "15px 18px", fontSize: "14px", fontWeight: 600 }}>{s.label}</button>
+                    <button key={s.val} onClick={() => answer("semester", s.val)} style={{ ...optBtn(), padding: "15px 18px", fontSize: "14px", fontWeight: 600 }}>{s.label}</button>
                   ))}
-                  <button onClick={() => answer("semester", "")} style={{ ...optionStyle(false), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)" }}>Skip for now</button>
+                  <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)" }}>Skip for now</button>
                 </div>
               )}
 
-              {/* Step 3: Field */}
+              {/* Step 3: Field of study */}
               {step === 3 && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                  {FIELDS.map(f => (
-                    <button key={f} onClick={() => answer("field", f)} style={{ ...optionStyle(false), padding: "11px 14px" }}>{f}</button>
-                  ))}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    {FIELDS.map(f => (
+                      <button key={f} onClick={() => answer("field", f)} style={{ ...optBtn(), padding: "11px 14px" }}>{f}</button>
+                    ))}
+                  </div>
+                  <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>Skip for now</button>
                 </div>
               )}
 
@@ -334,11 +375,12 @@ export default function OnboardingClient({ userName }: { userName: string }) {
               {step === 4 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {CHALLENGES.map(c => (
-                    <button key={c.text} onClick={() => answer("challenge", c.text)} style={{ ...optionStyle(false), display: "flex", alignItems: "center", gap: "12px" }}>
+                    <button key={c.text} onClick={() => answer("challenge", c.text)} style={{ ...optBtn(), display: "flex", alignItems: "center", gap: "12px" }}>
                       <span style={{ fontSize: "20px", flexShrink: 0 }}>{c.icon}</span>
                       <span>{c.text}</span>
                     </button>
                   ))}
+                  <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)" }}>Skip for now</button>
                 </div>
               )}
 
@@ -346,12 +388,12 @@ export default function OnboardingClient({ userName }: { userName: string }) {
               {step === 5 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {[
-                    { val: "visual", icon: "🎨", title: "Visual & diagrams", desc: "Graphs, tables, step-by-step breakdowns" },
+                    { val: "visual",   icon: "🎨", title: "Visual & diagrams",    desc: "Graphs, tables, step-by-step breakdowns" },
                     { val: "practice", icon: "⚡", title: "Practice problems first", desc: "Throw examples at me, explain on the way" },
-                    { val: "reading", icon: "📖", title: "Thorough reading", desc: "Full explanations before I try anything" },
-                    { val: "mixed", icon: "🔀", title: "Mix it up", desc: "Varies by topic — let Proffy decide" },
+                    { val: "reading",  icon: "📖", title: "Thorough reading",      desc: "Full explanations before I try anything" },
+                    { val: "mixed",    icon: "🔀", title: "Mix it up",             desc: "Varies by topic — let Proffy decide" },
                   ].map(o => (
-                    <button key={o.val} onClick={() => answer("learningStyle", o.val)} style={{ ...optionStyle(false), display: "flex", alignItems: "center", gap: "14px" }}>
+                    <button key={o.val} onClick={() => answer("learningStyle", o.val)} style={{ ...optBtn(), display: "flex", alignItems: "center", gap: "14px" }}>
                       <span style={{ fontSize: "22px", flexShrink: 0 }}>{o.icon}</span>
                       <div>
                         <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "2px" }}>{o.title}</div>
@@ -359,15 +401,19 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                       </div>
                     </button>
                   ))}
+                  <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)" }}>Skip for now</button>
                 </div>
               )}
 
               {/* Step 6: Hours */}
               {step === 6 && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px" }}>
-                  {["1–3h", "4–6h", "7–10h", "11–15h", "16–20h", "20h+"].map(h => (
-                    <button key={h} onClick={() => answer("hours", h)} style={{ ...optionStyle(false), padding: "18px 8px", textAlign: "center", fontWeight: 600 }}>{h}</button>
-                  ))}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px" }}>
+                    {["1–3h", "4–6h", "7–10h", "11–15h", "16–20h", "20h+"].map(h => (
+                      <button key={h} onClick={() => answer("hours", h)} style={{ ...optBtn(), padding: "18px 8px", textAlign: "center", fontWeight: 600 }}>{h}</button>
+                    ))}
+                  </div>
+                  <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>Skip for now</button>
                 </div>
               )}
 
@@ -375,11 +421,11 @@ export default function OnboardingClient({ userName }: { userName: string }) {
               {step === 7 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {[
-                    { val: "pass", icon: "✅", title: "Just pass", desc: "Focus on the essentials, skip the extras" },
-                    { val: "good", icon: "⭐", title: "Good grade", desc: "Solid understanding, aim for 80+" },
-                    { val: "excellent", icon: "🏆", title: "Top of the class", desc: "Deep mastery, full exam prep" },
+                    { val: "pass",      icon: "✅", title: "Just pass",        desc: "Focus on the essentials, skip the extras" },
+                    { val: "good",      icon: "⭐", title: "Good grade",        desc: "Solid understanding, aim for 80+" },
+                    { val: "excellent", icon: "🏆", title: "Top of the class",  desc: "Deep mastery, full exam prep" },
                   ].map(o => (
-                    <button key={o.val} onClick={() => answer("goal", o.val)} style={{ ...optionStyle(false), display: "flex", alignItems: "center", gap: "14px" }}>
+                    <button key={o.val} onClick={() => answer("goal", o.val)} style={{ ...optBtn(), display: "flex", alignItems: "center", gap: "14px" }}>
                       <span style={{ fontSize: "22px", flexShrink: 0 }}>{o.icon}</span>
                       <div>
                         <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "2px" }}>{o.title}</div>
@@ -387,14 +433,15 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                       </div>
                     </button>
                   ))}
+                  <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)" }}>Skip for now</button>
                 </div>
               )}
 
             </motion.div>
           )}
 
-          {/* Done screen */}
-          {isLast && (
+          {/* ── Done screen ── */}
+          {isDone && (
             <motion.div
               key="done"
               initial={{ opacity: 0, y: 20 }}
@@ -413,24 +460,32 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                 {answers.name ? `You're all set, ${answers.name.split(" ")[0]}!` : "You're all set!"}
               </h1>
               <p style={{ fontSize: "15px", color: "var(--text-muted)", lineHeight: 1.65, maxWidth: "360px", margin: "0 auto 2rem" }}>
-                Proffy is personalised to your university, field, and learning style. Add your first course to get started.
+                Proffy is personalised to your learning style and goals. Add your first course to get started.
               </p>
 
               {/* Summary */}
-              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "12px", padding: "16px 18px", marginBottom: "16px", textAlign: "left" }}>
-                {[
-                  { label: "University", val: answers.university },
-                  { label: "Field", val: answers.field },
-                  { label: "Learning style", val: { visual: "Visual & diagrams", practice: "Practice first", reading: "Thorough reading", mixed: "Mixed" }[answers.learningStyle] ?? answers.learningStyle },
-                  { label: "Goal", val: { pass: "Just pass", good: "Good grade", excellent: "Top of class" }[answers.goal] ?? answers.goal },
-                  { label: "Study hours", val: answers.hours ? answers.hours + " / week" : "" },
-                ].filter(r => r.val).map(r => (
-                  <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: "12px", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{r.label}</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>{r.val}</span>
-                  </div>
-                ))}
-              </div>
+              {[
+                { label: "University",     val: answers.university },
+                { label: "Field",          val: answers.field },
+                { label: "Learning style", val: ({ visual: "Visual & diagrams", practice: "Practice first", reading: "Thorough reading", mixed: "Mixed" } as Record<string,string>)[answers.learningStyle] ?? answers.learningStyle },
+                { label: "Goal",           val: ({ pass: "Just pass", good: "Good grade", excellent: "Top of class" } as Record<string,string>)[answers.goal] ?? answers.goal },
+                { label: "Study hours",    val: answers.hours ? answers.hours + " / week" : "" },
+              ].filter(r => r.val).length > 0 && (
+                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "12px", padding: "16px 18px", marginBottom: "16px", textAlign: "left" }}>
+                  {[
+                    { label: "University",     val: answers.university },
+                    { label: "Field",          val: answers.field },
+                    { label: "Learning style", val: ({ visual: "Visual & diagrams", practice: "Practice first", reading: "Thorough reading", mixed: "Mixed" } as Record<string,string>)[answers.learningStyle] ?? answers.learningStyle },
+                    { label: "Goal",           val: ({ pass: "Just pass", good: "Good grade", excellent: "Top of class" } as Record<string,string>)[answers.goal] ?? answers.goal },
+                    { label: "Study hours",    val: answers.hours ? answers.hours + " / week" : "" },
+                  ].filter(r => r.val).map(r => (
+                    <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: "12px", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{r.label}</span>
+                      <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>{r.val}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <button onClick={finish} disabled={saving} style={{
                 width: "100%", padding: "14px", borderRadius: "10px", border: "none",
