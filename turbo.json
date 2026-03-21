@@ -3,7 +3,23 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**"]
+      "outputs": [".next/**", "dist/**"],
+      "env": [
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL",
+        "DATABASE_URL",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_API_KEY",
+        "PAYPAL_CLIENT_ID",
+        "PAYPAL_SECRET",
+        "NEXT_PUBLIC_PAYPAL_CLIENT_ID",
+        "RESEND_API_KEY",
+        "QDRANT_URL",
+        "QDRANT_API_KEY"
+      ]
     },
     "dev": {
       "cache": false,
