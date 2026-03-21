@@ -11,6 +11,10 @@ interface Props {
   initialMessages?: ChatMessage[];
   hasCourses?: boolean;
   userPlan?: "free" | "pro" | "max";
+  initialUsedMsgs?: number;
+  initialUsedTokens?: number;
+  msgLimit?: number;
+  tokenLimit?: number;
 }
 
 const SUGGESTED = [
@@ -30,7 +34,13 @@ function makeGreeting(hasCourses: boolean, courseName?: string): ChatMessage {
 }
 
 
-export default function ChatWindow({ course, sessionId, initialMessages = [], hasCourses = false, userPlan = "free" }: Props) {
+function getResetHours(): number {
+  const now = new Date();
+  const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  return Math.ceil((midnight.getTime() - now.getTime()) / 3_600_000);
+}
+
+export default function ChatWindow({ course, sessionId, initialMessages = [], hasCourses = false, userPlan = "free", initialUsedMsgs = 0, initialUsedTokens = 0, msgLimit = 10, tokenLimit }: Props) {
   const router = useRouter();
   const greeting = makeGreeting(hasCourses, course?.name);
   const [messages, setMessages] = useState<ChatMessage[]>(
@@ -43,12 +53,19 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const [limitBanner, setLimitBanner] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [userSavedToast, setUserSavedToast] = useState(false);
+  const [usedMsgs, setUsedMsgs] = useState(initialUsedMsgs);
+  const [usedTokens, setUsedTokens] = useState(initialUsedTokens);
+  const [btwDismissed, setBtwDismissed] = useState(false);
+  const [hasFirstResponse, setHasFirstResponse] = useState(initialMessages.length > 1);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const noteToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardsToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const limitToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isBtw = input.trimStart().startsWith("/btw");
+  const resetHours = getResetHours();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -129,6 +146,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             if (data.type === "thinking") {
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, thinkingText: data.text } : m));
             } else if (data.type === "done") {
+              if (data.usedMsgs !== undefined) setUsedMsgs(data.usedMsgs);
+              if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
               router.refresh();
             } else if (data.type === "course_created" || data.type === "profile_updated") {
               router.refresh();
@@ -140,6 +159,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, streaming: false } : m));
             } else if (data.type === "token") {
               content += data.text;
+              setHasFirstResponse(true);
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, thinkingText: undefined } : m));
             } else if (data.type === "replace_content") {
               content = data.content;
@@ -348,12 +368,70 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         )}
       </AnimatePresence>
 
+      {/* ── Usage bar + /btw tip ── */}
+      <div style={{ flexShrink: 0, padding: "6px 16px 0", display: "flex", flexDirection: "column", gap: "4px" }}>
+        {/* /btw tip — only after first AI response */}
+        {hasFirstResponse && !btwDismissed && !isBtw && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            padding: "5px 10px", borderRadius: "8px",
+            background: "rgba(79,142,247,0.06)", border: "1px solid rgba(79,142,247,0.15)",
+          }}>
+            <span style={{ fontSize: "11px", color: "var(--blue)", fontWeight: 600 }}>💡</span>
+            <span style={{ fontSize: "11px", color: "var(--text-muted)", flex: 1 }}>
+              Type <code style={{ background: "rgba(79,142,247,0.12)", padding: "1px 5px", borderRadius: "4px", fontSize: "10px", color: "var(--blue)" }}>/btw</code> to inject context without asking a question
+            </span>
+            <button onClick={() => setBtwDismissed(true)} style={{ background: "none", border: "none", color: "var(--text-disabled)", cursor: "pointer", padding: 0, lineHeight: 1, fontSize: "12px" }}>✕</button>
+          </div>
+        )}
+        {/* /btw active indicator */}
+        {isBtw && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            padding: "5px 10px", borderRadius: "8px",
+            background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.2)",
+          }}>
+            <span style={{ fontSize: "11px", color: "var(--purple)", fontWeight: 700 }}>/btw</span>
+            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Context injection — I'll remember this without treating it as a question</span>
+          </div>
+        )}
+        {/* Usage bar — only shown at 75%+ like Claude */}
+        {userPlan === "free" && usedMsgs / msgLimit >= 0.75 ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 2px" }}>
+            <div style={{ flex: 1, height: "3px", borderRadius: "99px", background: "var(--border)", overflow: "hidden" }}>
+              <div style={{
+                height: "100%", borderRadius: "99px", transition: "width 0.4s",
+                width: `${Math.min(100, Math.round(usedMsgs / msgLimit * 100))}%`,
+                background: usedMsgs >= msgLimit ? "#f87171" : "#fbbf24",
+              }} />
+            </div>
+            <span style={{ fontSize: "10px", color: usedMsgs >= msgLimit ? "#f87171" : "#fbbf24", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {usedMsgs}/{msgLimit} messages · Resets in {resetHours}h
+            </span>
+          </div>
+        ) : tokenLimit && usedTokens / tokenLimit >= 0.75 ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 2px" }}>
+            <div style={{ flex: 1, height: "3px", borderRadius: "99px", background: "var(--border)", overflow: "hidden" }}>
+              <div style={{
+                height: "100%", borderRadius: "99px", transition: "width 0.4s",
+                width: `${Math.min(100, Math.round(usedTokens / tokenLimit * 100))}%`,
+                background: usedTokens / tokenLimit > 0.9 ? "#f87171" : "#fbbf24",
+              }} />
+            </div>
+            <span style={{ fontSize: "10px", color: usedTokens / tokenLimit > 0.9 ? "#f87171" : "#fbbf24", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {Math.round(usedTokens / tokenLimit * 100)}% of daily usage · Resets in {resetHours}h
+            </span>
+          </div>
+        ) : null}
+      </div>
+
       {/* ── Input area ── */}
-      <div style={{ flexShrink: 0, padding: "10px 16px 14px", borderTop: "1px solid var(--border)", background: "var(--bg-surface)" }}>
+      <div style={{ flexShrink: 0, padding: "6px 16px 14px", background: "var(--bg-surface)" }}>
         <div style={{
           display: "flex", alignItems: "flex-end", gap: "10px",
           padding: "10px 14px", borderRadius: "12px",
-          background: "var(--bg-elevated)", border: "1px solid var(--border-light)",
+          background: "var(--bg-elevated)",
+          border: `1px solid ${isBtw ? "rgba(167,139,250,0.35)" : "var(--border-light)"}`,
           transition: "border-color 0.15s",
         }}>
           <textarea
@@ -361,13 +439,13 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             value={input}
             onChange={e => { setInput(e.target.value); autoResize(); }}
             onKeyDown={handleKeyDown}
-            placeholder={course ? `Ask about ${course.name}…` : "Ask anything…"}
+            placeholder={isBtw ? "Add context the AI should remember…" : course ? `Ask about ${course.name}…` : "Ask anything…"}
             rows={1}
             disabled={streaming}
             style={{
               flex: 1, background: "transparent", fontSize: "14px", outline: "none",
               resize: "none", maxHeight: "140px", lineHeight: 1.6, border: "none",
-              color: "var(--text-primary)", opacity: streaming ? 0.5 : 1,
+              color: isBtw ? "var(--purple)" : "var(--text-primary)", opacity: streaming ? 0.5 : 1,
               fontFamily: "inherit", paddingTop: "2px",
             }}
           />
@@ -391,8 +469,10 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               style={{
                 flexShrink: 0, width: "32px", height: "32px",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                borderRadius: "9px", background: "var(--blue)", cursor: input.trim() ? "pointer" : "default",
-                boxShadow: input.trim() ? "0 2px 10px rgba(79,142,247,0.4)" : "none",
+                borderRadius: "9px",
+                background: isBtw ? "var(--purple)" : "var(--blue)",
+                cursor: input.trim() ? "pointer" : "default",
+                boxShadow: input.trim() ? `0 2px 10px ${isBtw ? "rgba(167,139,250,0.4)" : "rgba(79,142,247,0.4)"}` : "none",
                 opacity: input.trim() ? 1 : 0.3, transition: "opacity 0.15s, box-shadow 0.15s",
                 border: "none",
               }}
@@ -404,7 +484,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
           )}
         </div>
 
-        <p style={{ textAlign: "center", fontSize: "10px", marginTop: "7px", color: "var(--text-disabled)" }}>
+        <p style={{ textAlign: "center", fontSize: "10px", marginTop: "6px", color: "var(--text-disabled)" }}>
           Enter to send · Shift+Enter for new line
         </p>
       </div>

@@ -182,8 +182,8 @@ export default async function HomePage() {
           background: "rgba(5,5,10,0.75)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <svg width="38" height="38" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
             <defs>
               <linearGradient id="nav-lg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
                 <stop stopColor="#4f8ef7" /><stop offset="1" stopColor="#a78bfa" />
@@ -196,11 +196,11 @@ export default async function HomePage() {
             <line x1="27.5" y1="11.75" x2="27.5" y2="21.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.6" />
             <circle cx="27.5" cy="23" r="1.7" fill="white" fillOpacity="0.6" />
           </svg>
-          <span style={{ fontWeight: 700, fontSize: "1.2rem", letterSpacing: "-0.02em", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.4rem" }}>Proffy <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase" as const, color: "var(--accent)", background: "rgba(99,102,241,0.13)", border: "1px solid rgba(99,102,241,0.28)", borderRadius: "4px", padding: "1px 5px", lineHeight: 1.5 }}>BETA</span></span>
+          <span className="nav-logo-text" style={{ fontWeight: 700, fontSize: "1.1rem", letterSpacing: "-0.02em", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>Proffy <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase" as const, color: "var(--accent)", background: "rgba(99,102,241,0.13)", border: "1px solid rgba(99,102,241,0.28)", borderRadius: "4px", padding: "1px 5px", lineHeight: 1.5 }}>BETA</span></span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <Link href="/login" className="btn-ghost" style={{ fontSize: "0.95rem", padding: "0.6rem 1.25rem", borderRadius: "0.75rem" }}>Sign in</Link>
-          <Link href="/register" className="btn-primary" style={{ fontSize: "0.95rem", padding: "0.65rem 1.5rem", borderRadius: "0.75rem" }}>Get started free</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <Link href="/login" className="btn-ghost nav-btn" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem", borderRadius: "0.65rem", whiteSpace: "nowrap" }}>Sign in</Link>
+          <Link href="/register" className="btn-primary nav-btn" style={{ fontSize: "0.875rem", padding: "0.5rem 1.1rem", borderRadius: "0.65rem", whiteSpace: "nowrap" }}>Get started</Link>
         </div>
       </nav>
 
@@ -841,7 +841,7 @@ export default async function HomePage() {
               <h3 className="text-2xl font-bold mb-2">Ready to stop guessing what&apos;s on the exam?</h3>
               <p style={{ color: "var(--text-secondary)" }}>Join students from TAU, Technion, HUJI, BGU and Bar Ilan.</p>
             </div>
-            <Link href="/register" className="px-8 py-3.5 rounded-2xl text-base font-semibold btn-primary" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
+            <Link href="/register" className="btn-primary" style={{ whiteSpace: "nowrap", flexShrink: 0, fontSize: "1.05rem", padding: "0.9rem 2.5rem", borderRadius: "1rem", fontWeight: 700 }}>
               Start free today →
             </Link>
           </div>

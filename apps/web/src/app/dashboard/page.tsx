@@ -25,9 +25,10 @@ export default async function DashboardPage() {
     pool.query("SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active'", [uid]),
     pool.query("SELECT COUNT(*) as c FROM flashcards WHERE user_id = $1 AND next_review_at <= NOW()", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
     pool.query("SELECT COUNT(*) as c FROM course_notes WHERE user_id = $1", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
-    pool.query("SELECT onboarding_done FROM users WHERE id = $1", [uid]).catch(() => ({ rows: [{ onboarding_done: true }] })),
+    pool.query("SELECT onboarding_done, email_verified FROM users WHERE id = $1", [uid]).catch(() => ({ rows: [{ onboarding_done: true, email_verified: true }] })),
   ]);
 
+  if (!userRes.rows[0]?.email_verified) redirect("/verify-email");
   if (!userRes.rows[0]?.onboarding_done) redirect("/onboarding");
 
   const courses      = coursesRes.rows;
@@ -134,7 +135,14 @@ export default async function DashboardPage() {
 
           {/* Chat — takes all remaining space */}
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <ChatWindow hasCourses={courses.length > 0} userPlan={userPlan} />
+            <ChatWindow
+              hasCourses={courses.length > 0}
+              userPlan={userPlan}
+              initialUsedMsgs={todayQ}
+              initialUsedTokens={todayTokens}
+              msgLimit={10}
+              tokenLimit={tokenLimit ?? undefined}
+            />
           </div>
         </div>
 

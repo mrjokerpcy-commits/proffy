@@ -34,7 +34,7 @@ interface Answers {
   learningStyle: string;
 }
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 8;
 
 // ── Animated logo ──────────────────────────────────────────────────────────
 function AnimatedLogo({ active }: { active: boolean }) {
@@ -160,7 +160,6 @@ export default function OnboardingClient({ userName }: { userName: string }) {
     answers.name ? `${answers.name.split(" ")[0]}, which university are you at?` : "Which university are you at?",
     "Which semester are you in?",
     "What are you studying?",
-    "Skip step 4", // placeholder — step 4 doesn't exist, jump handled
     "What's your biggest study challenge?",
     "How do you learn best?",
     "How many hours a week can you study?",
@@ -191,6 +190,12 @@ export default function OnboardingClient({ userName }: { userName: string }) {
     pendingAnswer.current = { key, value };
     setWaiting(false);
     setErasing(true);
+    // Save incrementally so progress survives page refresh
+    fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [key]: value }),
+    }).catch(() => {});
   }
 
   async function finish() {
@@ -325,8 +330,8 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                 </div>
               )}
 
-              {/* Step 5: Challenge */}
-              {step === 5 && (
+              {/* Step 4: Challenge */}
+              {step === 4 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {CHALLENGES.map(c => (
                     <button key={c.text} onClick={() => answer("challenge", c.text)} style={{ ...optionStyle(false), display: "flex", alignItems: "center", gap: "12px" }}>
@@ -337,8 +342,8 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                 </div>
               )}
 
-              {/* Step 6: Learning style */}
-              {step === 6 && (
+              {/* Step 5: Learning style */}
+              {step === 5 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {[
                     { val: "visual", icon: "🎨", title: "Visual & diagrams", desc: "Graphs, tables, step-by-step breakdowns" },
@@ -357,8 +362,8 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                 </div>
               )}
 
-              {/* Step 7: Hours */}
-              {step === 7 && (
+              {/* Step 6: Hours */}
+              {step === 6 && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px" }}>
                   {["1–3h", "4–6h", "7–10h", "11–15h", "16–20h", "20h+"].map(h => (
                     <button key={h} onClick={() => answer("hours", h)} style={{ ...optionStyle(false), padding: "18px 8px", textAlign: "center", fontWeight: 600 }}>{h}</button>
@@ -366,8 +371,8 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                 </div>
               )}
 
-              {/* Step 8: Goal */}
-              {step === 8 && (
+              {/* Step 7: Goal */}
+              {step === 7 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {[
                     { val: "pass", icon: "✅", title: "Just pass", desc: "Focus on the essentials, skip the extras" },

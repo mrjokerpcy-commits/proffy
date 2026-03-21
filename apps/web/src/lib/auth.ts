@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { Pool } from "pg";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
@@ -42,8 +43,6 @@ export const authOptions: NextAuthOptions = {
         const valid = await bcrypt.compare(credentials.password, user.password_hash);
         if (!valid) return null;
 
-        if (!user.email_verified) return null; // must verify email first
-
         return { id: user.id, email: user.email, name: user.name, image: user.image };
       },
     }),
@@ -58,13 +57,17 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google" && user) {
         try {
           const { rows } = await pool.query(
-            `INSERT INTO users (email, name, image)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image
-             RETURNING id`,
+            `INSERT INTO users (email, name, image, email_verified)
+             VALUES ($1, $2, $3, true)
+             ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image, email_verified = true
+             RETURNING id, (xmax = 0) AS is_new`,
             [user.email, user.name, user.image]
           );
           token.id = rows[0].id;
+          // Send welcome email only on first-ever Google login
+          if (rows[0].is_new) {
+            sendWelcomeEmail(user.email!, user.name ?? undefined).catch(() => {});
+          }
         } catch (err) {
           console.error("Google OAuth DB upsert failed:", err);
         }
