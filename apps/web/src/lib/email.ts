@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY ?? "re_placeholder");
 
 // From address — update to your verified domain in Resend once you have one
 // For now uses Resend's sandbox domain which works for testing
