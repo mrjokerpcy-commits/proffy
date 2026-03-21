@@ -27,7 +27,7 @@ function ExamBadge({ examDate }: { examDate: string | null }) {
     days <= 14 ? { color: "var(--amber)", background: "rgba(251,191,36,0.1)" }  :
                  { color: "var(--green)", background: "rgba(52,211,153,0.1)" };
   return (
-    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "5px", flexShrink: 0, tabularNums: true, ...style }}>
+    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "5px", flexShrink: 0, fontVariantNumeric: "tabular-nums",...style }}>
       {days}d
     </span>
   );
