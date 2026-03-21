@@ -821,7 +821,7 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
         // Auto-save flashcards
         if (cardsTagMatch && courseId) {
           const pairs = cardsTagMatch[1].split(/\n---\n/).map(block => {
-            const qMatch = block.match(/Q:\s*(.+?)(?=\nA:|$)/s);
+            const qMatch = block.match(/Q:\s*([\s\S]+?)(?=\nA:|$)/);
             const aMatch = block.match(/A:\s*([\s\S]+)/);
             return qMatch && aMatch
               ? { front: qMatch[1].trim().slice(0, 500), back: aMatch[1].trim().slice(0, 1000) }
