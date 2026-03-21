@@ -1,0 +1,32 @@
+fastapi>=0.115.6
+uvicorn[standard]>=0.34.0
+python-multipart>=0.0.20
+pydantic>=2.11.0
+pydantic-settings>=2.7.0
+
+# File extraction
+pdf2image>=1.17.0
+pdfplumber>=0.11.4
+python-pptx>=1.0.2
+mammoth>=1.8.0
+python-docx>=1.1.2
+
+# Image processing
+opencv-python-headless>=4.10.0.84
+Pillow>=11.1.0
+
+# Google Vision (OCR)
+google-cloud-vision>=3.9.0
+
+# Video transcription
+faster-whisper>=1.1.1
+
+# Embeddings + vector store
+openai>=1.59.9
+qdrant-client>=1.13.2
+
+# Utilities
+httpx>=0.28.1
+python-dotenv>=1.0.1
+aiofiles>=24.1.0
+setuptools>=75.0.0
