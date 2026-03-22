@@ -326,7 +326,13 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { message, university, course, professor, semester, history = [], sessionId, courseNumber, btwResume, partialResponse } = body;
+  const { message, history = [], sessionId, btwResume, partialResponse } = body;
+  // These can be overridden by authoritative DB values below
+  let university: string | undefined = body.university;
+  let course: string | undefined     = body.course;
+  let professor: string | undefined  = body.professor;
+  let semester: string | undefined   = body.semester ?? null;
+  let courseNumber: string | undefined = body.courseNumber ?? null;
   // let so it can be updated mid-request when create_course tool runs
   let courseId: string | null = typeof body.courseId === "string" ? body.courseId : null;
 
@@ -384,7 +390,11 @@ export async function POST(req: NextRequest) {
       [userId]
     ),
     courseId
-      ? pool.query(`SELECT exam_date FROM courses WHERE id = $1 AND user_id = $2`, [courseId, userId]).catch(() => ({ rows: [] }))
+      ? pool.query(
+          `SELECT name, university, professor, semester, course_number, exam_date, hours_per_week, goal, user_level
+           FROM courses WHERE id = $1 AND user_id = $2`,
+          [courseId, userId]
+        ).catch(() => ({ rows: [] }))
       : Promise.resolve({ rows: [] }),
     courseId
       ? pool.query(
@@ -435,6 +445,19 @@ export async function POST(req: NextRequest) {
   const platformMemory: { topic: string; insight: string; insight_type: string; confidence: number }[] = platformMemoryResult.rows;
   const knowledgeDoc = courseKnowledgeResult.rows[0] ?? null;
   const examDate: Date | null = examResult.rows[0]?.exam_date ?? null;
+
+  // Always override with authoritative DB values — never trust stale client data
+  const dbCourse = examResult.rows[0] ?? null;
+  if (dbCourse) {
+    if (dbCourse.name)          course       = dbCourse.name;
+    if (dbCourse.university)    university   = dbCourse.university;
+    if (dbCourse.professor)     professor    = dbCourse.professor;
+    if (dbCourse.semester)      semester     = dbCourse.semester;
+    if (dbCourse.course_number) courseNumber = dbCourse.course_number;
+  }
+  const dbCourseGoal: string | null      = dbCourse?.goal ?? null;
+  const dbCourseLevel: string | null     = dbCourse?.user_level ?? null;
+  const dbCourseHours: number | null     = dbCourse?.hours_per_week ?? null;
   const hoursUntilExam = examDate ? Math.round((examDate.getTime() - Date.now()) / 3_600_000) : null;
   const studentInsights: { topic: string; status: string; note: string }[] = insightsResult.rows;
   const recentSlot: { slot_type: string; start_time: string; end_time: string } | null = recentSlotResult.rows[0] ?? null;
@@ -632,7 +655,10 @@ export async function POST(req: NextRequest) {
 You are brilliant, warm, and direct — like a top student who aced this exact course and wants to help.
 
 ${hasCourseContext
-  ? `Course context: ${[university, course, professor, semester ? `Semester: ${semester}` : "", courseNumber ? `#${courseNumber}` : "", examContext].filter(Boolean).join(" · ") || "General"}${missingWarning}`
+  ? `## COURSE CONTEXT (authoritative — do not ask the student for any of this)
+Course: ${course || "Unknown"}
+University: ${university || "Unknown"}${courseNumber ? `\nCourse number: ${courseNumber}` : ""}${professor ? `\nProfessor: ${professor}` : ""}${semester ? `\nSemester: ${semester}` : ""}${examContext ? `\nExam: ${examContext}` : ""}${dbCourseGoal ? `\nStudent's goal: ${dbCourseGoal === "excellent" ? "top grade" : dbCourseGoal === "good" ? "good grade (80+)" : "pass"}` : ""}${dbCourseLevel ? `\nStudent level: ${dbCourseLevel}` : ""}${dbCourseHours ? `\nStudy time available: ${dbCourseHours}h/week` : ""}
+You are now in the chat for this specific course. You know exactly which course this is. NEVER ask the student what course they're in. NEVER ask for course name, number, or professor — you already have it all.${missingWarning}`
   : `## ONBOARDING MODE
 No course is selected. Your job right now:
 1. Greet the student ONLY if this appears to be their very first message (no history). If there is already conversation history, skip the greeting entirely — just respond naturally.
