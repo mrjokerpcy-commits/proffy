@@ -85,6 +85,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const sendRef = useRef<((text: string) => void) | null>(null);
+
   function autoResize() {
     const t = textareaRef.current;
     if (!t) return;
@@ -94,6 +96,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
 
   const send = useCallback(async (text: string) => {
     if (!text.trim()) return;
+    sendRef.current = null; // clear after use to avoid double-fires
 
     // Pro/Max: /btw while streaming — queue for next paragraph break
     if (streaming && canTypeWhileStreaming && text.trimStart().startsWith("/btw")) {
@@ -344,6 +347,21 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
       setStreaming(false);
     }
   }, [course, sessionId]);
+
+  // Keep sendRef current so event listeners below can call send without stale closure
+  useEffect(() => { sendRef.current = send; }, [send]);
+
+  // Auto-send feature prompt after upload completes in this course's context
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { courseId: uploadedCourseId, prompt } = (e as CustomEvent).detail ?? {};
+      if (!prompt) return;
+      if (uploadedCourseId && runtimeCourseId && uploadedCourseId !== runtimeCourseId) return;
+      setTimeout(() => sendRef.current?.(prompt), 400);
+    };
+    window.addEventListener("proffy:upload-complete", handler);
+    return () => window.removeEventListener("proffy:upload-complete", handler);
+  }, [runtimeCourseId]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {

@@ -9,13 +9,20 @@ type UploadStatus = "idle" | "uploading" | "success" | "error";
 type Tab = "files" | "drive";
 
 const DOC_TYPES: { value: DocType; label: string; icon: string; desc: string; minPlan: "pro" | "max" }[] = [
-  { value: "exam",     label: "Past exam",        icon: "📝", desc: "AI extracts professor patterns", minPlan: "max" },
   { value: "slides",   label: "Lecture slides",   icon: "📊", desc: "Answers grounded in your slides", minPlan: "pro" },
-  { value: "notes",    label: "Study notes",      icon: "📖", desc: "Searchable by Proffy",            minPlan: "pro" },
-  { value: "textbook", label: "Textbook chapter", icon: "📚", desc: "Reference material",              minPlan: "pro" },
+  { value: "notes",    label: "Study notes",       icon: "📖", desc: "Searchable by Proffy",            minPlan: "pro" },
+  { value: "textbook", label: "Textbook chapter",  icon: "📚", desc: "Reference material",              minPlan: "pro" },
 ];
 const PLAN_RANK: Record<string, number> = { free: 0, pro: 1, max: 2 };
 function planLabel(plan: "pro" | "max") { return plan === "max" ? "Max" : "Pro"; }
+
+// Feature-specific prompts sent to the agent after upload
+const UPLOAD_PROMPTS: Record<string, string> = {
+  exam:     "I just uploaded a past exam for this course. Please analyze it thoroughly: identify the professor's top tested topics ranked by frequency, their preferred question styles, any recurring tricks or traps, and what I should prioritize to maximize my exam score.",
+  slides:   "I just uploaded lecture slides. Pull out the 3 most important concepts, any definitions I must memorize, and flag which topics look like likely exam material.",
+  notes:    "I just uploaded my study notes. Review them, identify gaps in my understanding, flag anything incomplete or unclear, and suggest what to study next.",
+  textbook: "I just uploaded a textbook chapter. Give me a concise summary of the core theory, the key formulas or rules to know, and three practice problems to test my understanding.",
+};
 
 export default function UploadModal() {
   const { data: session } = useSession();
@@ -86,7 +93,7 @@ export default function UploadModal() {
   }, []);
 
   async function upload() {
-    if (!files.length || !courseId || !canUseDocType(docType)) return;
+    if (!files.length || !courseId) return;
     setStatus("uploading"); setProgress(0); setError(""); setResult(null);
     let lastPatterns: { topic: string; pct: number }[] = [];
     let totalChunks = 0;
@@ -110,6 +117,10 @@ export default function UploadModal() {
     }
     setResult({ chunkCount: totalChunks, patterns: lastPatterns });
     setStatus("success");
+    // Dispatch event so ChatWindow can auto-send a feature-specific prompt
+    window.dispatchEvent(new CustomEvent("proffy:upload-complete", {
+      detail: { courseId, docType, prompt: UPLOAD_PROMPTS[docType] },
+    }));
   }
 
   async function submitDrive() {

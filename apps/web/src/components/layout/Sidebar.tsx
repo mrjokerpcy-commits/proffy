@@ -514,6 +514,35 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       {/* ── Feature widget boxes ── */}
       <div style={{ flexShrink: 0, padding: "0.5rem 0.75rem 0.5rem", display: "flex", flexDirection: "column", gap: "8px" }}>
 
+        {/* Professor Fingerprint */}
+        <button
+          onClick={() => window.dispatchEvent(new Event("proffy:open-fingerprint"))}
+          className="sidebar-item"
+          style={{
+            display: "flex", alignItems: "center", gap: "12px",
+            padding: "10px 14px", borderRadius: "10px",
+            background: "rgba(248,113,113,0.06)",
+            border: "1px solid rgba(248,113,113,0.18)",
+            width: "100%", cursor: "pointer", transition: "all 0.15s",
+          }}
+        >
+          <div style={{
+            width: "30px", height: "30px", borderRadius: "8px", flexShrink: 0,
+            background: "rgba(248,113,113,0.12)",
+            border: "1px solid rgba(248,113,113,0.25)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "15px",
+          }}>🧬</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#f87171", lineHeight: 1.25 }}>
+              Prof. Fingerprint
+            </div>
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
+              Map exam patterns · Max
+            </div>
+          </div>
+        </button>
+
         {/* Flashcards */}
         <button
           data-tour="sidebar-flashcards"
