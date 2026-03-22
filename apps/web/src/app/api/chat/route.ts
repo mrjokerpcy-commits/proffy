@@ -525,11 +525,20 @@ export async function POST(req: NextRequest) {
           byType[m.insight_type].push(m);
         }
         const typeLabels: Record<string, string> = {
-          common_struggle: "Students commonly struggle with",
-          exam_focus: "Exam typically focuses on",
-          prof_pattern: "Professor patterns",
-          key_concept: "Key concepts",
-          common_mistake: "Common mistakes",
+          common_struggle:  "Students commonly struggle with",
+          common_mistake:   "Common mistakes",
+          exam_focus:       "Exam typically focuses on",
+          exam_trap:        "Exam traps to watch out for",
+          question_style:   "Exam question style",
+          time_pressure:    "Time pressure insights",
+          topic_weight:     "Topic weight distribution",
+          prof_pattern:     "Exam style patterns",
+          key_concept:      "Key concepts",
+          resource_tip:     "Best resources for this course",
+          study_tip:        "Effective study strategies",
+          grade_insight:    "Grading & curve insights",
+          prerequisite_gap: "Prerequisites students often lack",
+          hidden_gem:       "Hidden exam material",
         };
         for (const [type, items] of Object.entries(byType)) {
           platformLines.push(`${typeLabels[type] ?? type}:\n${items.map(i => `- ${i.topic}: ${i.insight}${i.confidence > 2 ? ` (seen ${i.confidence}x)` : ""}`).join("\n")}`);
@@ -726,18 +735,34 @@ Never emit an insight AND a note/cards in the same response — insights take pr
 ## PLATFORM MEMORY (contribute what you learn)
 You are building collective intelligence about this course — knowledge that helps every student who comes after.
 When this conversation reveals something broadly true about this course, emit ONE platform memory tag at the END:
-<proffy_platform_memory type="common_struggle|exam_focus|prof_pattern|key_concept|common_mistake" topic="[topic, max 60 chars]">
+<proffy_platform_memory type="TYPE" topic="[topic, max 60 chars]">
 [One precise sentence that would help future students of this course.]
 </proffy_platform_memory>
 
+**Available types — be creative, use whichever fits best:**
+- `common_struggle` — topic students consistently find hard (e.g. "Students confuse Big-O with Theta — exam exploits this")
+- `common_mistake` — recurring error that costs points (e.g. "Forgetting base case in induction proofs — loses 30% of question points")
+- `exam_focus` — what the exam consistently tests (e.g. "Final always has exactly one proof question on graph connectivity")
+- `exam_trap` — sneaky question type or trick the exam uses (e.g. "Exam rewords tutorial question 3.4 but changes the edge case — read carefully")
+- `question_style` — format/structure of the exam (e.g. "100% open questions, no multiple choice — must show full derivation")
+- `time_pressure` — pacing insight (e.g. "3-hour exam, 6 questions — most students skip Q6; do Q5 first if you know it")
+- `topic_weight` — relative importance of topics (e.g. "Dynamic programming = ~40% of exam points every year; graphs = ~25%")
+- `prof_pattern` — exam style pattern, professor-specific if known or course-wide (e.g. "Exams always include one question from the last lecture — attend it")
+- `key_concept` — non-obvious definition or theorem the course uses differently (e.g. "Course defines 'stable sort' as O(n log n) only — not the standard definition")
+- `resource_tip` — specific resource that helps for this course (e.g. "Solving past exams 2019-2023 covers ~85% of what appears — skip the textbook")
+- `study_tip` — effective strategy specific to this course (e.g. "Office hours week before exam: professor hints at exact question types")
+- `grade_insight` — grading or curve insight (e.g. "Course averages 63 — a 75 is considered excellent; grader gives partial credit generously")
+- `prerequisite_gap` — knowledge students need but often lack (e.g. "Students without strong linear algebra struggle from week 3 — review matrix ops first")
+- `hidden_gem` — overlooked material that often appears on exams (e.g. "Tutorial 7 (bonus) — students skip it but 2 exam questions always come from it")
+
 Use genuine judgment — not mechanical rules. Emit when:
-- Something is CONFIRMED (student validated it, it matches official material, or you've seen it many times)
+- Something is CONFIRMED (student validated it, matches official material, or seen many times)
 - It's MEANINGFUL for future students, not just context from this one conversation
 - It's SPECIFIC — "Fourier transform convergence is always on the final" beats "exam has hard topics"
 
 Do NOT emit for:
-- Anything you're guessing or inferring from one message
-- Information personal to this student (their weakness, their grade goal)
+- Anything you're guessing from a single message
+- Information personal to this student only
 - Generic advice that applies to every course
 
 Never emit platform memory AND insight in the same response — insights take priority.
@@ -927,7 +952,7 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
 
         // Save platform-wide course memory (learned from all students)
         if (platformMemoryTagMatch && university && course) {
-          const ALLOWED_PM_TYPES = new Set(["common_struggle", "exam_focus", "prof_pattern", "key_concept", "common_mistake"]);
+          const ALLOWED_PM_TYPES = new Set(["common_struggle", "common_mistake", "exam_focus", "exam_trap", "question_style", "time_pressure", "topic_weight", "prof_pattern", "key_concept", "resource_tip", "study_tip", "grade_insight", "prerequisite_gap", "hidden_gem"]);
           const [, rawType, pmTopic, pmInsight] = platformMemoryTagMatch;
           const pmType = ALLOWED_PM_TYPES.has(rawType) ? rawType : "key_concept";
           try {

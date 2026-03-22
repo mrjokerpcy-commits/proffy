@@ -216,6 +216,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "File too large (max 25 MB)" }, { status: 413 });
   }
 
+  // Enforce per-plan file count limits per course
+  const { rows: planRows } = await pool.query(
+    `SELECT subscription_plan FROM users WHERE id = $1`, [session.user.id]
+  );
+  const userPlan: string = planRows[0]?.subscription_plan ?? "free";
+  const FILE_LIMITS: Record<string, number> = { free: 5, pro: 30, max: Infinity };
+  const fileLimit = FILE_LIMITS[userPlan] ?? 5;
+  if (fileLimit !== Infinity) {
+    const { rows: countRows } = await pool.query(
+      `SELECT COUNT(*) as cnt FROM documents WHERE course_id = $1 AND user_id = $2`,
+      [courseId, session.user.id]
+    );
+    const fileCount = parseInt(countRows[0]?.cnt ?? "0", 10);
+    if (fileCount >= fileLimit) {
+      const upgradeMsg = userPlan === "free"
+        ? "Free plan allows up to 5 files per course. Upgrade to Pro for 30 files."
+        : "Pro plan allows up to 30 files per course. Upgrade to Max for unlimited uploads.";
+      return NextResponse.json({ error: upgradeMsg }, { status: 403 });
+    }
+  }
+
   // Determine file kind from MIME + extension
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   const kindFromMime = ALLOWED_MIME[file.type];
