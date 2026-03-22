@@ -926,11 +926,12 @@ Generating cards always upserts — existing cards with the same question are up
 - Agent-initiated for a concept the student already knows somewhat → use <proffy_cards delay="48"> (delay in hours, up to 168)
 - Agent-initiated for a weak/new concept → use <proffy_cards> (due immediately)
 
-Card count limits per plan:
-- Free: up to 3 cards per generation
-- Pro: up to 5 cards per generation
-- Max: up to 15 cards per generation
+Card count limits per generation:
+- Free: up to 3 cards per generation (deck limit: 10 total)
+- Pro: up to 5 cards per generation (deck limit: 20 total)
+- Max: up to 15 cards per generation (deck limit: 50 total)
 Current plan: **${plan}**
+Generating cards upserts by question text — existing cards update, new cards fill available slots. If the deck is full and the student asks for more cards, tell them their deck is at the limit for their plan and they can upgrade for a larger deck.
 
 Format:
 <proffy_cards>
@@ -1155,8 +1156,8 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
               : null;
           }).filter(Boolean) as { front: string; back: string }[];
 
-          const cardLimit = plan === "max" ? 15 : plan === "pro" ? 5 : 3;
-          if (pairs.length > 0 && pairs.length <= cardLimit) {
+          const cardLimit = plan === "max" ? 50 : plan === "pro" ? 20 : 10;
+          if (pairs.length > 0) {
             try {
               // Ensure unique constraint exists so upsert works
               await pool.query(`
@@ -1164,7 +1165,27 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
                 CREATE UNIQUE INDEX IF NOT EXISTS flashcards_user_course_front_idx
                   ON flashcards (user_id, course_id, md5(front));
               `).catch(() => {});
-              for (const { front, back } of pairs) {
+
+              // Count existing cards for this course
+              const { rows: countRows } = await pool.query(
+                `SELECT COUNT(*) AS cnt FROM flashcards WHERE user_id = $1 AND course_id = $2`,
+                [userId, courseId]
+              );
+              const existingCount = parseInt(countRows[0]?.cnt ?? "0", 10);
+              const availableSlots = Math.max(0, cardLimit - existingCount);
+
+              // Cards that already exist will upsert (free slot), new ones need available slots
+              const toSave = pairs.slice(0, pairs.length); // try all — upserts don't consume new slots
+              let saved = 0;
+              let newSlotUsed = 0;
+              for (const { front, back } of toSave) {
+                // Check if this front already exists (upsert = no new slot needed)
+                const { rows: existing } = await pool.query(
+                  `SELECT id FROM flashcards WHERE user_id = $1 AND course_id = $2 AND md5(front) = md5($3)`,
+                  [userId, courseId, front]
+                );
+                if (existing.length === 0 && newSlotUsed >= availableSlots) continue; // deck full
+                if (existing.length === 0) newSlotUsed++;
                 await pool.query(
                   `INSERT INTO flashcards (user_id, course_id, front, back, next_review_at, updated_at)
                    VALUES ($1, $2, $3, $4, NOW() + ($5 || ' hours')::interval, NOW())
@@ -1172,8 +1193,9 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
                    DO UPDATE SET back = EXCLUDED.back, next_review_at = EXCLUDED.next_review_at, updated_at = NOW()`,
                   [userId, courseId, front, back, delayHours]
                 );
+                saved++;
               }
-              send({ type: "cards_saved", count: pairs.length });
+              if (saved > 0) send({ type: "cards_saved", count: saved });
             } catch { /* table may not exist yet */ }
           }
         }

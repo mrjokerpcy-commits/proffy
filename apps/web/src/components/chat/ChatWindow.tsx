@@ -80,8 +80,9 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const rafRef = useRef<number | null>(null);
   const pendingStreamRef = useRef<{ id: string; text: string } | null>(null);
 
-  const isBtw = input.trimStart().startsWith("/btw");
   const canTypeWhileStreaming = userPlan === "pro" || userPlan === "max";
+  // Show btw styling when: streaming (any message becomes btw injection) OR explicit /btw prefix
+  const isBtw = (streaming && canTypeWhileStreaming) || input.trimStart().startsWith("/btw");
   const resetDate = getResetDate();
 
   useEffect(() => {
@@ -101,22 +102,21 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     if (!text.trim()) return;
     sendRef.current = null; // clear after use to avoid double-fires
 
-    // Pro/Max: /btw while streaming — queue for next paragraph break
-    if (streaming && canTypeWhileStreaming && text.trimStart().startsWith("/btw")) {
-      const context = text.trimStart().slice(4).trim();
+    // Pro/Max: any message while streaming — inject as btw context (no prefix needed)
+    if (streaming && canTypeWhileStreaming) {
+      const context = text.trimStart().startsWith("/btw")
+        ? text.trimStart().slice(4).trim()
+        : text.trim();
       if (context) {
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: text.trim() }]);
-        btwBreakRef.current = context; // will be picked up at next \n\n
+        btwBreakRef.current = context;
         setInput("");
         if (textareaRef.current) textareaRef.current.style.height = "auto";
       }
       return;
     }
 
-    // Pro/Max: regular message while streaming — abort current stream, start fresh
-    if (streaming && canTypeWhileStreaming) {
-      abortRef.current?.abort();
-    } else if (streaming) {
+    if (streaming) {
       return; // free users: block
     }
 
@@ -627,10 +627,9 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               {canTypeWhileStreaming ? "💡" : "🔒"}
             </span>
             <span style={{ fontSize: "11px", color: "var(--text-muted)", flex: 1 }}>
-              <code style={{ background: "rgba(79,142,247,0.12)", padding: "1px 5px", borderRadius: "4px", fontSize: "10px", color: "var(--blue)" }}>/btw</code>
               {canTypeWhileStreaming
-                ? " — inject context mid-stream without interrupting the answer"
-                : <>{" — inject context without asking a question · "}<a href="/pricing" style={{ color: "var(--purple)", textDecoration: "none", fontWeight: 600 }}>Pro feature →</a></>
+                ? "Type while the agent is answering to inject context mid-stream without interrupting"
+                : <>Type while the agent answers to inject context · <a href="/pricing" style={{ color: "var(--purple)", textDecoration: "none", fontWeight: 600 }}>Pro feature →</a></>
               }
             </span>
             <button onClick={() => setBtwDismissed(true)} style={{ background: "none", border: "none", color: "var(--text-disabled)", cursor: "pointer", padding: 0, lineHeight: 1, fontSize: "12px" }}>✕</button>
@@ -643,8 +642,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             padding: "5px 10px", borderRadius: "8px",
             background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.2)",
           }}>
-            <span style={{ fontSize: "11px", color: "var(--purple)", fontWeight: 700 }}>/btw</span>
-            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Context injection — I'll remember this without treating it as a question</span>
+            <span style={{ fontSize: "11px", color: "var(--purple)", fontWeight: 700 }}>↩ inject</span>
+            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Your message will be injected as context mid-stream</span>
           </div>
         )}
         {/* Usage bar — shown at 75%+ of monthly token budget */}
@@ -680,7 +679,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             value={input}
             onChange={e => { setInput(e.target.value); autoResize(); }}
             onKeyDown={handleKeyDown}
-            placeholder={isBtw ? "Add context the AI should remember…" : course ? `Ask about ${course.name}…` : "Ask anything…"}
+            placeholder={isBtw ? "Add context mid-stream…" : course ? `Ask about ${course.name}…` : "Ask anything…"}
             rows={1}
             disabled={streaming && !canTypeWhileStreaming}
             style={{
