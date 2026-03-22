@@ -96,18 +96,40 @@ export default function AdminClient({
   const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [queueItems, setQueueItems] = useState<QueueItem[]>(queue);
 
-  // Auto-refresh queue every 8s when processing items exist
+  const [processing, setProcessing] = useState(false);
+
+  async function refreshQueue() {
+    const r = await fetch("/api/admin/queue-status").catch(() => null);
+    if (!r?.ok) return;
+    const d = await r.json().catch(() => ({}));
+    if (d.queue) setQueueItems(d.queue);
+  }
+
+  // Fetch fresh queue data when tab switches to queue
+  useEffect(() => { if (tab === "queue") refreshQueue(); }, [tab]);
+
+  // Auto-refresh every 5s while items are processing
   useEffect(() => {
-    const hasPending = queueItems.some(q => q.status === "pending" || q.status === "processing");
-    if (!hasPending) return;
-    const id = setInterval(async () => {
-      const r = await fetch("/api/admin/queue-status").catch(() => null);
-      if (!r?.ok) return;
-      const d = await r.json().catch(() => ({}));
-      if (d.queue) setQueueItems(d.queue);
-    }, 8000);
+    if (tab !== "queue") return;
+    const hasActive = queueItems.some(q => q.status === "pending" || q.status === "processing");
+    if (!hasActive) return;
+    const id = setInterval(refreshQueue, 5000);
     return () => clearInterval(id);
-  }, [queueItems]);
+  }, [tab, queueItems]);
+
+  async function runProcessNow() {
+    setProcessing(true);
+    await fetch("/api/cron/process-drive-queue", { method: "GET" }).catch(() => {});
+    // Refresh queue after triggering
+    setTimeout(async () => {
+      const r = await fetch("/api/admin/queue-status").catch(() => null);
+      if (r?.ok) {
+        const d = await r.json().catch(() => ({}));
+        if (d.queue) setQueueItems(d.queue);
+      }
+      setProcessing(false);
+    }, 3000);
+  }
 
   async function submitDrive() {
     if (!driveUrl.trim()) return;
@@ -440,7 +462,21 @@ export default function AdminClient({
             </div>
 
             <div style={cardStyle}>
-            <h3 style={{ fontWeight: 700, marginBottom: "1.25rem", fontSize: "14px" }}>Material queue</h3>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+              <h3 style={{ fontWeight: 700, fontSize: "14px", margin: 0 }}>Material queue</h3>
+              <button
+                onClick={runProcessNow}
+                disabled={processing}
+                style={{
+                  padding: "6px 14px", borderRadius: "8px", border: "none",
+                  background: processing ? "rgba(255,255,255,0.06)" : "rgba(79,142,247,0.15)",
+                  color: processing ? "var(--text-muted)" : "var(--blue)",
+                  fontSize: "12px", fontWeight: 700, cursor: processing ? "not-allowed" : "pointer",
+                }}
+              >
+                {processing ? "Processing…" : "▶ Process Now"}
+              </button>
+            </div>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)" }}>
