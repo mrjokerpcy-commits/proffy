@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 interface Props {
@@ -82,6 +83,7 @@ const card: React.CSSProperties = {
 
 export default function SettingsClient({ user }: Props) {
   const planMeta = PLAN_META[user.plan];
+  const router = useRouter();
 
   const [profile, setProfile] = useState({
     name: user.name ?? "",
@@ -91,6 +93,14 @@ export default function SettingsClient({ user }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function deleteAccount() {
+    setDeleting(true);
+    await fetch("/api/account", { method: "DELETE" }).catch(() => {});
+    await signOut({ redirect: false });
+    router.push("/login");
+  }
 
   async function saveProfile() {
     setSaving(true);
@@ -329,8 +339,10 @@ export default function SettingsClient({ user }: Props) {
                   Cancel
                 </button>
                 <button
-                  style={{ padding: "6px 12px", borderRadius: "7px", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", color: "var(--red)", fontSize: "12px", cursor: "pointer", fontWeight: 600 }}>
-                  Yes, delete
+                  onClick={deleteAccount}
+                  disabled={deleting}
+                  style={{ padding: "6px 12px", borderRadius: "7px", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", color: "var(--red)", fontSize: "12px", cursor: deleting ? "not-allowed" : "pointer", fontWeight: 600, opacity: deleting ? 0.6 : 1 }}>
+                  {deleting ? "Deleting…" : "Yes, delete"}
                 </button>
               </div>
             )}
