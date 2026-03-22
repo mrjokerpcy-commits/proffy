@@ -61,16 +61,8 @@ export default function LoginPage() {
           </span>
         </div>
 
-        {/* Quote */}
-        <div>
-          <blockquote style={{ fontSize: "1.15rem", fontWeight: 500, lineHeight: 1.7, marginBottom: "1rem", color: "var(--text-primary)" }}>
-            &ldquo;I uploaded Cohen&apos;s slides and it predicted 3 out of 4 exam questions. Passed with 94.&rdquo;
-          </blockquote>
-          <p style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>— CS student, Technion</p>
-        </div>
-
         {/* Universities */}
-        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>TAU · Technion · HUJI · BGU · Bar Ilan</p>
+        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>TAU · Technion · HUJI · BGU · Bar Ilan · Ariel</p>
       </div>
 
       {/* ── Right form ── */}

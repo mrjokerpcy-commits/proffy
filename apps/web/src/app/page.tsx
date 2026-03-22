@@ -438,11 +438,11 @@ export default async function HomePage() {
       >
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "2.5rem", fontSize: "0.95rem", color: "var(--text-muted)" }}>
           {[
-            { icon: "⭐", label: "94% pass rate" },
-            { icon: "📚", label: "500+ courses indexed" },
-            { icon: "🎓", label: "5 Israeli universities" },
+            { icon: "🎓", label: "6 Israeli universities" },
             { icon: "⚡", label: "Real-time streaming" },
-            { icon: "🔒", label: "Data stays private" },
+            { icon: "🇮🇱", label: "Built for Israeli exams" },
+            { icon: "🔒", label: "Your data stays private" },
+            { icon: "🃏", label: "Auto-generated flashcards" },
           ].map(s => (
             <div key={s.label} className="flex items-center gap-2">
               <span>{s.icon}</span>
@@ -641,88 +641,6 @@ export default async function HomePage() {
             </div>
           ))}
         </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ── */}
-      <section className="relative z-10" style={{ borderTop: "1px solid var(--border)", padding: "6rem 1.5rem" }}>
-        <div style={{ maxWidth: "72rem", margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-            <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: "0.75rem" }}>
-              Real students. Real results.
-            </h2>
-            <p style={{ fontSize: "1.1rem", color: "var(--text-secondary)" }}>
-              From first-years to grad students across Israel.
-            </p>
-          </div>
-
-          <div className="landing-grid-3" style={{ gap: "1.25rem" }}>
-            {[
-              {
-                quote: "I uploaded Cohen's slides and it predicted 3 out of 4 exam questions. Passed with 94.",
-                name: "Yoav M.",
-                detail: "CS · Technion",
-                initials: "YM",
-                grad: ["#4f8ef7", "#818cf8"],
-              },
-              {
-                quote: "The flashcards saved me. I had 3 exams in one week and the spaced repetition kept everything fresh without cramming.",
-                name: "Shira L.",
-                detail: "Industrial Engineering · TAU",
-                initials: "SL",
-                grad: ["#a78bfa", "#ec4899"],
-              },
-              {
-                quote: "I asked it to explain the proof in Hebrew and it just did it perfectly. No other AI tool understood what I needed.",
-                name: "Ahmed K.",
-                detail: "Mathematics · BGU",
-                initials: "AK",
-                grad: ["#34d399", "#059669"],
-              },
-            ].map(t => (
-              <div
-                key={t.name}
-                style={{
-                  position: "relative", borderRadius: "1.25rem", padding: "2.25rem",
-                  display: "flex", flexDirection: "column", gap: "1.5rem",
-                  background: "var(--bg-surface)", border: "1px solid var(--border)",
-                }}
-              >
-                {/* Stars */}
-                <div style={{ display: "flex", gap: "3px" }}>
-                  {[...Array(5)].map((_, i) => (
-                    <svg key={i} width="16" height="16" viewBox="0 0 20 20" fill="#fbbf24">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-
-                {/* Quote */}
-                <p style={{ fontSize: "0.925rem", lineHeight: 1.75, flex: 1, color: "var(--text-secondary)" }}>
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-
-                {/* Author */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.875rem" }}>
-                  <div
-                    style={{
-                      width: "2.75rem", height: "2.75rem", borderRadius: "50%",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "0.85rem", fontWeight: 700, color: "white", flexShrink: 0,
-                      background: `linear-gradient(135deg, ${t.grad[0]}, ${t.grad[1]})`,
-                      boxShadow: `0 4px 16px ${t.grad[0]}40`,
-                    }}
-                  >
-                    {t.initials}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: "0.925rem", fontWeight: 600, color: "var(--text-primary)" }}>{t.name}</div>
-                    <div style={{ fontSize: "0.8rem", marginTop: "2px", color: "var(--text-muted)" }}>{t.detail}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
