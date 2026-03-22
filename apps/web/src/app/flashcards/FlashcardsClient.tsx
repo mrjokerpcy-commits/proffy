@@ -95,11 +95,15 @@ export default function FlashcardsClient({ courses, initialCards, courseId, tota
       });
       const data = await resp.json();
       if (data.flashcards?.length) {
-        setCards(data.flashcards);
-        setIndex(0);
+        setCards(prev => {
+          const existingIds = new Set(prev.map((c: Flashcard) => c.front));
+          const newOnly = data.flashcards.filter((c: Flashcard) => !existingIds.has(c.front));
+          const merged = [...prev, ...newOnly];
+          setIndex(prev.length); // jump to first new card
+          return merged;
+        });
         setFlipped(false);
         setDone(false);
-        setReviewed(0);
       }
     } finally {
       setGenerating(false);
