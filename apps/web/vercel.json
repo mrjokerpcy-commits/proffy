@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/post-lecture",
-      "schedule": "* * * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/cron/process-drive-queue",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 7 * * *"
     }
   ]
 }
