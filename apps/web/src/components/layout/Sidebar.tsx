@@ -371,30 +371,29 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
             </div>
           </div>
         ) : (
-          <Link
-            href="/upload"
+          <button
+            onClick={() => window.dispatchEvent(new Event("proffy:open-upload"))}
             className="sidebar-item"
             style={{
-              display: "flex", alignItems: "center", gap: "12px",
-              padding: "13px 14px", borderRadius: "10px", textDecoration: "none",
-              background: pathname === "/upload" ? "rgba(79,142,247,0.09)" : "var(--bg-elevated)",
-              border: `1px solid ${pathname === "/upload" ? "rgba(79,142,247,0.28)" : "var(--border)"}`,
+              display: "flex", alignItems: "center", gap: "12px", width: "100%",
+              padding: "13px 14px", borderRadius: "10px", textAlign: "left",
+              background: "var(--bg-elevated)", border: "1px solid var(--border)",
+              cursor: "pointer",
             }}
           >
             <div style={{
               width: "36px", height: "36px", borderRadius: "9px", flexShrink: 0,
-              background: pathname === "/upload" ? "rgba(79,142,247,0.16)" : "rgba(255,255,255,0.05)",
-              border: `1px solid ${pathname === "/upload" ? "rgba(79,142,247,0.32)" : "var(--border)"}`,
+              background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              color: pathname === "/upload" ? "var(--blue)" : "var(--text-muted)",
+              color: "var(--text-muted)",
             }}>
               <IconFingerprint />
             </div>
             <div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: pathname === "/upload" ? "var(--blue)" : "var(--text-secondary)", lineHeight: 1.25 }}>Fingerprint</div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-secondary)", lineHeight: 1.25 }}>Fingerprint</div>
               <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>Professor patterns & exam intel</div>
             </div>
-          </Link>
+          </button>
         )}
       </div>
 

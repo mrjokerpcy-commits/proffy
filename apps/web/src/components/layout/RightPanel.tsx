@@ -215,12 +215,12 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
                 {course.professor ? `Prof. ${course.professor}'s` : "your professor's"} exact
                 patterns — topics that appear every year, trick questions, and point distribution.
               </p>
-              <a
-                href="/upload"
+              <button
+                onClick={() => window.dispatchEvent(new Event("proffy:open-upload"))}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: "5px",
                   fontSize: "11px", fontWeight: 600, color: "var(--blue)",
-                  textDecoration: "none", padding: "5px 10px", borderRadius: "7px",
+                  padding: "5px 10px", borderRadius: "7px", cursor: "pointer",
                   background: "var(--blue-dim)", border: "1px solid rgba(79,142,247,0.2)",
                 }}
               >
@@ -228,7 +228,7 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
                 Upload past exams
-              </a>
+              </button>
             </div>
           )}
         </Card>
