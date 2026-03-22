@@ -13,7 +13,7 @@ type DocType = "slides" | "exam" | "notes" | "textbook";
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 type Tab = "files" | "drive";
 
-const DOC_TYPES: { value: DocType; label: string; icon: string; desc: string; minPlan: "free" | "pro" | "max" }[] = [
+const DOC_TYPES: { value: DocType; label: string; icon: string; desc: string; minPlan: "pro" | "max" }[] = [
   { value: "exam",      label: "Past exam",        icon: "📝", desc: "AI extracts professor patterns",    minPlan: "max" },
   { value: "slides",    label: "Lecture slides",   icon: "📊", desc: "Answers grounded in your slides",   minPlan: "pro" },
   { value: "notes",     label: "Study notes",      icon: "📖", desc: "Searchable by Proffy",              minPlan: "pro" },
