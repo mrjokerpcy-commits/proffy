@@ -617,58 +617,6 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           </div>
         </button>
 
-        {/* Fingerprint by Proffy */}
-        {fingerprintLocked ? (
-          <div style={{
-            display: "flex", alignItems: "center", gap: "12px",
-            padding: "13px 14px", borderRadius: "10px",
-            background: "var(--bg-elevated)", border: "1px solid var(--border)",
-            opacity: 0.6,
-          }}>
-            <div style={{
-              width: "36px", height: "36px", borderRadius: "9px", flexShrink: 0,
-              background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <IconFingerprint />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-muted)", lineHeight: 1.25, display: "flex", alignItems: "center", gap: "6px" }}>
-                Fingerprint
-                <span style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "10px", padding: "2px 6px", borderRadius: "5px", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.2)", color: "#fbbf24", fontWeight: 700 }}>
-                  <IconLock /> Pro
-                </span>
-              </div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
-                Professor patterns & exam intel
-              </div>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => window.dispatchEvent(new Event("proffy:open-upload"))}
-            className="sidebar-item"
-            style={{
-              display: "flex", alignItems: "center", gap: "12px", width: "100%",
-              padding: "13px 14px", borderRadius: "10px", textAlign: "left",
-              background: "var(--bg-elevated)", border: "1px solid var(--border)",
-              cursor: "pointer",
-            }}
-          >
-            <div style={{
-              width: "36px", height: "36px", borderRadius: "9px", flexShrink: 0,
-              background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "var(--text-muted)",
-            }}>
-              <IconFingerprint />
-            </div>
-            <div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-secondary)", lineHeight: 1.25 }}>Fingerprint</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>Professor patterns & exam intel</div>
-            </div>
-          </button>
-        )}
       </div>
 
       {/* ── Bottom user menu ── */}
