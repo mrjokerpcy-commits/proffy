@@ -71,15 +71,15 @@ function extractFolderId(url: string): string | null {
   return null;
 }
 
-// ── List all files in a Drive folder (recursive, subfolder name = course) ─────
+// ── List all files in a Drive folder (recursive, tracks full path) ────────────
 async function listDriveFiles(
   drive: ReturnType<typeof google.drive>,
   folderId: string,
-  subfolderName: string | null = null,
+  pathSoFar: string[] = [],
   depth = 0,
-): Promise<{ id: string; name: string; mimeType: string; size: string; courseName: string | null }[]> {
-  if (depth > 5) return []; // cap recursion depth
-  const files: { id: string; name: string; mimeType: string; size: string; courseName: string | null }[] = [];
+): Promise<{ id: string; name: string; mimeType: string; size: string; folderPath: string[] }[]> {
+  if (depth > 6) return [];
+  const files: { id: string; name: string; mimeType: string; size: string; folderPath: string[] }[] = [];
   let pageToken: string | undefined;
   do {
     const res = await drive.files.list({
@@ -91,18 +91,35 @@ async function listDriveFiles(
     for (const f of res.data.files ?? []) {
       if (!f.id || !f.name || !f.mimeType) continue;
       if (f.mimeType === "application/vnd.google-apps.folder") {
-        // Year/semester folders should not override the course name
-        const isYearFolder = /^(year|שנה|semester|seme|year\s*\d|שנה\s*[א-ת]|\d+\s*(st|nd|rd|th)\s*year)/i.test(f.name);
-        const nextCourse = isYearFolder ? subfolderName : f.name;
-        const nested = await listDriveFiles(drive, f.id, nextCourse, depth + 1);
+        const nested = await listDriveFiles(drive, f.id, [...pathSoFar, f.name], depth + 1);
         files.push(...nested);
       } else {
-        files.push({ id: f.id, name: f.name, mimeType: f.mimeType, size: f.size ?? "0", courseName: subfolderName });
+        files.push({ id: f.id, name: f.name, mimeType: f.mimeType, size: f.size ?? "0", folderPath: pathSoFar });
       }
     }
     pageToken = res.data.nextPageToken ?? undefined;
   } while (pageToken);
   return files;
+}
+
+// ── Use AI to extract course name from folder path + filename ─────────────────
+async function inferCourseFromPath(folderPath: string[], filename: string): Promise<string | null> {
+  if (folderPath.length === 0) return null;
+  const pathStr = folderPath.join(" / ");
+  try {
+    const res = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 30,
+      messages: [{
+        role: "user",
+        content: `Given this folder path and filename from a university Drive, extract the course name (subject). Reply with ONLY the course name, nothing else. If unclear, reply with the most specific folder name.\n\nPath: ${pathStr}\nFile: ${filename}\n\nCourse name:`,
+      }],
+    });
+    const text = res.content[0].type === "text" ? res.content[0].text.trim() : null;
+    return text && text.length > 0 && text.length < 100 ? text : folderPath[folderPath.length - 1];
+  } catch {
+    return folderPath[folderPath.length - 1];
+  }
 }
 
 // ── Download a Drive file as Buffer ─────────────────────────────────────────
@@ -280,11 +297,15 @@ async function embedAndUpsert(chunks: Chunk[], payload: Record<string, unknown>)
 // ── Process a single Drive file ──────────────────────────────────────────────
 async function processDriveFile(
   drive: ReturnType<typeof google.drive>,
-  file: { id: string; name: string; mimeType: string; courseName: string | null },
+  file: { id: string; name: string; mimeType: string; folderPath: string[] },
   queueRow: { university: string; course_name: string; course_number?: string; professor?: string; semester?: string }
 ): Promise<number> {
-  // Subfolder name overrides the queue-level course name (more specific)
-  const effectiveCourseName = file.courseName ?? queueRow.course_name;
+  // AI infers the course from full path; falls back to queue-level course name
+  const inferredCourse = file.folderPath.length > 0
+    ? await inferCourseFromPath(file.folderPath, file.name)
+    : null;
+  const effectiveCourseName = inferredCourse ?? queueRow.course_name;
+  const fullPath = [...file.folderPath, file.name].join(" / ");
   const effectiveMime = file.mimeType === "application/vnd.google-apps.presentation"
     ? "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     : file.mimeType === "application/vnd.google-apps.document"
@@ -329,12 +350,13 @@ async function processDriveFile(
 
   return embedAndUpsert(chunks, {
     filename:      safeFilename,
+    folder_path:   fullPath,              // full Drive path for agent context
     type:          docType,
     professor:     queueRow.professor ?? null,
     university:    queueRow.university,
-    course:        effectiveCourseName,   // subfolder name if available
+    course:        effectiveCourseName,   // AI-inferred course name
     course_number: queueRow.course_number ?? null,
-    course_id:     null, // shared content — not tied to a specific user's course
+    course_id:     null,
     user_id:       null,
     semester:      queueRow.semester ?? null,
     is_shared:     true,
@@ -412,7 +434,7 @@ export async function GET(req: NextRequest) {
 
       // Process files in batches of 5 to avoid rate limits
       let totalChunks = 0;
-      const queueRow = { university: row.university, course_name: row.course_name, course_number: row.course_number, professor: row.professor, semester: row.semester };
+      const queueRow = { university: row.university ?? "Unknown", course_name: row.course_name ?? "General", course_number: row.course_number, professor: row.professor, semester: row.semester };
 
       for (let i = 0; i < files.length; i += 5) {
         const batch = files.slice(i, i + 5);
