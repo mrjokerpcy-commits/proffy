@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
 import type { ChatMessage, Source } from "@/lib/types";
@@ -146,7 +147,7 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
           ) : (
             <div className="prose-chat" dir="auto">
               <ReactMarkdown
-                remarkPlugins={[remarkMath]}
+                remarkPlugins={[remarkMath, remarkGfm]}
                 rehypePlugins={[rehypeKatex, rehypeHighlight]}
                 components={{
                   pre({ children }) {
@@ -155,7 +156,7 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
                   code({ className, children }) {
                     const isBlock = !!className;
                     const codeStr = String(children).replace(/\n$/, "");
-                    if (!isBlock) return <code>{children}</code>;
+                    if (!isBlock) return <code style={{ background: "rgba(79,142,247,0.1)", borderRadius: "4px", padding: "1px 5px", fontSize: "13px", fontFamily: "monospace" }}>{children}</code>;
                     return (
                       <div style={{ position: "relative", margin: "10px 0", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--border)" }}>
                         <div style={{
@@ -179,6 +180,39 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
                           {children}
                         </code>
                       </div>
+                    );
+                  },
+                  table({ children }) {
+                    return (
+                      <div style={{ overflowX: "auto", margin: "12px 0" }}>
+                        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "13px" }}>
+                          {children}
+                        </table>
+                      </div>
+                    );
+                  },
+                  thead({ children }) {
+                    return <thead style={{ background: "rgba(79,142,247,0.08)" }}>{children}</thead>;
+                  },
+                  th({ children }) {
+                    return <th style={{ padding: "8px 14px", textAlign: "left", fontWeight: 700, color: "var(--text-primary)", borderBottom: "2px solid var(--border)", whiteSpace: "nowrap" }}>{children}</th>;
+                  },
+                  td({ children }) {
+                    return <td style={{ padding: "7px 14px", borderBottom: "1px solid var(--border)", color: "var(--text-secondary)", verticalAlign: "top" }}>{children}</td>;
+                  },
+                  tr({ children }) {
+                    return <tr style={{ transition: "background 0.1s" }}>{children}</tr>;
+                  },
+                  blockquote({ children }) {
+                    return (
+                      <blockquote style={{
+                        margin: "10px 0", padding: "10px 14px",
+                        borderLeft: "3px solid var(--purple)", borderRadius: "0 8px 8px 0",
+                        background: "rgba(167,139,250,0.07)", color: "var(--text-secondary)",
+                        fontStyle: "italic",
+                      }}>
+                        {children}
+                      </blockquote>
                     );
                   },
                 }}
@@ -237,6 +271,19 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
                 <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/>
               </svg>
             </button>
+
+            {/* Retry */}
+            {onRetry && (
+              <button
+                onClick={onRetry}
+                title="Regenerate answer"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "3px", color: "var(--text-muted)", display: "flex", alignItems: "center", transition: "color 0.15s" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                </svg>
+              </button>
+            )}
 
             {/* Save to memory */}
             {onSave && (
