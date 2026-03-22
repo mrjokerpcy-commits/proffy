@@ -517,13 +517,19 @@ export async function GET(req: NextRequest) {
       let files: Awaited<ReturnType<typeof listDriveFiles>> = [];
       try {
         await appendLog(row.id, `Listing files in Drive folder...`);
-        files = await listDriveFiles(drive, folderId);
+        files = await Promise.race([
+          listDriveFiles(drive, folderId),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Drive listing timed out after 90s — folder may be too large or service account lacks access")), 90_000)
+          ),
+        ]);
         await appendLog(row.id, `Found ${files.length} files total`);
       } catch (err: any) {
-        await appendLog(row.id, `ERROR listing files: ${err.message}`);
+        const msg = err.message?.slice(0, 500) ?? "Unknown error listing folder";
+        await appendLog(row.id, `ERROR listing files: ${msg}`);
         await pool.query(
           `UPDATE material_queue SET status = 'failed', error_msg = $1, processed_at = NOW() WHERE id = $2`,
-          [err.message?.slice(0, 500), row.id]
+          [msg, row.id]
         );
         return;
       }
