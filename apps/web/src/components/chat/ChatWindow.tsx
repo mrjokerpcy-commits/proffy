@@ -381,8 +381,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             const data = JSON.parse(line.slice(6));
             if (data.type === "token") {
               content += data.text;
-              twRef.current.full = content;
-              startTypewriter(assistantId);
+              streamRef.current.full = content;
+              scheduleStreamFlush(assistantId);
             } else if (data.type === "done") {
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
               router.refresh();
