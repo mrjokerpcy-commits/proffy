@@ -136,55 +136,106 @@ const GENERIC_FOLDER_NAMES = new Set([
   "lectures", "tutorials", "תרגולים", "הרצאות", "notes", "סיכומים",
 ]);
 
-// Per-invocation cache: folder path string → inferred course name
-// Avoids calling AI for every file in the same folder (can be thousands)
-const coursePathCache = new Map<string, string | null>();
+// ── Course identification cache ───────────────────────────────────────────────
+// Key = meaningful folder path string → { course, courseNumber }
+// First file per folder uses content to verify; all subsequent files reuse the result.
+interface CourseTag { course: string; courseNumber: string | null }
+const coursePathCache = new Map<string, CourseTag>();
 
-// ── Use AI to extract course name from folder path + filename ─────────────────
-async function inferCourseFromPath(folderPath: string[], filename: string): Promise<string | null> {
-  // Strip generic folder names from the path — keep meaningful course-level folders
-  const meaningfulPath = folderPath.filter(p => {
+// Hebrew course abbreviation knowledge baked in so AI doesn't need to guess
+const COURSE_ABBREV_HINT = `
+Common Israeli university course names and abbreviations:
+- מדר / מד"ר / משוואות דיפרנציאליות רגילות = ODE (Ordinary Differential Equations)
+- חדו"א / חדווא / חשבון אינפיניטסימלי = Calculus / Mathematical Analysis
+- אלגברה לינארית / אל"ל = Linear Algebra
+- פיסיקה / פיז = Physics
+- מכניקה קלאסית = Classical Mechanics
+- תורת החשמל = Electromagnetism
+- מבוא למדעי המחשב / מבמח = Intro to CS
+- מבנה נתונים = Data Structures
+- תכנות מונחה עצמים / תמ"ע = OOP
+- מערכות הפעלה / מה"פ = Operating Systems
+- רשתות תקשורת = Computer Networks
+- אלגוריתמים = Algorithms
+- הסתברות / הסת = Probability
+- סטטיסטיקה = Statistics
+- מחשבים דיגיטליים = Digital Systems
+- אלקטרוניקה = Electronics
+- מימון / כלכלה = Finance / Economics
+- חשבונאות = Accounting
+- ביולוגיה / כימיה / פיזיקה = Biology / Chemistry / Physics
+Course numbers often appear at the start of filenames or in the first lines of the document (e.g. 104136, 234123, 044101).
+`;
+
+// Extract meaningful (non-generic) folders from path
+function getMeaningfulPath(folderPath: string[]): string[] {
+  return folderPath.filter(p => {
     const lower = p.trim().toLowerCase();
     return !GENERIC_FOLDER_NAMES.has(lower) && !GENERIC_FOLDER_NAMES.has(p.trim()) && p.trim().length > 1;
   });
+}
 
-  // If only one meaningful folder remains, use it directly (no AI call needed)
-  if (meaningfulPath.length === 1) return meaningfulPath[0];
-
+// ── Identify course for a file — cached per folder, content-verified on first file ──
+async function identifyCourse(
+  folderPath: string[],
+  filename: string,
+  sampleText: string,       // first ~600 chars of extracted content (used on cache miss)
+  fallback: string          // queue-level course name
+): Promise<CourseTag> {
+  const meaningfulPath = getMeaningfulPath(folderPath);
   const pathStr = meaningfulPath.join(" / ");
 
-  // Cache hit: same folder path already resolved this run
+  // Cache hit — this folder already resolved from a previous file's content
   if (coursePathCache.has(pathStr)) return coursePathCache.get(pathStr)!;
 
+  // Single-folder path with no content ambiguity — use it directly (no AI needed)
+  if (meaningfulPath.length === 1 && sampleText.length === 0) {
+    const tag: CourseTag = { course: meaningfulPath[0], courseNumber: null };
+    coursePathCache.set(pathStr, tag);
+    return tag;
+  }
+
+  // AI call: use both path AND content for maximum accuracy
   try {
     const res = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 30,
+      max_tokens: 80,
       messages: [{
         role: "user",
-        content: `You are tagging university course material. Given this folder path and filename, identify the COURSE NAME (e.g. "מימון", "Calculus", "Macroeconomics", "Parallel Computing").
+        content: `You are a university course material classifier. Identify the correct course for this file.
+${COURSE_ABBREV_HINT}
+Folder path: ${pathStr || "(root)"}
+Filename: ${filename}
+Expected course (from folder): ${meaningfulPath[0] ?? fallback}
+First 600 chars of actual content:
+${sampleText.slice(0, 600)}
+
+Respond with JSON only (no markdown):
+{"course":"<full course name in the language used>","number":"<course number if found, else null>"}
+
 Rules:
-- Pick the folder that represents the COURSE, not a subfolder type (not "Past Exams", "Lectures", etc.)
-- If the path has both a course and a subfolder type, pick the course
-- If path is empty, infer from the filename
-- Reply with ONLY the course name, nothing else
-
-Path: ${pathStr || "(root)"}
-File: ${filename}
-
-Course name:`,
+- Use the CONTENT to verify and correct the course name if the folder is wrong
+- If content clearly belongs to a different course than the folder name, use the content-inferred name
+- course number = numeric ID like 104136 or 234123 (null if not found in content or filename)`,
       }],
     });
-    const text = res.content[0].type === "text" ? res.content[0].text.trim() : null;
-    const result = (text && text.length > 0 && text.length < 100) ? text : (meaningfulPath.length > 0 ? meaningfulPath[0] : null);
-    coursePathCache.set(pathStr, result);
-    return result;
+    const raw = res.content[0].type === "text" ? res.content[0].text.trim() : "";
+    const parsed = JSON.parse(raw);
+    const course = typeof parsed.course === "string" && parsed.course.length > 0 && parsed.course.length < 120
+      ? parsed.course
+      : (meaningfulPath[0] ?? fallback);
+    const courseNumber = typeof parsed.number === "string" && /^\d{5,8}$/.test(parsed.number.trim())
+      ? parsed.number.trim()
+      : null;
+    const tag: CourseTag = { course, courseNumber };
+    coursePathCache.set(pathStr, tag);
+    return tag;
   } catch {}
 
-  // Fallback: use the first meaningful folder (most likely the course-level one)
-  const fallback = meaningfulPath.length > 0 ? meaningfulPath[0] : null;
-  coursePathCache.set(pathStr, fallback);
-  return fallback;
+  // Fallback
+  const tag: CourseTag = { course: meaningfulPath[0] ?? fallback, courseNumber: null };
+  coursePathCache.set(pathStr, tag);
+  return tag;
 }
 
 // ── Download a Drive file as Buffer ─────────────────────────────────────────
@@ -222,59 +273,6 @@ function detectDocType(filename: string): string | null {
   return null;
 }
 
-// Combined: verifies course name against content AND classifies doc type in one AI call.
-// Returns { course, docType, mismatch }.
-// mismatch = true means the content looks like a different subject than pathCourse.
-async function inferCourseAndDocType(
-  folderPath: string[],
-  filename: string,
-  sampleText: string,
-  pathCourse: string,    // course name from path inference (may be wrong)
-  fallbackCourse: string // queue-level course name
-): Promise<{ course: string; docType: string; mismatch: boolean }> {
-  const docTypeFromName = detectDocType(filename);
-
-  // Build meaningful path string for context
-  const meaningfulPath = folderPath.filter(p => {
-    const lower = p.trim().toLowerCase();
-    return !GENERIC_FOLDER_NAMES.has(lower) && !GENERIC_FOLDER_NAMES.has(p.trim()) && p.trim().length > 1;
-  });
-  const pathStr = meaningfulPath.join(" / ");
-
-  try {
-    const res = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 60,
-      messages: [{
-        role: "user",
-        content: `You are a university course material tagger. Analyze this file and respond with JSON only.
-
-Folder path: ${pathStr || "(root)"}
-Filename: ${filename}
-Expected course (from folder): ${pathCourse}
-First 400 chars of content:
-${sampleText.slice(0, 400)}
-
-Respond with exactly this JSON (no markdown, no extra text):
-{"course":"<actual course name>","type":"<exam|slides|notes|textbook>","match":<true|false>}
-
-- course: the real course this material belongs to (use content to verify, correct if path is wrong)
-- type: document type based on content
-- match: true if content matches the expected course, false if it looks like a different subject`,
-      }],
-    });
-    const raw = res.content[0].type === "text" ? res.content[0].text.trim() : "";
-    const parsed = JSON.parse(raw);
-    const course   = typeof parsed.course === "string" && parsed.course.length > 0 && parsed.course.length < 120
-      ? parsed.course : pathCourse || fallbackCourse;
-    const docType  = ["exam", "slides", "notes", "textbook"].includes(parsed.type) ? parsed.type : (docTypeFromName ?? "notes");
-    const mismatch = parsed.match === false;
-    return { course, docType, mismatch };
-  } catch {}
-
-  // Fallback
-  return { course: pathCourse || fallbackCourse, docType: docTypeFromName ?? "notes", mismatch: false };
-}
 
 interface Chunk { text: string; slide_number: number | null; word_count: number }
 
@@ -465,7 +463,7 @@ async function processDriveFile(
   drive: ReturnType<typeof google.drive>,
   file: { id: string; name: string; mimeType: string; folderPath: string[] },
   queueRow: { university: string; course_name: string; course_number?: string; professor?: string; semester?: string }
-): Promise<{ chunks: number; course: string; mismatch?: boolean }> {
+): Promise<{ chunks: number; course: string }> {
   const fullPath = [...file.folderPath, file.name].join(" / ");
   const fileKind = ALLOWED_MIME_DRIVE[file.mimeType];
   if (!fileKind) return { chunks: 0, course: queueRow.course_name }; // unsupported type, skip
@@ -507,37 +505,44 @@ async function processDriveFile(
   const chunks = qualityFilter(rawChunks);
   if (chunks.length === 0) return { chunks: 0, course: queueRow.course_name };
 
-  const sampleText = chunks.slice(0, 3).map(c => c.text).join(" ");
+  const sampleText = chunks.slice(0, 4).map(c => c.text).join(" ");
 
-  // Path-level course inference (cached per folder path)
-  const pathCourse = file.folderPath.length > 0
-    ? (await inferCourseFromPath(file.folderPath, file.name)) ?? queueRow.course_name
-    : queueRow.course_name;
-
-  // Content-aware: verify course name against extracted text and get doc type in one call
-  const { course: effectiveCourseName, docType, mismatch } = await inferCourseAndDocType(
-    file.folderPath, file.name, sampleText, pathCourse, queueRow.course_name
+  // Identify course — cached per folder, content-verified on first file per folder
+  const { course: effectiveCourseName, courseNumber: detectedCourseNumber } = await identifyCourse(
+    file.folderPath, file.name, sampleText, queueRow.course_name
   );
 
-  // mismatch is surfaced in the return value so the caller can log it
+  // Doc type: filename-based detection first (free), AI fallback only when ambiguous
+  const docType = detectDocType(file.name) ?? await (async () => {
+    try {
+      const res = await anthropic.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 10,
+        messages: [{ role: "user", content: `Classify: exam / slides / notes / textbook\n${file.name}\n${sampleText.slice(0, 300)}\nOne word:` }],
+      });
+      const t = res.content[0].type === "text" ? res.content[0].text.trim().toLowerCase() : "";
+      return ["exam", "slides", "notes", "textbook"].includes(t) ? t : "notes";
+    } catch { return "notes"; }
+  })();
 
+  const effectiveCourseNumber = detectedCourseNumber ?? queueRow.course_number ?? null;
   const safeFilename = file.name.replace(/[^a-zA-Z0-9._\-\u0590-\u05FF ]/g, "_").slice(0, 200);
 
   const count = await embedAndUpsert(chunks, {
     filename:      safeFilename,
-    folder_path:   fullPath,              // full Drive path for agent context
+    folder_path:   fullPath,
     type:          docType,
     professor:     queueRow.professor ?? null,
     university:    queueRow.university,
-    course:        effectiveCourseName,   // AI-inferred course name
-    course_number: queueRow.course_number ?? null,
+    course:        effectiveCourseName,
+    course_number: effectiveCourseNumber,
     course_id:     null,
     user_id:       null,
     semester:      queueRow.semester ?? null,
     is_shared:     true,
     trust_level:   "verified",
   }, file.id);
-  return { chunks: count, course: effectiveCourseName, mismatch };
+  return { chunks: count, course: effectiveCourseName };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
@@ -662,7 +667,7 @@ export async function GET(req: NextRequest) {
           if (r.status === "fulfilled") {
             totalChunks += r.value.chunks;
             newlyDoneIds.push(batch[j].id);
-            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value.chunks} chunks${r.value.course ? ` [${r.value.course}]` : ""}${r.value.mismatch ? " ⚠ content differs from folder" : ""}`);
+            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value.chunks} chunks${r.value.course ? ` [${r.value.course}]` : ""}`);
           } else {
             const errMsg: string = (r.reason as any)?.message ?? "unknown error";
             // Transient errors (credit, rate limit, network) — do NOT mark as done so they're retried
