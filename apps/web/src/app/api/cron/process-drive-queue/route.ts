@@ -95,24 +95,33 @@ async function listDriveFiles(
   if (depth > 6) return [];
   const files: { id: string; name: string; mimeType: string; size: string; folderPath: string[] }[] = [];
   let pageToken: string | undefined;
+  const subfolders: { id: string; name: string }[] = [];
   do {
     const res = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
       fields: "nextPageToken, files(id, name, mimeType, size)",
-      pageSize: 100,
+      pageSize: 1000,
       pageToken,
     });
     for (const f of res.data.files ?? []) {
       if (!f.id || !f.name || !f.mimeType) continue;
       if (f.mimeType === "application/vnd.google-apps.folder") {
-        const nested = await listDriveFiles(drive, f.id, [...pathSoFar, f.name], depth + 1);
-        files.push(...nested);
+        subfolders.push({ id: f.id, name: f.name });
       } else {
         files.push({ id: f.id, name: f.name, mimeType: f.mimeType, size: f.size ?? "0", folderPath: pathSoFar });
       }
     }
     pageToken = res.data.nextPageToken ?? undefined;
   } while (pageToken);
+
+  // Recurse into subfolders in parallel (max 5 concurrent to avoid rate limits)
+  for (let i = 0; i < subfolders.length; i += 5) {
+    const batch = subfolders.slice(i, i + 5);
+    const results = await Promise.all(
+      batch.map(f => listDriveFiles(drive, f.id, [...pathSoFar, f.name], depth + 1).catch(() => []))
+    );
+    for (const nested of results) files.push(...nested);
+  }
   return files;
 }
 
@@ -520,7 +529,7 @@ export async function GET(req: NextRequest) {
         files = await Promise.race([
           listDriveFiles(drive, folderId),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("Drive listing timed out after 90s — folder may be too large or service account lacks access")), 90_000)
+            setTimeout(() => reject(new Error("Drive listing timed out after 150s — folder may be too large or service account lacks access")), 150_000)
           ),
         ]);
         await appendLog(row.id, `Found ${files.length} files total`);
