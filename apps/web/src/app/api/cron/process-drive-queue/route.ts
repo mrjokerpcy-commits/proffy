@@ -241,6 +241,18 @@ Rules:
 - For mixed Hebrew/English content: keep both languages exactly as they appear
 - Return extracted text only — no commentary, no "Here is the extracted text:" preamble`;
 
+const IMAGE_EXTRACT_PROMPT = `You are extracting text from a scanned or photographed academic document (university exam, lecture notes, or study material). Extract with maximum accuracy.
+
+Critical rules:
+1. Hebrew text: extract RIGHT-TO-LEFT text exactly as written — every word, abbreviation, and shorthand as-is. Do not expand abbreviations.
+2. Math formulas: convert ALL mathematical expressions to LaTeX inline ($...$) or display ($$...$$) notation. Fractions → \\frac{}{}, roots → \\sqrt{}, subscripts → _{}, superscripts → ^{}. Example: "100/1.05^4" → $\\frac{100}{1.05^4}$
+3. Tables and grids: reproduce as markdown tables with | delimiters
+4. Question numbers: preserve exactly (שאלה 1, .1, א., (א), etc.)
+5. If the scan is tilted or low quality: still extract every readable character — mark truly unreadable parts as [?]
+6. Mixed Hebrew+English+math is common in Israeli university material — handle all three in the same line
+7. Return ONLY the extracted text. No preamble, no "Here is the text", no explanation.`;
+
+
 async function extractFromPdf(buffer: Buffer): Promise<string> {
   const MAX_BYTES = 4_000_000;
   const workingBuffer = buffer.length > MAX_BYTES ? buffer.subarray(0, MAX_BYTES) : buffer;
@@ -261,14 +273,16 @@ async function extractFromPdf(buffer: Buffer): Promise<string> {
 
 async function extractFromImage(buffer: Buffer, mimeType: string): Promise<string> {
   const base64 = buffer.toString("base64");
+  const safeMime = (["image/jpeg","image/png","image/webp","image/gif"].includes(mimeType)
+    ? mimeType : "image/jpeg") as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
   const res = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 8000,
     messages: [{
       role: "user",
       content: [
-        { type: "image", source: { type: "base64", media_type: mimeType as "image/jpeg" | "image/png" | "image/webp" | "image/gif", data: base64 } },
-        { type: "text", text: EXTRACT_PROMPT },
+        { type: "image", source: { type: "base64", media_type: safeMime, data: base64 } },
+        { type: "text", text: IMAGE_EXTRACT_PROMPT },
       ],
     }],
   });
