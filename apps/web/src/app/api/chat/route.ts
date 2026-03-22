@@ -63,14 +63,25 @@ const TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "search_web",
-    description: "Search the internet for course-specific material: syllabi, past exams, professor pages, course pages, study guides. Call this proactively when you have a course number or course name to find what's available online. Also call when the student asks you to find material for them. Prefer Hebrew + English queries for Israeli university courses.",
+    description: "Search the internet. Use for: finding course syllabi, course numbers, past exams, professor pages, study material, online resources. For Israeli university courses search in both Hebrew and English. Call this proactively whenever you have a course name/number — students expect you to already know what's out there.",
     input_schema: {
       type: "object" as const,
       properties: {
-        query: { type: "string", description: "Search query. For Israeli courses include university name and course number, e.g. 'Technion 234218 מבחנים' or 'TAU business law syllabus'" },
-        purpose: { type: "string", enum: ["find_material", "find_course_page", "find_exams", "general"], description: "What you are looking for" },
+        query: { type: "string", description: "Search query. For Israeli courses include university + course number/name. E.g. 'Technion 234218 syllabus past exams' or 'מדר 104136 טכניון מבחנים'" },
       },
       required: ["query"],
+    },
+  },
+  {
+    name: "fetch_page",
+    description: "Fetch and read the full content of a specific URL. Use this after search_web to read a syllabus page, professor course page, or any relevant resource in full. Returns the main text content of the page.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        url: { type: "string", description: "Full URL to fetch" },
+        reason: { type: "string", description: "Why you are fetching this page" },
+      },
+      required: ["url"],
     },
   },
   {
@@ -258,19 +269,49 @@ async function executeTool(
       const res = await fetch("https://api.tavily.com/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_key: tavilyKey, query, max_results: 6, search_depth: "basic", include_answer: false }),
-        signal: AbortSignal.timeout(10_000),
+        body: JSON.stringify({
+          api_key: tavilyKey,
+          query,
+          max_results: 8,
+          search_depth: "advanced",
+          include_answer: true,
+          include_raw_content: false,
+        }),
+        signal: AbortSignal.timeout(15_000),
       });
       if (!res.ok) return { result: `Search failed (status ${res.status}).` };
       const data = await res.json();
-      const results: { title: string; url: string; content: string }[] = data.results ?? [];
+      const results: { title: string; url: string; content: string; score?: number }[] = data.results ?? [];
       if (results.length === 0) return { result: "No results found." };
+      const answer = data.answer ? `Summary: ${data.answer}\n\n` : "";
       const formatted = results.map((r, i) =>
-        `${i + 1}. **${r.title}**\n   ${r.url}\n   ${r.content?.slice(0, 200) ?? ""}`
+        `${i + 1}. **${r.title}**\n   URL: ${r.url}\n   ${r.content?.slice(0, 400) ?? ""}`
       ).join("\n\n");
-      return { result: `Found ${results.length} results:\n\n${formatted}` };
+      return { result: `${answer}Found ${results.length} results:\n\n${formatted}` };
     } catch (e: any) {
       return { result: `Search error: ${e.message}` };
+    }
+  }
+
+  if (name === "fetch_page") {
+    const url = typeof input.url === "string" ? input.url.trim() : "";
+    if (!url || (!url.startsWith("http://") && !url.startsWith("https://"))) return { result: "Invalid URL." };
+    const tavilyKey = process.env.TAVILY_API_KEY;
+    if (!tavilyKey) return { result: "Page fetch not configured (TAVILY_API_KEY missing)." };
+    try {
+      const res = await fetch("https://api.tavily.com/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: tavilyKey, urls: [url] }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) return { result: `Fetch failed (status ${res.status}).` };
+      const data = await res.json();
+      const content: string = data.results?.[0]?.raw_content ?? data.results?.[0]?.content ?? "";
+      if (!content) return { result: "Could not extract content from this page." };
+      return { result: `Page content from ${url}:\n\n${content.slice(0, 4000)}` };
+    } catch (e: any) {
+      return { result: `Fetch error: ${e.message}` };
     }
   }
 
@@ -831,7 +872,8 @@ Current student plan: **${plan}**
 You have tools to take real actions:
 - **lookup_course**: For Technion students, ALWAYS call this first when they mention a course name or number. Show them the top matches and ask them to confirm before creating. Handles course numbers with varying zero-padding (e.g. "044142" ≈ "44142" ≈ "0440142"). For non-Technion universities, skip this and go straight to create_course.
 - **create_course**: Call AFTER the user confirms the course details (or immediately for non-Technion). IMPORTANT: Free users can only have 3 courses total (lifetime). If they already have 3, tell them they need to upgrade to Pro before calling this tool. If the university is "Other", after creating the course say something like: "I've added your course! Since your university isn't one of the main ones I have pre-loaded material for, you'll get the best results by uploading your slides or course material — want to do that now?" (only ask once, don't repeat).
-- **search_web**: Search the internet for course-specific material. Call this proactively whenever you have a course name or number — search for syllabi, past exams, professor pages, and course info. Use Hebrew + English queries for Israeli courses (e.g. "Technion 234218 מבחנים" or "TAU business law past exams"). After finding results, share relevant URLs with the student and offer to queue promising ones via submit_course_material.
+- **search_web**: Search the internet. Call this proactively at the start of any course-related conversation where you don't already have rich material — search for the official syllabus, past exams, professor pages, course number, and online resources. For Israeli courses always try Hebrew queries too (e.g. "Technion 234218 מבחנים" + "TAU אלגברה לינארית סיכומים"). Don't wait for the student to ask — if you can search and find useful material, do it.
+- **fetch_page**: After finding a promising URL via search_web, fetch the full page to read its content. Use this to read a syllabus, a professor's course page, or a resource page in full before summarizing it to the student.
 - **submit_course_material**: Call when a student shares a Google Drive link, professor website, or any URL containing slides/exams/notes. Queues it for admin ingestion — helps ALL future students. Also call proactively when you detect sparse material coverage (see below).
 - **save_note**: Save an informative note to the student's personal Course Notes. Call this when the student says "add note", "save note", "save this", or "add this to my notes". Write the full content — don't save headers or empty shells. Pull from the course material if available. A note should be informative enough to study from. Requires a course to be active.
 - **update_course_knowledge**: Write a verified fact to this course's persistent knowledge file. ONLY when you are confident the information is accurate — confirmed by official material, by the student, or seen many times. Never for guesses. Sections: exam_focus (what the exam focuses on — course-wide, not professor-specific), common_struggles, prof_patterns (professor-specific style if professor is known, otherwise general course exam style), key_concepts, important_notes.
