@@ -21,7 +21,7 @@ export default async function DashboardPage() {
 
   const [coursesRes, usageRes, planRes, fcRes, notesRes, userRes] = await Promise.all([
     pool.query("SELECT * FROM courses WHERE user_id = $1 ORDER BY created_at DESC", [uid]),
-    pool.query("SELECT questions, tokens_input, tokens_output FROM usage WHERE user_id = $1 AND date = CURRENT_DATE", [uid]),
+    pool.query("SELECT SUM(tokens_input) AS tokens_input, SUM(tokens_output) AS tokens_output FROM usage WHERE user_id = $1 AND date >= DATE_TRUNC('month', CURRENT_DATE)", [uid]),
     pool.query("SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active'", [uid]),
     pool.query("SELECT COUNT(*) as c FROM flashcards WHERE user_id = $1 AND next_review_at <= NOW()", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
     pool.query("SELECT COUNT(*) as c FROM course_notes WHERE user_id = $1", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
@@ -31,12 +31,11 @@ export default async function DashboardPage() {
   if (!userRes.rows[0]?.email_verified) redirect("/verify-email");
   if (!userRes.rows[0]?.onboarding_done) redirect("/onboarding");
 
-  const courses      = coursesRes.rows;
-  const todayQ       = usageRes.rows[0]?.questions ?? 0;
-  const todayTokens  = (usageRes.rows[0]?.tokens_input ?? 0) + (usageRes.rows[0]?.tokens_output ?? 0);
-  const userPlan     = planRes.rows[0]?.plan ?? "free";
-  const TOKEN_LIMITS: Record<string, number> = { pro: 250_000, max: 500_000 };
-  const tokenLimit   = TOKEN_LIMITS[userPlan] ?? null;
+  const courses       = coursesRes.rows;
+  const monthTokens   = (Number(usageRes.rows[0]?.tokens_input) || 0) + (Number(usageRes.rows[0]?.tokens_output) || 0);
+  const userPlan      = planRes.rows[0]?.plan ?? "free";
+  const MONTHLY_LIMITS: Record<string, number> = { free: 600_000, pro: 4_000_000, max: 10_000_000 };
+  const tokenLimit    = MONTHLY_LIMITS[userPlan] ?? MONTHLY_LIMITS.free;
   const fcDue        = parseInt(fcRes.rows[0]?.c ?? "0", 10);
   const notesCount = parseInt(notesRes.rows[0]?.c ?? "0", 10);
   const firstName  = (session.user.name ?? "").split(" ")[0] || "there";
@@ -93,18 +92,14 @@ export default async function DashboardPage() {
                   {notesCount} notes
                 </span>
               )}
-              {userPlan === "free" ? (
-                <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 9px", borderRadius: "99px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: todayQ >= 10 ? "#f87171" : "var(--text-muted)" }}>
-                  {todayQ}/10 messages
-                </span>
-              ) : tokenLimit ? (
+              {monthTokens / tokenLimit >= 0.6 && (
                 <span style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "99px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                   <span style={{ width: "60px", height: "4px", borderRadius: "99px", background: "var(--border)", overflow: "hidden", display: "inline-block" }}>
-                    <span style={{ display: "block", height: "100%", borderRadius: "99px", width: `${Math.min(100, Math.round(todayTokens / tokenLimit * 100))}%`, background: todayTokens / tokenLimit > 0.85 ? "#f87171" : todayTokens / tokenLimit > 0.6 ? "#fbbf24" : "#4f8ef7", transition: "width 0.4s" }} />
+                    <span style={{ display: "block", height: "100%", borderRadius: "99px", width: `${Math.min(100, Math.round(monthTokens / tokenLimit * 100))}%`, background: monthTokens / tokenLimit > 0.85 ? "#f87171" : "#fbbf24", transition: "width 0.4s" }} />
                   </span>
-                  {Math.round(todayTokens / tokenLimit * 100)}% used today
+                  {Math.round(monthTokens / tokenLimit * 100)}% this month
                 </span>
-              ) : null}
+              )}
             </div>
           </div>
 
@@ -122,10 +117,8 @@ export default async function DashboardPage() {
             <ChatWindow
               hasCourses={courses.length > 0}
               userPlan={userPlan}
-              initialUsedMsgs={todayQ}
-              initialUsedTokens={todayTokens}
-              msgLimit={10}
-              tokenLimit={tokenLimit ?? undefined}
+              initialUsedTokens={monthTokens}
+              tokenLimit={tokenLimit}
             />
           </div>
         </div>

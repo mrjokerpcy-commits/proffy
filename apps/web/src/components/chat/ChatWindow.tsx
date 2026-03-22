@@ -11,9 +11,7 @@ interface Props {
   initialMessages?: ChatMessage[];
   hasCourses?: boolean;
   userPlan?: "free" | "pro" | "max";
-  initialUsedMsgs?: number;
   initialUsedTokens?: number;
-  msgLimit?: number;
   tokenLimit?: number;
 }
 
@@ -34,13 +32,13 @@ function makeGreeting(hasCourses: boolean, courseName?: string): ChatMessage {
 }
 
 
-function getResetHours(): number {
+function getResetDate(): string {
   const now = new Date();
-  const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-  return Math.ceil((midnight.getTime() - now.getTime()) / 3_600_000);
+  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return next.toLocaleDateString("en-IL", { day: "numeric", month: "short" });
 }
 
-export default function ChatWindow({ course, sessionId, initialMessages = [], hasCourses = false, userPlan = "free", initialUsedMsgs = 0, initialUsedTokens = 0, msgLimit = 10, tokenLimit }: Props) {
+export default function ChatWindow({ course, sessionId, initialMessages = [], hasCourses = false, userPlan = "free", initialUsedTokens = 0, tokenLimit }: Props) {
   const router = useRouter();
   const greeting = makeGreeting(hasCourses, course?.name);
   const [messages, setMessages] = useState<ChatMessage[]>(
@@ -53,7 +51,6 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const [limitBanner, setLimitBanner] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [userSavedToast, setUserSavedToast] = useState(false);
-  const [usedMsgs, setUsedMsgs] = useState(initialUsedMsgs);
   const [usedTokens, setUsedTokens] = useState(initialUsedTokens);
   const [btwDismissed, setBtwDismissed] = useState(false);
   const [pendingBtw, setPendingBtw] = useState<string[]>([]);
@@ -73,7 +70,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
 
   const isBtw = input.trimStart().startsWith("/btw");
   const canTypeWhileStreaming = userPlan === "pro" || userPlan === "max";
-  const resetHours = getResetHours();
+  const resetDate = getResetDate();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -118,6 +115,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     setStreaming(true);
     abortRef.current = new AbortController();
+    let btwTriggered = false;
 
     try {
       const res = await fetch("/api/chat", {
@@ -166,7 +164,6 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
       const decoder = new TextDecoder();
       let content = "";
       let sources: Source[] = [];
-      let btwTriggered = false;
 
       outer: while (true) {
         const { done, value } = await reader.read();
@@ -180,7 +177,6 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             } else if (data.type === "compacted") {
               setWasCompacted(true);
             } else if (data.type === "done") {
-              if (data.usedMsgs !== undefined) setUsedMsgs(data.usedMsgs);
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
               // Store DB message ID for feedback
               if (data.messageId) {
@@ -302,7 +298,6 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               content += data.text;
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, thinkingText: undefined } : m));
             } else if (data.type === "done") {
-              if (data.usedMsgs !== undefined) setUsedMsgs(data.usedMsgs);
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
               router.refresh();
             } else if (data.type === "course_created") {
@@ -567,21 +562,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Context injection — I'll remember this without treating it as a question</span>
           </div>
         )}
-        {/* Usage bar — only shown at 75%+ like Claude */}
-        {userPlan === "free" && usedMsgs / msgLimit >= 0.75 ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 2px" }}>
-            <div style={{ flex: 1, height: "3px", borderRadius: "99px", background: "var(--border)", overflow: "hidden" }}>
-              <div style={{
-                height: "100%", borderRadius: "99px", transition: "width 0.4s",
-                width: `${Math.min(100, Math.round(usedMsgs / msgLimit * 100))}%`,
-                background: usedMsgs >= msgLimit ? "#f87171" : "#fbbf24",
-              }} />
-            </div>
-            <span style={{ fontSize: "10px", color: usedMsgs >= msgLimit ? "#f87171" : "#fbbf24", whiteSpace: "nowrap", flexShrink: 0 }}>
-              {usedMsgs}/{msgLimit} messages · Resets in {resetHours}h
-            </span>
-          </div>
-        ) : tokenLimit && usedTokens / tokenLimit >= 0.75 ? (
+        {/* Usage bar — shown at 75%+ of monthly token budget */}
+        {tokenLimit && usedTokens / tokenLimit >= 0.75 ? (
           <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 2px" }}>
             <div style={{ flex: 1, height: "3px", borderRadius: "99px", background: "var(--border)", overflow: "hidden" }}>
               <div style={{
@@ -591,7 +573,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               }} />
             </div>
             <span style={{ fontSize: "10px", color: usedTokens / tokenLimit > 0.9 ? "#f87171" : "#fbbf24", whiteSpace: "nowrap", flexShrink: 0 }}>
-              {Math.round(usedTokens / tokenLimit * 100)}% of daily usage · Resets in {resetHours}h
+              {Math.round(usedTokens / tokenLimit * 100)}% used · Resets {resetDate}
             </span>
           </div>
         ) : null}
