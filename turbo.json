@@ -17,6 +17,7 @@
         "PAYPAL_SECRET",
         "NEXT_PUBLIC_PAYPAL_CLIENT_ID",
         "RESEND_API_KEY",
+        "RESEND_FROM",
         "QDRANT_URL",
         "QDRANT_API_KEY"
       ]
