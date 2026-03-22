@@ -488,13 +488,8 @@ export async function POST(req: NextRequest) {
         }
 
         // Build system prompt
-        // Only flag truly important missing info — professor and university.
-        // Course number is optional and should never be nagged about.
-        const missingFields: string[] = [];
-        if (!professor) missingFields.push("professor name");
-        if (!university) missingFields.push("university");
-        const missingWarning = courseId && missingFields.length > 0
-          ? `\nNote: this course is missing ${missingFields.join(" and ")}. Only ask about this once, naturally, if it comes up organically (e.g. "Who's your professor?"). Never block or delay answering the student's actual question.`
+        const missingWarning = courseId && !university
+          ? `\nNote: this course is missing university. Ask once naturally if it comes up — never block answering.`
           : "";
 
         const GOAL_LABEL: Record<string, string> = { pass: "just pass", good: "get a good grade (80+)", excellent: "top of the class" };
@@ -626,7 +621,7 @@ You have tools to take real actions:
 - **lookup_course**: For Technion students, ALWAYS call this first when they mention a course name or number. Show them the top matches and ask them to confirm before creating. Handles course numbers with varying zero-padding (e.g. "044142" ≈ "44142" ≈ "0440142"). For non-Technion universities, skip this and go straight to create_course.
 - **create_course**: Call AFTER the user confirms the course details (or immediately for non-Technion). IMPORTANT: Free users can only have 3 courses total (lifetime). If they already have 3, tell them they need to upgrade to Pro before calling this tool.
 - **submit_course_material**: Call when a student shares a Google Drive link, professor website, or any URL containing slides/exams/notes. Queues it for admin ingestion — helps ALL future students. Also call proactively when you detect sparse material coverage (see below).
-- **update_course_knowledge**: Write a verified fact to this course's persistent knowledge file. ONLY when you are confident the information is accurate — confirmed by official material, by the student, or seen many times. Never for guesses. Sections: exam_focus, common_struggles, prof_patterns, key_concepts, important_notes.
+- **update_course_knowledge**: Write a verified fact to this course's persistent knowledge file. ONLY when you are confident the information is accurate — confirmed by official material, by the student, or seen many times. Never for guesses. Sections: exam_focus (what the exam focuses on — course-wide, not professor-specific), common_struggles, prof_patterns (professor-specific style if professor is known, otherwise general course exam style), key_concepts, important_notes.
 - **update_user_profile**: Use when you learn their university, goals, study style, or hours available.
 
 After using a tool, continue the conversation naturally — don't announce "I used the create_course tool". Just say "Great, I've added [course] to your courses!" and move on.
@@ -751,7 +746,7 @@ Never emit platform memory AND insight in the same response — insights take pr
 Separate from platform memory tags, you can call the update_course_knowledge tool to write to this course's permanent knowledge file. Use this for high-confidence, structured facts:
 - **exam_focus**: "The final always has 3 questions on dynamic programming (confirmed by 4 students)"
 - **common_struggles**: "Students consistently struggle with amortized analysis — confused by accounting method"
-- **prof_patterns**: "Prof. Cohen writes exam questions verbatim from tutorial exercises"
+- **prof_patterns**: "This course's exams always include one proof question regardless of professor" — use for course-level exam style patterns even when professor is unknown; add professor name only if specifically known
 - **key_concepts**: "The course defines 'balanced tree' as height ≤ 2 log n, not the standard log n"
 - **important_notes**: "Course skips Chapter 7 of the textbook every year"
 - **frequently_asked**: "Q: Is the exam open book? A: No, closed book with one handwritten formula sheet allowed"
