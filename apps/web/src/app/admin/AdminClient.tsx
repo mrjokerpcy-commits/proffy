@@ -82,6 +82,34 @@ export default function AdminClient({
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"joined" | "msgs" | "cost" | "plan">("joined");
+
+  // Drive queue form
+  const [driveUrl, setDriveUrl] = useState("");
+  const [driveUniversity, setDriveUniversity] = useState("TAU");
+  const [driveFaculty, setDriveFaculty] = useState("");
+  const [driveNote, setDriveNote] = useState("");
+  const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
+  const [queueItems, setQueueItems] = useState<QueueItem[]>(queue);
+
+  async function submitDrive() {
+    if (!driveUrl.trim()) return;
+    setDriveStatus("loading");
+    try {
+      const r = await fetch("/api/admin/queue-drive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: driveUrl.trim(), university: driveUniversity, faculty: driveFaculty || null, note: driveNote || null }),
+      });
+      if (!r.ok) throw new Error();
+      setDriveStatus("ok");
+      setQueueItems(prev => [{ id: crypto.randomUUID(), url: driveUrl.trim(), submitted_at: new Date().toISOString(), status: "pending", email: null }, ...prev]);
+      setDriveUrl(""); setDriveFaculty(""); setDriveNote("");
+      setTimeout(() => setDriveStatus("idle"), 3000);
+    } catch {
+      setDriveStatus("err");
+      setTimeout(() => setDriveStatus("idle"), 3000);
+    }
+  }
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const filteredUsers = useMemo(() => {
@@ -348,7 +376,52 @@ export default function AdminClient({
 
         {/* ── QUEUE ── */}
         {tab === "queue" && (
-          <div style={cardStyle}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+
+            {/* Add Drive Folder form */}
+            <div style={{ ...cardStyle, borderColor: "rgba(79,142,247,0.3)" }}>
+              <h3 style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "14px", color: "var(--blue)" }}>Add Drive Folder to Queue</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <input
+                  value={driveUrl} onChange={e => setDriveUrl(e.target.value)}
+                  placeholder="Google Drive folder URL"
+                  style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                />
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    value={driveUniversity} onChange={e => setDriveUniversity(e.target.value)}
+                    placeholder="University (e.g. TAU)"
+                    style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                  />
+                  <input
+                    value={driveFaculty} onChange={e => setDriveFaculty(e.target.value)}
+                    placeholder="Faculty (e.g. Management)"
+                    style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <input
+                    value={driveNote} onChange={e => setDriveNote(e.target.value)}
+                    placeholder="Note (optional)"
+                    style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                  />
+                  <button
+                    onClick={submitDrive}
+                    disabled={!driveUrl.trim() || driveStatus === "loading"}
+                    style={{
+                      padding: "9px 20px", borderRadius: "8px", border: "none", cursor: driveUrl.trim() ? "pointer" : "not-allowed",
+                      background: driveStatus === "ok" ? "rgba(52,211,153,0.2)" : driveStatus === "err" ? "rgba(248,113,113,0.2)" : "var(--blue)",
+                      color: driveStatus === "ok" ? "#34d399" : driveStatus === "err" ? "#f87171" : "#fff",
+                      fontSize: "13px", fontWeight: 700, flexShrink: 0,
+                    }}
+                  >
+                    {driveStatus === "loading" ? "Adding…" : driveStatus === "ok" ? "Added!" : driveStatus === "err" ? "Error" : "Add to Queue"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={cardStyle}>
             <h3 style={{ fontWeight: 700, marginBottom: "1.25rem", fontSize: "14px" }}>Material queue</h3>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
@@ -359,7 +432,7 @@ export default function AdminClient({
                 </tr>
               </thead>
               <tbody>
-                {queue.map(item => (
+                {queueItems.map(item => (
                   <tr key={item.id} style={{ borderBottom: "1px solid var(--border)" }}>
                     <td style={{ padding: "8px 12px", maxWidth: "360px" }}>
                       <a href={item.url} target="_blank" rel="noopener noreferrer"
@@ -380,11 +453,12 @@ export default function AdminClient({
                     </td>
                   </tr>
                 ))}
-                {queue.length === 0 && (
+                {queueItems.length === 0 && (
                   <tr><td colSpan={4} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>Queue is empty</td></tr>
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
