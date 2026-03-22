@@ -232,18 +232,27 @@ function qualityFilter(chunks: Chunk[]): Chunk[] {
   });
 }
 
+const EXTRACT_PROMPT = `Extract all text from this document verbatim and with high accuracy.
+Rules:
+- Preserve the exact Hebrew text — do not translate, summarize, or paraphrase
+- Preserve all mathematical formulas and equations in LaTeX notation (e.g. $x^2 + y^2$, $$\\sum_{i=1}^n$$)
+- Preserve headings, numbered lists, bullet points, and document structure
+- For tables: preserve as markdown tables
+- For mixed Hebrew/English content: keep both languages exactly as they appear
+- Return extracted text only — no commentary, no "Here is the extracted text:" preamble`;
+
 async function extractFromPdf(buffer: Buffer): Promise<string> {
   const MAX_BYTES = 4_000_000;
   const workingBuffer = buffer.length > MAX_BYTES ? buffer.subarray(0, MAX_BYTES) : buffer;
   const base64 = workingBuffer.toString("base64");
   const res = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 4096,
+    model: "claude-sonnet-4-6",
+    max_tokens: 8000,
     messages: [{
       role: "user",
       content: [
         { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } } as any,
-        { type: "text", text: "Extract all text from this document verbatim. Preserve headings, equations, and structure. Return text only." },
+        { type: "text", text: EXTRACT_PROMPT },
       ],
     }],
   });
@@ -254,12 +263,12 @@ async function extractFromImage(buffer: Buffer, mimeType: string): Promise<strin
   const base64 = buffer.toString("base64");
   const res = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 3000,
+    max_tokens: 8000,
     messages: [{
       role: "user",
       content: [
         { type: "image", source: { type: "base64", media_type: mimeType as "image/jpeg" | "image/png" | "image/webp" | "image/gif", data: base64 } },
-        { type: "text", text: "Extract all text from this image verbatim. Preserve headings, equations (LaTeX notation), and structure. Return extracted text only." },
+        { type: "text", text: EXTRACT_PROMPT },
       ],
     }],
   });
