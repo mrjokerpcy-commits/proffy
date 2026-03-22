@@ -83,10 +83,41 @@ export default function AdminClient({
   users: User[];
   queue: QueueItem[];
 }) {
-  const [tab, setTab] = useState<"overview" | "users" | "usage" | "queue">("overview");
+  const [tab, setTab] = useState<"overview" | "users" | "usage" | "queue" | "knowledge">("overview");
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"joined" | "msgs" | "cost" | "plan">("joined");
+
+  // Knowledge tab state
+  type Chunk = { id: string; payload: Record<string, any> };
+  const [chunks, setChunks] = useState<Chunk[]>([]);
+  const [chunksTotal, setChunksTotal] = useState(0);
+  const [chunksOffset, setChunksOffset] = useState<number | null>(null);
+  const [chunksNextOffset, setChunksNextOffset] = useState<number | null>(null);
+  const [chunksLoading, setChunksLoading] = useState(false);
+  const [chunkFilterUni, setChunkFilterUni] = useState("");
+  const [chunkFilterCourse, setChunkFilterCourse] = useState("");
+  const [expandedChunk, setExpandedChunk] = useState<string | null>(null);
+
+  async function loadChunks(offset: number | null = null) {
+    setChunksLoading(true);
+    const params = new URLSearchParams();
+    if (offset !== null) params.set("offset", String(offset));
+    if (chunkFilterUni) params.set("university", chunkFilterUni);
+    if (chunkFilterCourse) params.set("course", chunkFilterCourse);
+    try {
+      const r = await fetch(`/api/admin/chunks?${params}`);
+      const d = await r.json();
+      setChunks(d.points ?? []);
+      setChunksTotal(d.total ?? 0);
+      setChunksNextOffset(d.next_offset ?? null);
+      setChunksOffset(offset);
+    } finally {
+      setChunksLoading(false);
+    }
+  }
+
+  useEffect(() => { if (tab === "knowledge") loadChunks(null); }, [tab]);
 
   // Drive queue form
   const [driveUrl, setDriveUrl] = useState("");
@@ -212,7 +243,7 @@ export default function AdminClient({
             <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Proffy platform dashboard</p>
           </div>
           <div style={{ display: "flex", gap: "6px", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "10px", padding: "4px" }}>
-            {(["overview", "users", "usage", "queue"] as const).map(t => (
+            {(["overview", "users", "usage", "queue", "knowledge"] as const).map(t => (
               <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
                 {t === "queue" && queue.filter(q => q.status === "pending").length > 0 && (
@@ -562,6 +593,134 @@ export default function AdminClient({
               </tbody>
             </table>
             </div>
+          </div>
+        )}
+
+        {/* ── KNOWLEDGE ── */}
+        {tab === "knowledge" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+            {/* Filters + stats row */}
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                placeholder="Filter by university (e.g. TAU)"
+                value={chunkFilterUni}
+                onChange={e => setChunkFilterUni(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && loadChunks(null)}
+                style={{ flex: 1, minWidth: "180px", padding: "8px 14px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px" }}
+              />
+              <input
+                placeholder="Filter by course name"
+                value={chunkFilterCourse}
+                onChange={e => setChunkFilterCourse(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && loadChunks(null)}
+                style={{ flex: 2, minWidth: "200px", padding: "8px 14px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px" }}
+              />
+              <button
+                onClick={() => loadChunks(null)}
+                disabled={chunksLoading}
+                style={{ padding: "8px 18px", borderRadius: "10px", border: "none", background: "var(--blue)", color: "#fff", fontSize: "13px", fontWeight: 700, cursor: "pointer", opacity: chunksLoading ? 0.6 : 1 }}
+              >
+                {chunksLoading ? "Loading…" : "Search"}
+              </button>
+              <div style={{ padding: "8px 14px", borderRadius: "10px", background: "var(--bg-surface)", border: "1px solid var(--border)", fontSize: "13px", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                {fmtNum(chunksTotal)} total chunks
+              </div>
+            </div>
+
+            {/* Chunks table */}
+            <div style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-elevated)" }}>
+                    {["Filename", "Course", "Uni", "Type", "Trust", "Text preview"].map(h => (
+                      <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: "var(--text-muted)", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {chunks.map(c => {
+                    const p = c.payload;
+                    const isExpanded = expandedChunk === c.id;
+                    return (
+                      <tr key={c.id}
+                        onClick={() => setExpandedChunk(isExpanded ? null : c.id)}
+                        style={{ borderBottom: "1px solid var(--border)", cursor: "pointer", background: isExpanded ? "var(--bg-elevated)" : "transparent", transition: "background 0.1s" }}
+                        onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+                        onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = "transparent"; }}
+                      >
+                        <td style={{ padding: "10px 14px", maxWidth: "220px" }}>
+                          <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text-primary)", fontWeight: 500 }} title={p.filename}>
+                            {p.filename ?? "—"}
+                          </div>
+                          {p.folder_path && (
+                            <div style={{ fontSize: "10px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: "2px" }} title={p.folder_path}>
+                              {p.folder_path}
+                            </div>
+                          )}
+                          <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "2px" }}>chunk #{p.chunk_index ?? 0}</div>
+                        </td>
+                        <td style={{ padding: "10px 14px", maxWidth: "160px" }}>
+                          <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text-secondary)" }}>{p.course ?? "—"}</div>
+                          {p.course_number && <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>{p.course_number}</div>}
+                        </td>
+                        <td style={{ padding: "10px 14px", color: "var(--blue)", fontWeight: 600, whiteSpace: "nowrap" }}>{p.university ?? "—"}</td>
+                        <td style={{ padding: "10px 14px" }}>
+                          <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 600,
+                            background: p.type === "slides" ? "rgba(167,139,250,0.15)" : p.type === "notes" ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)",
+                            color: p.type === "slides" ? "var(--purple)" : p.type === "notes" ? "var(--green)" : "var(--text-muted)" }}>
+                            {p.type ?? "?"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "10px 14px" }}>
+                          <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 600,
+                            background: p.trust_level === "verified" ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)",
+                            color: p.trust_level === "verified" ? "var(--green)" : "var(--text-muted)" }}>
+                            {p.trust_level ?? "?"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "10px 14px", maxWidth: "300px" }}>
+                          {isExpanded ? (
+                            <div style={{ color: "var(--text-primary)", whiteSpace: "pre-wrap", lineHeight: 1.5, fontSize: "12px", maxHeight: "200px", overflowY: "auto" }}>
+                              {p.text}
+                            </div>
+                          ) : (
+                            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text-secondary)" }}>
+                              {p.text?.slice(0, 120) ?? "—"}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {chunks.length === 0 && !chunksLoading && (
+                    <tr><td colSpan={6} style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>No chunks found</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <button
+                onClick={() => loadChunks(null)}
+                disabled={chunksOffset === null || chunksLoading}
+                style={{ padding: "7px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-secondary)", fontSize: "13px", fontWeight: 600, cursor: "pointer", opacity: chunksOffset === null ? 0.4 : 1 }}
+              >
+                First page
+              </button>
+              <button
+                onClick={() => chunksNextOffset !== null && loadChunks(chunksNextOffset)}
+                disabled={chunksNextOffset === null || chunksLoading}
+                style={{ padding: "7px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-secondary)", fontSize: "13px", fontWeight: 600, cursor: "pointer", opacity: chunksNextOffset === null ? 0.4 : 1 }}
+              >
+                Next 20 →
+              </button>
+              {chunksOffset !== null && (
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>offset: {chunksOffset}</span>
+              )}
+            </div>
+
           </div>
         )}
 
