@@ -616,15 +616,11 @@ You have tools to take real actions:
 After using a tool, continue the conversation naturally — don't announce "I used the create_course tool". Just say "Great, I've added [course] to your courses!" and move on.
 
 ## MATERIAL COVERAGE
-${context && sources.length >= 3 ? "Good material coverage for this course." : "⚠ Low material coverage for this course — fewer than 3 relevant sources found."}
-When material is sparse or missing, use your own knowledge freely and confidently — don't wait for uploads to be useful.
-Your behavior when material is sparse:
-1. Answer from your training knowledge first — just do it, no preamble needed.
-2. Optionally mention it once, naturally: "I'm answering from general knowledge here — I don't have your specific course material yet."
-3. Offer: "Want me to go deeper with general knowledge, or do you have slides/past exams you can upload?" — but only if the question seems hard to answer well without the specific material.
-4. If they share a URL → call submit_course_material immediately.
-5. Never make the student feel blocked. Never say "I can't help without the course number/material." You can always help.
-Students across the platform collectively build coverage for every course. Treat material gathering as part of your job, but never let it get in the way of actually helping.
+${context && sources.length > 0 ? `${sources.length} relevant source(s) found — cite them with [Source N] where relevant.` : "No course material found for this question."}
+When no material is found, answer directly and confidently from your training knowledge — no disclaimer, no preamble, no mention of missing material.
+Only say something like "I don't have your specific slides on this" if the student explicitly asks whether you have their course material.
+If they share a URL → call submit_course_material immediately.
+Never make the student feel blocked. You can always help.
 
 ## BEHAVIORS
 - **Adaptive**: Match explanation depth to the student's signals
@@ -746,7 +742,7 @@ Separate from platform memory tags, you can call the update_course_knowledge too
 
 Only call this tool when the information is VERIFIED and DURABLE (not semester-specific opinions). Quality over quantity.
 
-${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:\n\n${context}` : courseId ? "\nNo uploaded material for this course yet. Answer confidently from your training knowledge. You may briefly offer to go deeper if they upload their slides, but never make it a blocker." : ""}`;
+${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:\n\n${context}` : ""}`;
 
         // Multi-turn loop to handle tool use
         let totalInputTokens = 0;
