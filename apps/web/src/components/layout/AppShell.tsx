@@ -21,12 +21,16 @@ interface Props {
 }
 
 export default function AppShell({ children, courses, activeCourse, flashcardsDue, professorPatterns, studentInsights, userPlan = "free" }: Props) {
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
 
   useEffect(() => {
-    const check = () => { if (window.innerWidth < 768) setSidebarOpen(false); };
+    const check = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setSidebarOpen(false);
+    };
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -34,7 +38,7 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
   const [openPanel, setOpenPanel] = useState<"flashcards" | "notes" | null>(null);
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "var(--bg-base)", color: "var(--text-primary)", overflow: "hidden", position: "relative" }}>
+    <div style={{ display: "flex", height: "100dvh", background: "var(--bg-base)", color: "var(--text-primary)", overflow: "hidden", position: "relative" }}>
 
       {/* ── Mobile overlay when sidebar open ── */}
       {sidebarOpen && isMobile && (
