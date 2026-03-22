@@ -127,23 +127,32 @@ async function listDriveFiles(
   return files;
 }
 
+// Generic/upload folder names to ignore when inferring course
+const GENERIC_FOLDER_NAMES = new Set([
+  "uploads", "upload", "תיקיות העלאות", "תיקיית העלאות", "shared", "files",
+  "documents", "material", "materials", "course material", "חומרי לימוד",
+  "general", "misc", "other", "שונות", "כללי", "downloads",
+]);
+
 // ── Use AI to extract course name from folder path + filename ─────────────────
 async function inferCourseFromPath(folderPath: string[], filename: string): Promise<string | null> {
-  if (folderPath.length === 0) return null;
-  const pathStr = folderPath.join(" / ");
+  // Strip generic folder names from the path
+  const meaningfulPath = folderPath.filter(p => !GENERIC_FOLDER_NAMES.has(p.trim().toLowerCase()) && !GENERIC_FOLDER_NAMES.has(p.trim()));
+  const pathStr = meaningfulPath.join(" / ");
   try {
     const res = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 30,
       messages: [{
         role: "user",
-        content: `Given this folder path and filename from a university Drive, extract the course name (subject). Reply with ONLY the course name, nothing else. If unclear, reply with the most specific folder name.\n\nPath: ${pathStr}\nFile: ${filename}\n\nCourse name:`,
+        content: `Given this folder path and filename from a university Drive, extract the academic course name (subject like "Finance", "Macroeconomics", "מימון", etc). Rely on the filename if the path is generic or empty. Reply with ONLY the course name, nothing else.\n\nPath: ${pathStr || "(root)"}\nFile: ${filename}\n\nCourse name:`,
       }],
     });
     const text = res.content[0].type === "text" ? res.content[0].text.trim() : null;
-    return text && text.length > 0 && text.length < 100 ? text : folderPath[folderPath.length - 1];
+    if (text && text.length > 0 && text.length < 100) return text;
+    return meaningfulPath.length > 0 ? meaningfulPath[meaningfulPath.length - 1] : null;
   } catch {
-    return folderPath[folderPath.length - 1];
+    return meaningfulPath.length > 0 ? meaningfulPath[meaningfulPath.length - 1] : null;
   }
 }
 
