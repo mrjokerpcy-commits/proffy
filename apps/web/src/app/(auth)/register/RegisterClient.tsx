@@ -105,7 +105,7 @@ export default function RegisterClient() {
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
           <button
             type="button"
-            onClick={() => signIn("google", { callbackUrl: plan ? `/checkout?plan=${plan}` : "/dashboard" })}
+            onClick={() => signIn("google", { callbackUrl: plan ? `/checkout?plan=${plan}` : "/onboarding" })}
             style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem",
               padding: "0.7rem 1rem", borderRadius: "0.875rem", fontSize: "0.9rem", fontWeight: 500,

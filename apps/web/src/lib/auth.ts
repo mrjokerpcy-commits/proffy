@@ -28,6 +28,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax" as const,
         path: "/",
         secure: isProd,
+        maxAge: 30 * 24 * 60 * 60, // 30 days — keep user logged in
       },
     },
     callbackUrl: {
