@@ -5,6 +5,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { QdrantClient } from "@qdrant/js-client-rest";
 import OpenAI from "openai";
 import { Pool } from "pg";
+import { createHash } from "crypto";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "placeholder" });
 const openai    = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "placeholder" });
@@ -344,14 +345,27 @@ export async function POST(req: NextRequest) {
 
   const language = detectLanguage(sampleText);
 
-  // Embed + store in Qdrant
+  // Deduplication: hash full extracted text — skip if this exact content is already indexed for this course
+  const contentHash = createHash("sha256").update(chunks.map(c => c.text).join("\n")).digest("hex");
+  let isDuplicate = false;
+  try {
+    const { rows: hashRows } = await pool.query(
+      `SELECT 1 FROM documents WHERE course_id = $1 AND content_hash = $2 LIMIT 1`,
+      [courseId, contentHash]
+    );
+    isDuplicate = hashRows.length > 0;
+  } catch {
+    // content_hash column may not exist yet — add it and continue
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS content_hash TEXT`).catch(() => {});
+  }
+
+  // Embed + store as shared platform knowledge (no user_id — benefits ALL students in this course)
   let chunkCount = 0;
-  if (chunks.length > 0) {
+  if (chunks.length > 0 && !isDuplicate) {
     try {
       try { await qdrant.getCollection("studyai_chunks"); }
       catch {
         await qdrant.createCollection("studyai_chunks", { vectors: { size: 1536, distance: "Cosine" } });
-        // Index payload fields for fast filtered search
         await Promise.all([
           qdrant.createPayloadIndex("studyai_chunks", { field_name: "university",    field_schema: "keyword" }),
           qdrant.createPayloadIndex("studyai_chunks", { field_name: "course_number", field_schema: "keyword" }),
@@ -381,7 +395,8 @@ export async function POST(req: NextRequest) {
               course:        course.name,
               course_number: course.course_number ?? null,
               course_id:     courseId,
-              user_id:       session.user.id,
+              user_id:       null,          // shared — no user restriction
+              trust_level:   "student",     // sourced from student upload, unverified
               chunk_index:   i + j,
               slide_number:  batch[j].slide_number,
               helpful_count: 0,
@@ -398,13 +413,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Save document record
+  // Save document record (always, even for duplicates — so user knows it was received)
   let documentId: string | null = null;
   try {
     const { rows: docRows } = await pool.query(
-      `INSERT INTO documents (course_id, user_id, filename, type, professor, size_bytes, chunk_count)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [courseId, session.user.id, safeFilename, file_type_detected, course.professor ?? null, file.size, chunkCount]
+      `INSERT INTO documents (course_id, user_id, filename, type, professor, size_bytes, chunk_count, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
+      [courseId, session.user.id, safeFilename, file_type_detected, course.professor ?? null, file.size, chunkCount, contentHash]
     );
     documentId = docRows[0]?.id ?? null;
   } catch (err) {
@@ -429,6 +446,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     success:             true,
     documentId:          documentId,
+    duplicate:           isDuplicate,
     chunks_created:      chunkCount,
     file_type_detected,
     pages_found:         pages,
