@@ -1123,10 +1123,18 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
         send({ type: "thinking", text: "Thinking…" });
 
         while (continueLoop) {
-          const useThinking = plan !== "free";
+          const selectedModel = (() => {
+              if (plan === "free") return "claude-haiku-4-5-20251001";
+              const isComplex = message.length > 200
+                || /explain|summarize|compare|analyze|prove|derive|difference|why|how does|study plan|cheat sheet|generate.*card|create.*card|quiz|exam|מה ההבדל|הסבר|סכם|נתח|למה|איך/i.test(message)
+                || (history.length === 0);
+              if (!isComplex) return "claude-haiku-4-5-20251001";
+              return plan === "max" ? "claude-opus-4-6" : "claude-sonnet-4-6";
+            })();
+          const useThinking = plan !== "free" && selectedModel !== "claude-haiku-4-5-20251001";
           const claudeStream = anthropic.messages.stream({
-            model: plan === "free" ? "claude-haiku-4-5-20251001" : plan === "max" ? "claude-opus-4-6" : "claude-sonnet-4-6",
-            max_tokens: plan === "free" ? 1024 : 10000,
+            model: selectedModel,
+            max_tokens: selectedModel === "claude-haiku-4-5-20251001" ? 1024 : 10000,
             ...(useThinking ? { thinking: { type: "enabled", budget_tokens: 5000 } } : {}),
             ...(useThinking ? { betas: ["interleaved-thinking-2025-05-14"] } : {}),
             system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
