@@ -172,23 +172,53 @@ async function classifyDocType(text: string, filename: string): Promise<string> 
 
 interface Chunk { text: string; slide_number: number | null; word_count: number }
 
-function smartChunk(text: string, slideNumber: number | null = null, maxWords = 400): Chunk[] {
+function smartChunk(text: string, slideNumber: number | null = null, maxWords = 300): Chunk[] {
   const chunks: Chunk[] = [];
-  const sentences = text.split(/(?<=[.!?؟])\s+/);
+
+  // Split on: markdown headers (##), blank lines between paragraphs, or sentence-ending punctuation
+  // Handles Hebrew RTL numbered lists like ".1 ..." by splitting on blank lines + headers first
+  const segments = text
+    .split(/\n{2,}/)                          // split on blank lines
+    .flatMap(seg => seg.split(/(?=^#{1,3} )/m)) // further split on markdown headers
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
   let current = "";
   let wordCount = 0;
-  for (const sentence of sentences) {
-    const words = sentence.trim().split(/\s+/).length;
-    if (wordCount + words > maxWords && current.length > 0) {
+
+  function flush() {
+    if (current.trim().length > 50) {
       chunks.push({ text: current.trim(), slide_number: slideNumber, word_count: wordCount });
-      current = sentence + " ";
+    }
+    current = "";
+    wordCount = 0;
+  }
+
+  for (const seg of segments) {
+    const words = seg.split(/\s+/).length;
+    // If segment alone exceeds limit, split it further by sentence
+    if (words > maxWords) {
+      if (current) flush();
+      const sentences = seg.split(/(?<=[.!?؟])\s+/);
+      for (const sentence of sentences) {
+        const sw = sentence.trim().split(/\s+/).length;
+        if (wordCount + sw > maxWords && current.length > 0) {
+          flush();
+        }
+        current += sentence + " ";
+        wordCount += sw;
+      }
+      flush();
+    } else if (wordCount + words > maxWords && current.length > 0) {
+      flush();
+      current = seg + "\n\n";
       wordCount = words;
     } else {
-      current += sentence + " ";
+      current += seg + "\n\n";
       wordCount += words;
     }
   }
-  if (current.trim().length > 50) chunks.push({ text: current.trim(), slide_number: slideNumber, word_count: wordCount });
+  flush();
   return chunks;
 }
 
