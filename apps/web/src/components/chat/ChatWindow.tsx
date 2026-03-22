@@ -58,6 +58,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const [btwDismissed, setBtwDismissed] = useState(false);
   const [hasFirstResponse, setHasFirstResponse] = useState(initialMessages.length > 1);
   const [wasCompacted, setWasCompacted] = useState(false);
+  const [ratingReminderDismissed, setRatingReminderDismissed] = useState(false);
+  const [assistantMsgCount, setAssistantMsgCount] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -151,6 +153,13 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             } else if (data.type === "done") {
               if (data.usedMsgs !== undefined) setUsedMsgs(data.usedMsgs);
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
+              // Store DB message ID for feedback
+              if (data.messageId) {
+                setMessages(prev => prev.map(m =>
+                  m.id === assistantId ? { ...m, dbMessageId: data.messageId } : m
+                ));
+              }
+              setAssistantMsgCount(c => c + 1);
               router.refresh();
             } else if (data.type === "course_created" || data.type === "profile_updated") {
               router.refresh();
@@ -247,12 +256,12 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               key={msg.id}
               message={msg}
               index={i}
+              courseId={course?.id}
               onRetry={msg.role === "assistant" && msg.id !== "greeting" && i === messages.length - 1
                 ? () => {
-                    // Find last user message and re-send it
                     const lastUser = [...messages].reverse().find(m => m.role === "user");
                     if (lastUser) {
-                      setMessages(prev => prev.slice(0, -1)); // Remove failed assistant msg
+                      setMessages(prev => prev.slice(0, -1));
                       send(lastUser.content);
                     }
                   }
@@ -270,6 +279,29 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               } : undefined}
             />
           ))}
+
+          {/* Rating reminder — shows after 3rd assistant response, once per session */}
+          {assistantMsgCount >= 3 && !ratingReminderDismissed && !streaming && (
+            <div style={{ display: "flex", justifyContent: "center", padding: "0 20px" }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: "10px",
+                padding: "8px 14px", borderRadius: "99px",
+                background: "rgba(79,142,247,0.06)", border: "1px solid rgba(79,142,247,0.18)",
+                maxWidth: "420px",
+              }}>
+                <span style={{ fontSize: "13px" }}>👍</span>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", flex: 1 }}>
+                  Rate answers with <span style={{ color: "var(--blue)" }}>thumbs up/down</span> — it helps Proffy get smarter for everyone
+                </span>
+                <button
+                  onClick={() => setRatingReminderDismissed(true)}
+                  style={{ background: "none", border: "none", color: "var(--text-disabled)", cursor: "pointer", padding: 0, fontSize: "12px", lineHeight: 1, flexShrink: 0 }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
           {/* Suggested prompts after greeting when no user messages yet */}
           {messages.length === 1 && course && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", padding: "0 20px" }}>

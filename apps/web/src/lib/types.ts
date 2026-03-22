@@ -21,6 +21,7 @@ export interface ChatMessage {
   sources?: Source[];
   streaming?: boolean;
   thinkingText?: string;
+  dbMessageId?: string; // DB id of saved assistant message — used for feedback
 }
 
 export interface Source {

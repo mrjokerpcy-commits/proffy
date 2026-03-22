@@ -11,6 +11,7 @@ import type { ChatMessage, Source } from "@/lib/types";
 interface Props {
   message: ChatMessage;
   index: number;
+  courseId?: string;
   onRetry?: () => void;
   onSave?: (content: string) => void;
 }
@@ -63,13 +64,28 @@ function ThinkingBlock({ text }: { text: string }) {
   );
 }
 
-export default function MessageBubble({ message, index, onRetry, onSave }: Props) {
+export default function MessageBubble({ message, index, courseId, onRetry, onSave }: Props) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [feedback, setFeedback] = useState<"like" | "dislike" | null>(null);
   const [saved, setSaved] = useState(false);
+
+  async function submitFeedback(rating: "like" | "dislike") {
+    const newRating = feedback === rating ? null : rating;
+    setFeedback(newRating);
+    if (!message.dbMessageId || !newRating) return;
+    fetch("/api/chat/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messageId: message.dbMessageId,
+        rating: newRating === "like" ? "up" : "down",
+        courseId: courseId ?? undefined,
+      }),
+    }).catch(() => {});
+  }
   const isUser = message.role === "user";
   const thinking = !isUser && isThinking(message);
   const isError = !isUser && !message.streaming && message.content?.startsWith("Something went wrong");
@@ -202,9 +218,9 @@ export default function MessageBubble({ message, index, onRetry, onSave }: Props
 
             {/* Like */}
             <button
-              onClick={() => setFeedback(f => f === "like" ? null : "like")}
+              onClick={() => submitFeedback("like")}
               title="Helpful"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "3px", color: feedback === "like" ? "var(--blue)" : "var(--text-muted)", display: "flex", alignItems: "center" }}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "3px", color: feedback === "like" ? "var(--blue)" : "var(--text-muted)", display: "flex", alignItems: "center", transition: "color 0.15s" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill={feedback === "like" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
@@ -213,9 +229,9 @@ export default function MessageBubble({ message, index, onRetry, onSave }: Props
 
             {/* Dislike */}
             <button
-              onClick={() => setFeedback(f => f === "dislike" ? null : "dislike")}
+              onClick={() => submitFeedback("dislike")}
               title="Not helpful"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "3px", color: feedback === "dislike" ? "#f87171" : "var(--text-muted)", display: "flex", alignItems: "center" }}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "3px", color: feedback === "dislike" ? "#f87171" : "var(--text-muted)", display: "flex", alignItems: "center", transition: "color 0.15s" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill={feedback === "dislike" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/>
