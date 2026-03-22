@@ -44,7 +44,8 @@ async function ensureSchema() {
       ADD COLUMN IF NOT EXISTS course_number TEXT,
       ADD COLUMN IF NOT EXISTS professor TEXT,
       ADD COLUMN IF NOT EXISTS semester TEXT,
-      ADD COLUMN IF NOT EXISTS log TEXT NOT NULL DEFAULT '';
+      ADD COLUMN IF NOT EXISTS log TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS processed_file_ids TEXT NOT NULL DEFAULT '';
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS mq_status_idx ON material_queue(status)`);
 }
@@ -508,14 +509,16 @@ export async function GET(req: NextRequest) {
         return;
       }
 
-      await pool.query(`UPDATE material_queue SET log = '' WHERE id = $1`, [row.id]).catch(() => {});
+      // Restore log only on first run (no processed files yet)
+      const isFirstRun = !row.processed_file_ids;
+      if (isFirstRun) await pool.query(`UPDATE material_queue SET log = '' WHERE id = $1`, [row.id]).catch(() => {});
       await appendLog(row.id, `Starting: ${row.url}`);
 
       let files: Awaited<ReturnType<typeof listDriveFiles>> = [];
       try {
         await appendLog(row.id, `Listing files in Drive folder...`);
         files = await listDriveFiles(drive, folderId);
-        await appendLog(row.id, `Found ${files.length} files`);
+        await appendLog(row.id, `Found ${files.length} files total`);
       } catch (err: any) {
         await appendLog(row.id, `ERROR listing files: ${err.message}`);
         await pool.query(
@@ -525,13 +528,22 @@ export async function GET(req: NextRequest) {
         return;
       }
 
-      // Process files in batches of 5 to avoid rate limits
+      // Resume from where we left off — skip already-processed file IDs
+      const processedIds = new Set((row.processed_file_ids ?? "").split(",").filter(Boolean));
+      const remaining = files.filter(f => !processedIds.has(f.id));
+      await appendLog(row.id, `${processedIds.size} already done, ${remaining.length} remaining`);
+
+      // Process up to 40 files per cron run to stay within 5-min timeout
+      const FILE_BATCH_SIZE = 40;
+      const filesToProcess = remaining.slice(0, FILE_BATCH_SIZE);
+
       let totalChunks = 0;
+      const newlyDoneIds: string[] = [];
       const queueRow = { university: row.university ?? "Unknown", course_name: row.course_name ?? "General", course_number: row.course_number, professor: row.professor, semester: row.semester };
 
-      for (let i = 0; i < files.length; i += 5) {
-        const batch = files.slice(i, i + 5);
-        await appendLog(row.id, `Processing batch ${Math.floor(i/5)+1}/${Math.ceil(files.length/5)}: ${batch.map(f => f.name).join(", ")}`);
+      for (let i = 0; i < filesToProcess.length; i += 5) {
+        const batch = filesToProcess.slice(i, i + 5);
+        await appendLog(row.id, `Batch ${Math.floor(i/5)+1}/${Math.ceil(filesToProcess.length/5)}: ${batch.map(f => f.name).join(", ")}`);
         const batchResults = await Promise.allSettled(
           batch.map(f => processDriveFile(drive, f, queueRow))
         );
@@ -539,18 +551,40 @@ export async function GET(req: NextRequest) {
           const r = batchResults[j];
           if (r.status === "fulfilled") {
             totalChunks += r.value;
+            newlyDoneIds.push(batch[j].id);
             await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value} chunks`);
           } else {
-            await appendLog(row.id, `  ✗ ${batch[j].name} → failed: ${(r.reason as any)?.message ?? "unknown error"}`);
+            // Still mark as done so we don't retry failing files forever
+            newlyDoneIds.push(batch[j].id);
+            await appendLog(row.id, `  ✗ ${batch[j].name} → ${(r.reason as any)?.message ?? "unknown error"}`);
           }
         }
+        // Save progress after each mini-batch so a timeout doesn't lose work
+        const allDoneIds = [...processedIds, ...newlyDoneIds].join(",");
+        await pool.query(
+          `UPDATE material_queue SET processed_file_ids = $1, chunks_created = COALESCE(chunks_created, 0) + $2 WHERE id = $3`,
+          [allDoneIds, totalChunks, row.id]
+        ).catch(() => {});
+        totalChunks = 0; // reset so we don't double-count on next save
       }
 
-      await appendLog(row.id, `Done — ${files.length} files, ${totalChunks} chunks total`);
-      await pool.query(
-        `UPDATE material_queue SET status = 'done', processed_at = NOW(), files_found = $1, chunks_created = $2 WHERE id = $3`,
-        [files.length, totalChunks, row.id]
-      );
+      const allDoneIds = [...processedIds, ...newlyDoneIds].join(",");
+      const allFilesProcessed = allDoneIds.split(",").filter(Boolean).length >= files.length;
+
+      if (allFilesProcessed) {
+        await appendLog(row.id, `Done — all ${files.length} files processed`);
+        await pool.query(
+          `UPDATE material_queue SET status = 'done', processed_at = NOW(), files_found = $1, processed_file_ids = $2 WHERE id = $3`,
+          [files.length, allDoneIds, row.id]
+        );
+      } else {
+        const left = files.length - allDoneIds.split(",").filter(Boolean).length;
+        await appendLog(row.id, `Paused — ${left} files remaining, will continue next run`);
+        await pool.query(
+          `UPDATE material_queue SET status = 'pending', processed_file_ids = $1, files_found = $2 WHERE id = $3`,
+          [allDoneIds, files.length, row.id]
+        );
+      }
     })
   );
 

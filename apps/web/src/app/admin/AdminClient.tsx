@@ -261,7 +261,7 @@ export default function AdminClient({
       });
       if (!r.ok) throw new Error();
       setDriveStatus("ok");
-      setQueueItems(prev => [{ id: crypto.randomUUID(), url: driveUrl.trim(), university: driveUniversity || null, course_name: driveFaculty || null, submitted_at: new Date().toISOString(), status: "pending", email: null, files_found: null, chunks_created: null, error_msg: null, processed_at: null }, ...prev]);
+      setQueueItems(prev => [{ id: crypto.randomUUID(), url: driveUrl.trim(), university: driveUniversity || null, course_name: driveFaculty || null, submitted_at: new Date().toISOString(), status: "pending", email: null, files_found: null, chunks_created: null, error_msg: null, processed_at: null, log: null }, ...prev]);
       setDriveUrl(""); setDriveFaculty(""); setDriveNote("");
       setTimeout(() => setDriveStatus("idle"), 3000);
     } catch {
