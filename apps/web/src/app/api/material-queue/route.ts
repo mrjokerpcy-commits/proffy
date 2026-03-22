@@ -24,17 +24,18 @@ export async function POST(req: NextRequest) {
 
   // Fetch course to get university + name (needed for material_queue)
   const { rows } = await pool.query(
-    "SELECT name, university FROM courses WHERE id = $1 AND user_id = $2",
+    "SELECT name, university, course_number, professor FROM courses WHERE id = $1 AND user_id = $2",
     [courseId, session.user.id]
   );
   if (!rows[0]) return NextResponse.json({ error: "Course not found" }, { status: 404 });
 
-  const { name: courseName, university } = rows[0];
+  const { name: courseName, university, course_number, professor } = rows[0];
 
   await pool.query(
-    `INSERT INTO material_queue (university, course_name, url, url_type, submitted_by, note)
-     VALUES ($1, $2, $3, 'drive_folder', $4, $5)`,
-    [university, courseName, url.trim(), session.user.id, note?.slice(0, 500) ?? null]
+    `INSERT INTO material_queue (university, course_name, course_number, professor, url, url_type, submitted_by, note)
+     VALUES ($1, $2, $3, $4, $5, 'drive_folder', $6, $7)
+     ON CONFLICT DO NOTHING`,
+    [university, courseName, course_number ?? null, professor ?? null, url.trim(), session.user.id, note?.slice(0, 500) ?? null]
   );
 
   return NextResponse.json({ success: true });

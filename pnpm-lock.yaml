@@ -83,6 +83,9 @@ importers:
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      googleapis:
+        specifier: ^144.0.0
+        version: 144.0.0
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1

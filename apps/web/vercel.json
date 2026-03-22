@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/post-lecture",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/process-drive-queue",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
