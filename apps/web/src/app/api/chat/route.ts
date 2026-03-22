@@ -325,7 +325,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { message, university, course, professor, semester, history = [], sessionId, courseId, courseNumber } = body;
+  const { message, university, course, professor, semester, history = [], sessionId, courseId, courseNumber, btwResume, partialResponse } = body;
 
   // Input validation
   if (!message || typeof message !== "string") {
@@ -581,7 +581,7 @@ export async function POST(req: NextRequest) {
 
         const hasCourseContext = !!(university || course || courseId);
 
-        const systemPrompt = `You are Proffy, an AI study companion for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan, Ariel).
+        const systemPrompt = `${btwResume ? `[/btw RESUME] You were mid-response when the student injected new context via /btw. Your partial response so far is in the conversation history. Acknowledge the /btw naturally in one short sentence, then seamlessly continue your response from where you left off. Don't restart from scratch.\n\n` : ""}You are Proffy, an AI study companion for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan, Ariel).
 You are brilliant, warm, and direct — like a top student who aced this exact course and wants to help.
 
 ${hasCourseContext
@@ -837,10 +837,17 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
 
         if (compacted) send({ type: "compacted" });
 
-        let msgs: Anthropic.MessageParam[] = [
-          ...rawHistory,
-          { role: "user", content: message },
-        ];
+        // /btw resume: inject partial response + btw context so agent continues naturally
+        let msgs: Anthropic.MessageParam[] = btwResume && partialResponse
+          ? [
+              ...rawHistory,
+              { role: "assistant", content: partialResponse },
+              { role: "user", content: message }, // "[/btw: ctx]"
+            ]
+          : [
+              ...rawHistory,
+              { role: "user", content: message },
+            ];
 
         let fullAssistantText = "";
         let continueLoop = true;

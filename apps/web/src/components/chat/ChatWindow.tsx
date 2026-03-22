@@ -64,6 +64,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const btwBreakRef = useRef<string | null>(null);
   const noteToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardsToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const limitToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -86,13 +87,12 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const send = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
-    // Pro/Max: /btw while streaming — inject context without interrupting stream
+    // Pro/Max: /btw while streaming — queue for next paragraph break
     if (streaming && canTypeWhileStreaming && text.trimStart().startsWith("/btw")) {
       const context = text.trimStart().slice(4).trim();
       if (context) {
-        const btwMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text.trim() };
-        setMessages(prev => [...prev, btwMsg]);
-        setPendingBtw(prev => [...prev, context]);
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: text.trim() }]);
+        btwBreakRef.current = context; // will be picked up at next \n\n
         setInput("");
         if (textareaRef.current) textareaRef.current.style.height = "auto";
       }
@@ -164,8 +164,9 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
       const decoder = new TextDecoder();
       let content = "";
       let sources: Source[] = [];
+      let btwTriggered = false;
 
-      while (true) {
+      outer: while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const lines = decoder.decode(value).split("\n").filter(l => l.startsWith("data: "));
@@ -199,6 +200,17 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               content += data.text;
               setHasFirstResponse(true);
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, thinkingText: undefined } : m));
+              // Paragraph break detected — flush pending /btw
+              if (btwBreakRef.current && content.endsWith("\n\n")) {
+                const btwCtx = btwBreakRef.current;
+                btwBreakRef.current = null;
+                btwTriggered = true;
+                abortRef.current?.abort();
+                const snapshot = content;
+                const histSnapshot = [...messages];
+                setTimeout(() => resumeWithBtw(snapshot, btwCtx, histSnapshot), 80);
+                break outer;
+              }
             } else if (data.type === "replace_content") {
               content = data.content;
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content } : m));
@@ -215,9 +227,11 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         }
       }
 
-      setMessages(prev => prev.map(m =>
-        m.id === assistantId ? { ...m, content, streaming: false } : m
-      ));
+      if (!btwTriggered) {
+        setMessages(prev => prev.map(m =>
+          m.id === assistantId ? { ...m, content, streaming: false } : m
+        ));
+      }
     } catch (err: any) {
       if (err.name !== "AbortError") {
         setMessages(prev => prev.map(m =>
@@ -229,9 +243,81 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         ));
       }
     } finally {
-      setStreaming(false);
+      if (!btwTriggered) setStreaming(false);
     }
   }, [messages, course, sessionId, streaming]);
+
+  const resumeWithBtw = useCallback(async (partial: string, btwCtx: string, historyMessages: ChatMessage[]) => {
+    const assistantId = crypto.randomUUID();
+    setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "", streaming: true }]);
+    setStreaming(true);
+    abortRef.current = new AbortController();
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `[/btw: ${btwCtx}]`,
+          btwResume: true,
+          partialResponse: partial,
+          courseId: course?.id,
+          university: course?.university,
+          course: course?.name,
+          professor: course?.professor,
+          semester: course?.semester ?? null,
+          courseNumber: (course as any)?.course_number ?? null,
+          sessionId,
+          history: (() => {
+            const hist = historyMessages
+              .filter(m => m.id !== "greeting" && m.content)
+              .slice(-12)
+              .map(m => ({ role: m.role, content: m.content }));
+            while (hist.length > 0 && hist[0].role === "assistant") hist.shift();
+            return hist;
+          })(),
+        }),
+        signal: abortRef.current.signal,
+      });
+
+      if (!res.ok || !res.body) throw new Error("Stream failed");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let content = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const lines = decoder.decode(value).split("\n").filter(l => l.startsWith("data: "));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "token") {
+              content += data.text;
+              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, thinkingText: undefined } : m));
+            } else if (data.type === "done") {
+              if (data.usedMsgs !== undefined) setUsedMsgs(data.usedMsgs);
+              if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
+              router.refresh();
+            } else if (data.type === "course_created" || data.type === "profile_updated") {
+              router.refresh();
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, streaming: false } : m));
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: "Something went wrong.", streaming: false } : m));
+      } else {
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, streaming: false } : m));
+      }
+    } finally {
+      setStreaming(false);
+    }
+  }, [course, sessionId]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
