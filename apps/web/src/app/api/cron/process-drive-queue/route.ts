@@ -312,8 +312,8 @@ async function extractFromPdf(buffer: Buffer): Promise<string> {
   const workingBuffer = buffer.length > MAX_BYTES ? buffer.subarray(0, MAX_BYTES) : buffer;
   const base64 = workingBuffer.toString("base64");
   const res = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8000,
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 4096,
     messages: [{
       role: "user",
       content: [
@@ -330,8 +330,8 @@ async function extractFromImage(buffer: Buffer, mimeType: string): Promise<strin
   const safeMime = (["image/jpeg","image/png","image/webp","image/gif"].includes(mimeType)
     ? mimeType : "image/jpeg") as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
   const res = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8000,
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 4096,
     messages: [{
       role: "user",
       content: [
