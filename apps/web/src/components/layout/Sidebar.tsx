@@ -178,7 +178,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           </span>
         </span>
         <Link
-          href="/dashboard"
+          href={`/dashboard?new=${Date.now()}`}
           title="New chat"
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
