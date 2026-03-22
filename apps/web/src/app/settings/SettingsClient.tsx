@@ -93,11 +93,25 @@ export default function SettingsClient({ user }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   async function deleteAccount() {
+    if (!deletePassword.trim()) { setDeleteError("Enter your password to confirm."); return; }
     setDeleting(true);
-    await fetch("/api/account", { method: "DELETE" }).catch(() => {});
+    setDeleteError("");
+    const res = await fetch("/api/account", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: deletePassword }),
+    }).catch(() => null);
+    if (!res?.ok) {
+      const data = await res?.json().catch(() => ({}));
+      setDeleteError(data?.error ?? "Incorrect password. Try again.");
+      setDeleting(false);
+      return;
+    }
     await signOut({ redirect: false });
     router.push("/login");
   }
@@ -332,18 +346,38 @@ export default function SettingsClient({ user }: Props) {
                 Delete account
               </button>
             ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Are you sure?</span>
-                <button onClick={() => setDeleteConfirm(false)}
-                  style={{ padding: "6px 12px", borderRadius: "7px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer" }}>
-                  Cancel
-                </button>
-                <button
-                  onClick={deleteAccount}
-                  disabled={deleting}
-                  style={{ padding: "6px 12px", borderRadius: "7px", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", color: "var(--red)", fontSize: "12px", cursor: deleting ? "not-allowed" : "pointer", fontWeight: 600, opacity: deleting ? 0.6 : 1 }}>
-                  {deleting ? "Deleting…" : "Yes, delete"}
-                </button>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>
+                  Enter your password to confirm permanent deletion.
+                </p>
+                <input
+                  type="password"
+                  placeholder="Your password"
+                  value={deletePassword}
+                  onChange={e => { setDeletePassword(e.target.value); setDeleteError(""); }}
+                  onKeyDown={e => e.key === "Enter" && deleteAccount()}
+                  style={{
+                    padding: "8px 12px", borderRadius: "7px", fontSize: "13px",
+                    border: `1px solid ${deleteError ? "rgba(248,113,113,0.5)" : "var(--border)"}`,
+                    background: "var(--bg-elevated)", color: "var(--text-primary)",
+                    outline: "none", fontFamily: "inherit", maxWidth: "260px",
+                  }}
+                />
+                {deleteError && (
+                  <p style={{ fontSize: "11px", color: "var(--red)", margin: 0 }}>{deleteError}</p>
+                )}
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button onClick={() => { setDeleteConfirm(false); setDeletePassword(""); setDeleteError(""); }}
+                    style={{ padding: "6px 12px", borderRadius: "7px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={deleteAccount}
+                    disabled={deleting || !deletePassword.trim()}
+                    style={{ padding: "6px 14px", borderRadius: "7px", background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", color: "var(--red)", fontSize: "12px", cursor: deleting || !deletePassword.trim() ? "not-allowed" : "pointer", fontWeight: 600, opacity: deleting || !deletePassword.trim() ? 0.5 : 1 }}>
+                    {deleting ? "Deleting…" : "Yes, delete everything"}
+                  </button>
+                </div>
               </div>
             )}
           </div>

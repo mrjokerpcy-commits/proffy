@@ -2,6 +2,7 @@
 export default function OpenUploadButton() {
   return (
     <button
+      data-tour="upload-btn"
       onClick={() => window.dispatchEvent(new Event("proffy:open-upload"))}
       style={{
         display: "flex", alignItems: "center", gap: "7px",

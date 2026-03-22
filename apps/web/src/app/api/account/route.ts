@@ -1,18 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Pool } from "pg";
+import bcrypt from "bcryptjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const uid = session.user.id;
+
+  // Verify password before deleting
+  let body: { password?: string } = {};
+  try { body = await req.json(); } catch { /* ignore */ }
+  if (!body.password) return NextResponse.json({ error: "Password required." }, { status: 400 });
+
+  const { rows: userRows } = await pool.query("SELECT password_hash FROM users WHERE id = $1", [uid]);
+  const hash = userRows[0]?.password_hash;
+  if (!hash) return NextResponse.json({ error: "Cannot verify password for this account." }, { status: 400 });
+  const valid = await bcrypt.compare(body.password, hash);
+  if (!valid) return NextResponse.json({ error: "Incorrect password." }, { status: 403 });
 
   // Delete all user data in dependency order
   await pool.query("DELETE FROM chat_messages WHERE session_id IN (SELECT id FROM chat_sessions WHERE user_id = $1)", [uid]);

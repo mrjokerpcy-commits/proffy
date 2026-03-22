@@ -203,7 +203,17 @@ export default function HelpClient() {
             </button>
           ))}
 
-          <div style={{ marginTop: "auto", paddingTop: "20px" }}>
+          <div style={{ marginTop: "auto", paddingTop: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <button
+              onClick={() => window.dispatchEvent(new Event("proffy:start-tour"))}
+              style={{
+                width: "100%", padding: "8px 10px", borderRadius: "8px",
+                background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.2)",
+                color: "var(--purple)", fontSize: "12px", fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              Take the tour →
+            </button>
             <div style={{
               padding: "14px", borderRadius: "10px",
               background: "rgba(79,142,247,0.06)", border: "1px solid rgba(79,142,247,0.15)",

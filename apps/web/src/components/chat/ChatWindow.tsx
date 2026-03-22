@@ -608,6 +608,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         }}>
           <textarea
             ref={textareaRef}
+            data-tour="chat-input"
             value={input}
             onChange={e => { setInput(e.target.value); autoResize(); }}
             onKeyDown={handleKeyDown}

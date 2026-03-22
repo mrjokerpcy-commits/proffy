@@ -196,7 +196,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       </div>
 
       {/* ── Courses list ── */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "0.5rem 0.75rem 0.25rem" }}>
+      <div data-tour="sidebar-courses" style={{ flex: 1, overflowY: "auto", padding: "0.5rem 0.75rem 0.25rem" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.25rem 0.5rem 0.625rem" }}>
           <span style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
             Courses
@@ -297,6 +297,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
 
         {/* Flashcards */}
         <button
+          data-tour="sidebar-flashcards"
           onClick={onOpenFlashcards}
           className={fcDue > 0 ? "fc-due-widget" : "sidebar-item"}
           style={{
@@ -332,6 +333,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
 
         {/* Notes */}
         <button
+          data-tour="sidebar-notes"
           onClick={onOpenNotes}
           className="sidebar-item"
           style={{
