@@ -207,14 +207,12 @@ export default async function HomePage() {
       <section className="landing-hero" style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
 
         {/* Badge */}
-        <div
-          style={{
-            display: "inline-flex", alignItems: "center", gap: "0.5rem",
-            padding: "0.5rem 1.1rem", borderRadius: "999px",
-            fontSize: "0.85rem", fontWeight: 500, marginBottom: "2.5rem",
-            background: "rgba(79,142,247,0.08)", border: "1px solid rgba(79,142,247,0.2)", color: "var(--blue-hover)",
-          }}
-        >
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: "0.5rem",
+          padding: "0.5rem 1.1rem", borderRadius: "999px",
+          fontSize: "0.85rem", fontWeight: 500, marginBottom: "2.5rem",
+          background: "rgba(79,142,247,0.08)", border: "1px solid rgba(79,142,247,0.2)", color: "var(--blue-hover)",
+        }}>
           <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#60a5fa", display: "inline-block" }} />
           TAU &middot; Technion &middot; HUJI &middot; BGU &middot; Bar Ilan &middot; Ariel
         </div>
@@ -432,20 +430,62 @@ export default async function HomePage() {
       </section>
 
       {/* ── Social proof bar ── */}
-      <div
-        style={{ position: "relative", zIndex: 10, padding: "1.5rem 2rem", overflow: "hidden", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "rgba(13,13,20,0.6)" }}
-      >
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "2.5rem", fontSize: "0.95rem", color: "var(--text-muted)" }}>
+      <div style={{
+        position: "relative", zIndex: 10, overflow: "hidden",
+        borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
+        background: "rgba(13,13,20,0.7)",
+      }}>
+        <div style={{
+          display: "flex", flexWrap: "wrap", alignItems: "stretch",
+          justifyContent: "center", maxWidth: "72rem", margin: "0 auto",
+        }}>
           {[
-            { icon: "🎓", label: "6 Israeli universities" },
-            { icon: "⚡", label: "Real-time streaming" },
-            { icon: "🇮🇱", label: "Built for Israeli exams" },
-            { icon: "🔒", label: "Your data stays private" },
-            { icon: "🃏", label: "Auto-generated flashcards" },
-          ].map(s => (
-            <div key={s.label} className="flex items-center gap-2">
-              <span>{s.icon}</span>
-              <span>{s.label}</span>
+            { label: "6 Israeli universities", sub: "TAU · Technion · HUJI · BGU · Bar Ilan · Ariel", color: "#4f8ef7",
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+              )
+            },
+            { label: "Real-time answers", sub: "Streamed directly from your slides", color: "#a78bfa",
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+              )
+            },
+            { label: "Built for Israeli exams", sub: "Moed A, Moed B, Moed C patterns", color: "#34d399",
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+              )
+            },
+            { label: "Your data stays private", sub: "Never shared with other students", color: "#fbbf24",
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+              )
+            },
+          ].map((s, i) => (
+            <div key={s.label} style={{
+              flex: "1 1 200px", display: "flex", alignItems: "center", gap: "14px",
+              padding: "1.5rem 2rem",
+              borderRight: i < 3 ? "1px solid var(--border)" : "none",
+            }}>
+              <div style={{
+                width: "40px", height: "40px", borderRadius: "10px", flexShrink: 0,
+                background: s.color + "14", border: `1px solid ${s.color}30`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: s.color,
+              }}>
+                {s.icon}
+              </div>
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "2px" }}>{s.label}</div>
+                <div style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.4 }}>{s.sub}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -453,73 +493,144 @@ export default async function HomePage() {
 
       {/* ── How it works ── */}
       <section className="relative z-10" style={{ padding: "6rem 1.5rem" }}>
-        <div style={{ maxWidth: "72rem", margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-          <div
-            style={{
-              display: "inline-block", fontSize: "0.8rem", fontWeight: 700,
-              padding: "0.4rem 1rem", borderRadius: "999px", marginBottom: "1.25rem",
-              letterSpacing: "0.1em", textTransform: "uppercase",
-              background: "rgba(79,142,247,0.08)", color: "var(--blue-hover)", border: "1px solid rgba(79,142,247,0.15)",
-            }}
-          >
-            How it works
-          </div>
-          <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15 }}>
-            From slides to exam-ready{" "}
-            <span className="gradient-text-blue">in minutes</span>
-          </h2>
-        </div>
-
-        <div className="landing-grid-3" style={{ gap: "2rem" }}>
-          {[
-            {
-              step: "01",
-              title: "Upload your material",
-              desc: "Drag in lecture slides, PDFs, past exams, or even a Google Drive link. The AI processes and indexes everything.",
-              color: "var(--blue)",
-              glow: "rgba(79,142,247,0.15)",
-              illustration: <UploadIllustration />,
-            },
-            {
-              step: "02",
-              title: "Ask anything",
-              desc: "Get answers grounded in your specific slides. Every response cites the exact source, no hallucinated facts.",
-              color: "var(--purple)",
-              glow: "rgba(167,139,250,0.12)",
-              illustration: <AskIllustration />,
-            },
-            {
-              step: "03",
-              title: "Ace your exam",
-              desc: "Flashcards review on schedule, a study plan counts down to exam day, and professor patterns tell you exactly what to expect.",
-              color: "var(--green)",
-              glow: "rgba(52,211,153,0.1)",
-              illustration: <StudyIllustration />,
-            },
-          ].map(s => (
-            <div
-              key={s.step}
-              className="relative rounded-2xl overflow-hidden flex flex-col"
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
-            >
-              {/* Illustration area */}
-              <div
-                className="w-full h-44 flex items-center justify-center p-4 overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at center, ${s.glow} 0%, transparent 70%)`, borderBottom: "1px solid var(--border)" }}
-              >
-                <div className="w-40 h-36">{s.illustration}</div>
-              </div>
-
-              {/* Content */}
-              <div style={{ padding: "1.75rem", flex: 1 }}>
-                <div style={{ fontFamily: "monospace", fontSize: "0.8rem", fontWeight: 700, marginBottom: "0.75rem", color: s.color }}>{s.step}</div>
-                <h3 style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.6rem", color: "var(--text-primary)" }}>{s.title}</h3>
-                <p style={{ fontSize: "0.95rem", lineHeight: 1.65, color: "var(--text-muted)" }}>{s.desc}</p>
-              </div>
+        <div style={{ maxWidth: "76rem", margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "5rem" }}>
+            <div style={{
+              display: "inline-block", fontSize: "0.75rem", fontWeight: 700,
+              padding: "0.35rem 1rem", borderRadius: "999px", marginBottom: "1.25rem",
+              letterSpacing: "0.12em", textTransform: "uppercase" as const,
+              background: "rgba(79,142,247,0.08)", color: "var(--blue-hover)", border: "1px solid rgba(79,142,247,0.18)",
+            }}>
+              How it works
             </div>
-          ))}
-        </div>
+            <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15 }}>
+              From slides to exam-ready{" "}
+              <span className="gradient-text-blue">in minutes</span>
+            </h2>
+          </div>
+
+          {/* Steps */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+            {[
+              {
+                step: "01", num: 1,
+                title: "Upload your material",
+                desc: "Drag in lecture slides, PDFs, past exams, or a Google Drive link. Proffy processes and indexes everything so it knows your course inside out.",
+                color: "#4f8ef7", glow: "rgba(79,142,247,0.12)",
+                tag: "Your slides. Your language.",
+                illustration: <UploadIllustration />,
+              },
+              {
+                step: "02", num: 2,
+                title: "Ask anything, get sourced answers",
+                desc: "Ask questions in plain language and get answers grounded in your specific slides. Every response cites the exact slide or page, no hallucinated facts.",
+                color: "#a78bfa", glow: "rgba(167,139,250,0.12)",
+                tag: "Zero hallucinations.",
+                illustration: <AskIllustration />,
+              },
+              {
+                step: "03", num: 3,
+                title: "Ace your exam",
+                desc: "Flashcards auto-scheduled with spaced repetition, a countdown to exam day, and professor pattern analysis that tells you exactly what to expect.",
+                color: "#34d399", glow: "rgba(52,211,153,0.1)",
+                tag: "Spaced repetition built in.",
+                illustration: <StudyIllustration />,
+              },
+            ].map((s, i) => {
+              const isEven = i % 2 === 1;
+              return (
+                <div key={s.step} style={{ position: "relative" }}>
+                  {/* Connector line to next step */}
+                  {i < 2 && (
+                    <div style={{
+                      position: "absolute", bottom: 0, left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "1px", height: "48px",
+                      background: `linear-gradient(to bottom, ${s.color}44, transparent)`,
+                      zIndex: 2,
+                    }} />
+                  )}
+
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "1fr 1fr",
+                    gap: "0", alignItems: "stretch",
+                    marginBottom: i < 2 ? "48px" : 0,
+                  }} className="how-it-works-row">
+                    {/* Illustration side */}
+                    <div style={{
+                      order: isEven ? 2 : 1,
+                      background: `radial-gradient(ellipse at ${isEven ? "30%" : "70%"} 50%, ${s.glow} 0%, transparent 65%)`,
+                      borderRadius: isEven ? "0 20px 20px 0" : "20px 0 0 20px",
+                      border: `1px solid ${s.color}20`,
+                      borderRight: isEven ? `1px solid ${s.color}20` : "none",
+                      borderLeft: isEven ? "none" : `1px solid ${s.color}20`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: "3rem 2rem",
+                      minHeight: "280px",
+                      position: "relative", overflow: "hidden",
+                    }}>
+                      {/* Step number as large background */}
+                      <div style={{
+                        position: "absolute",
+                        top: "50%", left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        fontSize: "9rem", fontWeight: 900,
+                        color: s.color, opacity: 0.04,
+                        fontFamily: "monospace",
+                        lineHeight: 1, userSelect: "none",
+                        letterSpacing: "-0.04em",
+                      }}>{s.num}</div>
+                      <div style={{ width: "180px", height: "150px", position: "relative", zIndex: 1 }}>
+                        {s.illustration}
+                      </div>
+                    </div>
+
+                    {/* Content side */}
+                    <div style={{
+                      order: isEven ? 1 : 2,
+                      background: "var(--bg-surface)",
+                      borderRadius: isEven ? "20px 0 0 20px" : "0 20px 20px 0",
+                      border: `1px solid ${s.color}20`,
+                      borderRight: isEven ? "none" : `1px solid ${s.color}20`,
+                      borderLeft: isEven ? `1px solid ${s.color}20` : "none",
+                      padding: "3rem 3rem",
+                      display: "flex", flexDirection: "column", justifyContent: "center",
+                    }}>
+                      {/* Step badge */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "1.5rem" }}>
+                        <div style={{
+                          width: "42px", height: "42px", borderRadius: "12px",
+                          background: s.color + "18",
+                          border: `1px solid ${s.color}44`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontFamily: "monospace", fontWeight: 800, fontSize: "13px", color: s.color,
+                          flexShrink: 0,
+                        }}>{s.step}</div>
+                        <div style={{
+                          fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em",
+                          textTransform: "uppercase" as const, color: s.color,
+                          background: s.color + "12", border: `1px solid ${s.color}25`,
+                          borderRadius: "6px", padding: "3px 10px",
+                        }}>{s.tag}</div>
+                      </div>
+
+                      <h3 style={{
+                        fontSize: "clamp(1.3rem, 2.5vw, 1.7rem)",
+                        fontWeight: 800, letterSpacing: "-0.025em",
+                        color: "var(--text-primary)", lineHeight: 1.2,
+                        marginBottom: "1rem",
+                      }}>{s.title}</h3>
+
+                      <p style={{
+                        fontSize: "1rem", lineHeight: 1.7,
+                        color: "var(--text-muted)", maxWidth: "38ch",
+                      }}>{s.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -532,7 +643,7 @@ export default async function HomePage() {
             <span className="gradient-text-blue">A tutor that knows your course.</span>
           </h2>
           <p style={{ fontSize: "1.15rem", maxWidth: "36rem", margin: "0 auto", color: "var(--text-secondary)", lineHeight: 1.65 }}>
-            Built specifically for Israeli university students, in Hebrew and English.
+            Built specifically for Israeli university students.
           </p>
         </div>
 

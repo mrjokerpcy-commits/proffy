@@ -222,6 +222,34 @@ html, body { overflow-x: hidden; }
 .landing-hero { padding: 7rem 2rem 5rem; }
 .landing-section { padding: 6rem 1.5rem; }
 
+/* How-it-works alternating layout */
+.how-it-works-row {
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 768px) {
+  .how-it-works-row {
+    grid-template-columns: 1fr !important;
+  }
+  .how-it-works-row > div {
+    order: unset !important;
+    border-radius: 20px !important;
+    border-left: 1px solid rgba(255,255,255,0.06) !important;
+    border-right: 1px solid rgba(255,255,255,0.06) !important;
+    min-height: auto !important;
+  }
+  .how-it-works-row > div:first-child {
+    border-bottom: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 2rem !important;
+    min-height: 180px !important;
+  }
+  .how-it-works-row > div:last-child {
+    border-top: none !important;
+    border-radius: 0 0 20px 20px !important;
+    padding: 1.5rem !important;
+  }
+}
+
 @media (max-width: 768px) {
   .landing-grid-3 { grid-template-columns: 1fr; gap: 1rem; }
   .landing-grid-3-2 { grid-template-columns: 1fr; gap: 0.875rem; }
