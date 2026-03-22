@@ -143,6 +143,19 @@ export default function UploadClient({ courses, userPlan = "free", serviceAccoun
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: "2rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1rem" }}>
+          <a href="/" style={{
+            display: "inline-flex", alignItems: "center", gap: "5px",
+            fontSize: "13px", color: "var(--text-muted)", textDecoration: "none",
+            padding: "6px 12px", borderRadius: "8px", border: "1px solid var(--border)",
+            background: "var(--bg-elevated)", transition: "color 0.15s",
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+            Back to chat
+          </a>
+        </div>
         <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.5rem" }}>
           Add course material
         </h1>
