@@ -64,31 +64,33 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
         />
       </div>
 
-      {/* ── Sidebar toggle ── */}
-      <button
-        onClick={() => setSidebarOpen(v => !v)}
-        style={{
-          position: "absolute",
-          left: sidebarOpen && !isMobile ? "232px" : "0px",
-          top: "50%", transform: "translateY(-50%)",
-          zIndex: 20, transition: "left 0.2s cubic-bezier(0.4,0,0.2,1)",
-          width: "18px", height: "40px",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          borderRadius: "0 6px 6px 0",
-          background: "var(--bg-elevated)",
-          border: "1px solid var(--border)",
-          borderLeft: sidebarOpen && !isMobile ? "1px solid var(--border)" : "none",
-          cursor: "pointer", color: "var(--text-muted)",
-        }}
-      >
-        <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          {sidebarOpen && !isMobile ? (
-            <><path d="M5 1L1 6L5 11"/></>
-          ) : (
-            <><path d="M1 1L5 6L1 11"/></>
-          )}
-        </svg>
-      </button>
+      {/* ── Sidebar toggle (desktop only) ── */}
+      {!isMobile && (
+        <button
+          onClick={() => setSidebarOpen(v => !v)}
+          style={{
+            position: "absolute",
+            left: sidebarOpen ? "232px" : "0px",
+            top: "50%", transform: "translateY(-50%)",
+            zIndex: 20, transition: "left 0.2s cubic-bezier(0.4,0,0.2,1)",
+            width: "18px", height: "40px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            borderRadius: "0 6px 6px 0",
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border)",
+            borderLeft: sidebarOpen ? "1px solid var(--border)" : "none",
+            cursor: "pointer", color: "var(--text-muted)",
+          }}
+        >
+          <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            {sidebarOpen ? (
+              <><path d="M5 1L1 6L5 11"/></>
+            ) : (
+              <><path d="M1 1L5 6L1 11"/></>
+            )}
+          </svg>
+        </button>
+      )}
 
       {/* ── Main content ── */}
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
@@ -99,6 +101,21 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
           borderBottom: "1px solid var(--border)",
           background: "var(--bg-surface)",
         }}>
+          {/* Hamburger on mobile */}
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(v => !v)}
+              style={{
+                marginRight: "auto", background: "none", border: "none",
+                cursor: "pointer", color: "var(--text-muted)", padding: "4px 2px",
+                display: "flex", alignItems: "center",
+              }}
+            >
+              <svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M1 1h16M1 7h16M1 13h16"/>
+              </svg>
+            </button>
+          )}
           <TimerButton />
           <CalcButton />
           <CalendarButton />

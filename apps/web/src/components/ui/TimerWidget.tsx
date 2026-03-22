@@ -69,6 +69,13 @@ export default function TimerWidget({ isOpen, onOpenChange }: TimerWidgetProps =
   const controlled = isOpen !== undefined;
   const open = controlled ? isOpen : internalOpen;
   function setOpen(v: boolean) { controlled ? onOpenChange?.(v) : setInternalOpen(v); }
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [tab, setTab]           = useState<"timer" | "exam">("timer");
   const [timerMode, setTimerMode] = useState<"pomodoro" | "session">("pomodoro");
 
@@ -186,8 +193,11 @@ export default function TimerWidget({ isOpen, onOpenChange }: TimerWidgetProps =
             exit={{ opacity: 0, scale: 0.9, y: 8 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              position: "fixed", bottom: "80px", left: "268px", zIndex: 9000,
-              width: "292px",
+              position: "fixed", bottom: "80px",
+              ...(isMobile
+                ? { left: "8px", right: "8px", width: "auto" }
+                : { left: "268px", width: "292px" }),
+              zIndex: 9000,
               background: "rgba(14,16,28,0.97)",
               border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: "18px",

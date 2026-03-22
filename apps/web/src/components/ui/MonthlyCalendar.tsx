@@ -61,6 +61,13 @@ export default function MonthlyCalendar({ isOpen, onOpenChange }: Props) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlled ? isOpen! : internalOpen;
   function setOpen(v: boolean) { controlled ? onOpenChange?.(v) : setInternalOpen(v); }
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -205,20 +212,22 @@ export default function MonthlyCalendar({ isOpen, onOpenChange }: Props) {
           position: "fixed", inset: 0, zIndex: 800,
           background: "rgba(0,0,0,0.65)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "20px",
+          padding: isMobile ? "0" : "20px",
         }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 20 }}
+          initial={{ opacity: 0, scale: isMobile ? 1 : 0.94, y: isMobile ? "100%" : 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: 10 }}
+          exit={{ opacity: 0, scale: isMobile ? 1 : 0.94, y: isMobile ? "100%" : 10 }}
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           onClick={e => e.stopPropagation()}
           style={{
-            width: "100%", maxWidth: "860px", height: "min(90vh, 640px)",
+            width: "100%",
+            ...(isMobile
+              ? { maxWidth: "100%", height: "100dvh", borderRadius: 0 }
+              : { maxWidth: "860px", height: "min(90vh, 640px)", borderRadius: "20px" }),
             background: "rgba(12,14,26,0.98)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "20px",
+            border: isMobile ? "none" : "1px solid rgba(255,255,255,0.08)",
             boxShadow: "0 24px 80px rgba(0,0,0,0.8)",
             backdropFilter: "blur(20px)",
             display: "flex", flexDirection: "column",
@@ -239,15 +248,17 @@ export default function MonthlyCalendar({ isOpen, onOpenChange }: Props) {
               </button>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              {/* Legend */}
-              <div style={{ display: "flex", gap: "10px" }}>
-                {[["#f87171","Exam"],["#4f8ef7","Lecture"],["#34d399","Tutorial"],["#f59e0b","Goal"],["#a78bfa","Task"]].map(([c,l]) => (
-                  <div key={l} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                    <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: c }} />
-                    <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>{l}</span>
-                  </div>
-                ))}
-              </div>
+              {/* Legend — hidden on mobile */}
+              {!isMobile && (
+                <div style={{ display: "flex", gap: "10px" }}>
+                  {[["#f87171","Exam"],["#4f8ef7","Lecture"],["#34d399","Tutorial"],["#f59e0b","Goal"],["#a78bfa","Task"]].map(([c,l]) => (
+                    <div key={l} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: c }} />
+                      <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>{l}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <button onClick={() => setOpen(false)} style={{ ...navBtn, marginLeft: "4px" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
@@ -255,10 +266,10 @@ export default function MonthlyCalendar({ isOpen, onOpenChange }: Props) {
           </div>
 
           {/* Body: calendar + day panel */}
-          <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: isMobile ? "column" : "row", overflow: "hidden" }}>
 
             {/* Month grid */}
-            <div style={{ flex: 1, padding: "12px 16px", display: "flex", flexDirection: "column", minWidth: 0 }}>
+            <div style={{ flex: isMobile ? "none" : 1, padding: "12px 16px", display: "flex", flexDirection: "column", minWidth: 0 }}>
               {/* Day headers */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", marginBottom: "4px" }}>
                 {DAY_NAMES.map(d => (
@@ -319,10 +330,10 @@ export default function MonthlyCalendar({ isOpen, onOpenChange }: Props) {
 
             {/* Day detail panel */}
             <div style={{
-              width: "280px", flexShrink: 0,
-              borderLeft: "1px solid rgba(255,255,255,0.07)",
+              ...(isMobile
+                ? { flex: 1, borderTop: "1px solid rgba(255,255,255,0.07)", overflow: "auto" }
+                : { width: "280px", flexShrink: 0, borderLeft: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }),
               display: "flex", flexDirection: "column",
-              overflow: "hidden",
             }}>
               {selectedDay === null ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, flexDirection: "column", gap: "8px", padding: "20px" }}>
