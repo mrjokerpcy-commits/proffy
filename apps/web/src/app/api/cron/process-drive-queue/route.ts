@@ -125,19 +125,21 @@ async function inferCourseFromPath(folderPath: string[], filename: string): Prom
 // ── Download a Drive file as Buffer ─────────────────────────────────────────
 async function downloadDriveFile(drive: ReturnType<typeof google.drive>, fileId: string, mimeType: string): Promise<{ buffer: Buffer; exportedMime: string }> {
   // Google Workspace files must be exported
+  // Google Slides → PDF (we have working PDF extractor via Claude Haiku)
   if (mimeType === "application/vnd.google-apps.presentation") {
     const res = await drive.files.export(
-      { fileId, mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
+      { fileId, mimeType: "application/pdf" },
       { responseType: "arraybuffer" }
     );
-    return { buffer: Buffer.from(res.data as ArrayBuffer), exportedMime: "application/vnd.openxmlformats-officedocument.presentationml.presentation" };
+    return { buffer: Buffer.from(res.data as ArrayBuffer), exportedMime: "application/pdf" };
   }
+  // Google Docs → plain text (no external service needed, preserves Hebrew perfectly)
   if (mimeType === "application/vnd.google-apps.document") {
     const res = await drive.files.export(
-      { fileId, mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      { fileId, mimeType: "text/plain" },
       { responseType: "arraybuffer" }
     );
-    return { buffer: Buffer.from(res.data as ArrayBuffer), exportedMime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
+    return { buffer: Buffer.from(res.data as ArrayBuffer), exportedMime: "text/plain" };
   }
   // Regular files
   const res = await drive.files.get({ fileId, alt: "media" }, { responseType: "arraybuffer" });
@@ -336,31 +338,34 @@ async function processDriveFile(
     : null;
   const effectiveCourseName = inferredCourse ?? queueRow.course_name;
   const fullPath = [...file.folderPath, file.name].join(" / ");
-  const effectiveMime = file.mimeType === "application/vnd.google-apps.presentation"
-    ? "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    : file.mimeType === "application/vnd.google-apps.document"
-    ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    : file.mimeType;
-
   const fileKind = ALLOWED_MIME_DRIVE[file.mimeType];
   if (!fileKind) return 0; // unsupported type, skip
 
   const { buffer, exportedMime } = await downloadDriveFile(drive, file.id, file.mimeType);
   if (buffer.length > 25 * 1024 * 1024) return 0; // skip files > 25MB
 
+  // Determine effective kind after export
+  // Google Slides → exported as PDF; Google Docs → exported as text/plain
+  const effectiveKind: typeof fileKind =
+    exportedMime === "application/pdf" ? "pdf" :
+    exportedMime === "text/plain"      ? "text" :
+    fileKind;
+
   let rawChunks: Chunk[] = [];
 
-  if (fileKind === "text") {
+  if (effectiveKind === "text") {
     rawChunks = smartChunk(buffer.toString("utf-8"));
-  } else if (fileKind === "image") {
-    const text = await extractFromImage(buffer, effectiveMime);
+  } else if (effectiveKind === "image") {
+    const text = await extractFromImage(buffer, exportedMime as "image/jpeg" | "image/png" | "image/webp");
     rawChunks = smartChunk(text);
-  } else if (fileKind === "office") {
+  } else if (effectiveKind === "office") {
+    // Fallback for .pptx/.docx uploaded directly (not Google Workspace) — try PPTX extractor
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "pptx";
     const officeChunks = await extractFromOffice(buffer, `${file.id}.${ext}`);
     if (officeChunks) {
       rawChunks = officeChunks;
     } else {
+      // Last resort: convert to image and OCR
       const text = await extractFromImage(buffer, "image/png");
       rawChunks = smartChunk(text);
     }
@@ -411,6 +416,15 @@ export async function GET(req: NextRequest) {
     console.error("Schema migration error:", err);
     // Continue anyway — table might already be correct
   }
+
+  // Unstick items that have been 'processing' for > 20 minutes (cron timeout recovery)
+  await pool.query(`
+    UPDATE material_queue
+    SET status = 'pending'
+    WHERE status = 'processing'
+      AND (processed_at IS NULL OR processed_at < NOW() - INTERVAL '20 minutes')
+      AND created_at < NOW() - INTERVAL '20 minutes'
+  `).catch(() => {});
 
   // Claim up to 3 pending items at once
   const { rows: pending } = await pool.query(`
