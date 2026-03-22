@@ -78,7 +78,7 @@ async function listDriveFiles(
   subfolderName: string | null = null,
   depth = 0,
 ): Promise<{ id: string; name: string; mimeType: string; size: string; courseName: string | null }[]> {
-  if (depth > 3) return []; // cap recursion depth
+  if (depth > 5) return []; // cap recursion depth
   const files: { id: string; name: string; mimeType: string; size: string; courseName: string | null }[] = [];
   let pageToken: string | undefined;
   do {
@@ -91,8 +91,10 @@ async function listDriveFiles(
     for (const f of res.data.files ?? []) {
       if (!f.id || !f.name || !f.mimeType) continue;
       if (f.mimeType === "application/vnd.google-apps.folder") {
-        // Recurse — the folder name becomes the course context for its files
-        const nested = await listDriveFiles(drive, f.id, f.name, depth + 1);
+        // Year/semester folders should not override the course name
+        const isYearFolder = /^(year|שנה|semester|seme|year\s*\d|שנה\s*[א-ת]|\d+\s*(st|nd|rd|th)\s*year)/i.test(f.name);
+        const nextCourse = isYearFolder ? subfolderName : f.name;
+        const nested = await listDriveFiles(drive, f.id, nextCourse, depth + 1);
         files.push(...nested);
       } else {
         files.push({ id: f.id, name: f.name, mimeType: f.mimeType, size: f.size ?? "0", courseName: subfolderName });
