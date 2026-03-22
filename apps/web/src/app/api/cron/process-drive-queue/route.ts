@@ -91,6 +91,7 @@ async function listDriveFiles(
   folderId: string,
   pathSoFar: string[] = [],
   depth = 0,
+  onProgress?: (count: number) => void,
 ): Promise<{ id: string; name: string; mimeType: string; size: string; folderPath: string[] }[]> {
   if (depth > 6) return [];
   const files: { id: string; name: string; mimeType: string; size: string; folderPath: string[] }[] = [];
@@ -109,6 +110,7 @@ async function listDriveFiles(
         subfolders.push({ id: f.id, name: f.name });
       } else {
         files.push({ id: f.id, name: f.name, mimeType: f.mimeType, size: f.size ?? "0", folderPath: pathSoFar });
+        onProgress?.(files.length);
       }
     }
     pageToken = res.data.nextPageToken ?? undefined;
@@ -118,7 +120,7 @@ async function listDriveFiles(
   for (let i = 0; i < subfolders.length; i += 5) {
     const batch = subfolders.slice(i, i + 5);
     const results = await Promise.all(
-      batch.map(f => listDriveFiles(drive, f.id, [...pathSoFar, f.name], depth + 1).catch(() => []))
+      batch.map(f => listDriveFiles(drive, f.id, [...pathSoFar, f.name], depth + 1, onProgress).catch(() => []))
     );
     for (const nested of results) files.push(...nested);
   }
@@ -526,8 +528,15 @@ export async function GET(req: NextRequest) {
       let files: Awaited<ReturnType<typeof listDriveFiles>> = [];
       try {
         await appendLog(row.id, `Listing files in Drive folder...`);
+        let lastLoggedCount = 0;
+        const onProgress = (count: number) => {
+          if (count - lastLoggedCount >= 200) {
+            lastLoggedCount = count;
+            appendLog(row.id, `  ...found ${count} files so far`).catch(() => {});
+          }
+        };
         files = await Promise.race([
-          listDriveFiles(drive, folderId),
+          listDriveFiles(drive, folderId, [], 0, onProgress),
           new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error("Drive listing timed out after 150s — folder may be too large or service account lacks access")), 150_000)
           ),
