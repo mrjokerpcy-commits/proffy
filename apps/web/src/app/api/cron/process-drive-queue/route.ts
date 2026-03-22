@@ -131,29 +131,49 @@ async function listDriveFiles(
 const GENERIC_FOLDER_NAMES = new Set([
   "uploads", "upload", "תיקיות העלאות", "תיקיית העלאות", "shared", "files",
   "documents", "material", "materials", "course material", "חומרי לימוד",
-  "general", "misc", "other", "שונות", "כללי", "downloads",
+  "general", "misc", "other", "שונות", "כללי", "downloads", "all courses",
+  "past exams", "מבחנים", "exams", "tests", "quizzes", "homework", "hw",
+  "lectures", "tutorials", "תרגולים", "הרצאות", "notes", "סיכומים",
 ]);
 
 // ── Use AI to extract course name from folder path + filename ─────────────────
 async function inferCourseFromPath(folderPath: string[], filename: string): Promise<string | null> {
-  // Strip generic folder names from the path
-  const meaningfulPath = folderPath.filter(p => !GENERIC_FOLDER_NAMES.has(p.trim().toLowerCase()) && !GENERIC_FOLDER_NAMES.has(p.trim()));
+  // Strip generic folder names from the path — keep meaningful course-level folders
+  const meaningfulPath = folderPath.filter(p => {
+    const lower = p.trim().toLowerCase();
+    return !GENERIC_FOLDER_NAMES.has(lower) && !GENERIC_FOLDER_NAMES.has(p.trim()) && p.trim().length > 1;
+  });
+
+  // If only one meaningful folder remains, use it directly (no AI call needed)
+  if (meaningfulPath.length === 1) return meaningfulPath[0];
+
   const pathStr = meaningfulPath.join(" / ");
+
   try {
     const res = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 30,
       messages: [{
         role: "user",
-        content: `Given this folder path and filename from a university Drive, extract the academic course name (subject like "Finance", "Macroeconomics", "מימון", etc). Rely on the filename if the path is generic or empty. Reply with ONLY the course name, nothing else.\n\nPath: ${pathStr || "(root)"}\nFile: ${filename}\n\nCourse name:`,
+        content: `You are tagging university course material. Given this folder path and filename, identify the COURSE NAME (e.g. "מימון", "Calculus", "Macroeconomics", "Parallel Computing").
+Rules:
+- Pick the folder that represents the COURSE, not a subfolder type (not "Past Exams", "Lectures", etc.)
+- If the path has both a course and a subfolder type, pick the course
+- If path is empty, infer from the filename
+- Reply with ONLY the course name, nothing else
+
+Path: ${pathStr || "(root)"}
+File: ${filename}
+
+Course name:`,
       }],
     });
     const text = res.content[0].type === "text" ? res.content[0].text.trim() : null;
     if (text && text.length > 0 && text.length < 100) return text;
-    return meaningfulPath.length > 0 ? meaningfulPath[meaningfulPath.length - 1] : null;
-  } catch {
-    return meaningfulPath.length > 0 ? meaningfulPath[meaningfulPath.length - 1] : null;
-  }
+  } catch {}
+
+  // Fallback: use the first meaningful folder (most likely the course-level one)
+  return meaningfulPath.length > 0 ? meaningfulPath[0] : null;
 }
 
 // ── Download a Drive file as Buffer ─────────────────────────────────────────
@@ -395,7 +415,7 @@ async function processDriveFile(
   drive: ReturnType<typeof google.drive>,
   file: { id: string; name: string; mimeType: string; folderPath: string[] },
   queueRow: { university: string; course_name: string; course_number?: string; professor?: string; semester?: string }
-): Promise<number> {
+): Promise<{ chunks: number; course: string }> {
   // AI infers the course from full path; falls back to queue-level course name
   const inferredCourse = file.folderPath.length > 0
     ? await inferCourseFromPath(file.folderPath, file.name)
@@ -403,10 +423,10 @@ async function processDriveFile(
   const effectiveCourseName = inferredCourse ?? queueRow.course_name;
   const fullPath = [...file.folderPath, file.name].join(" / ");
   const fileKind = ALLOWED_MIME_DRIVE[file.mimeType];
-  if (!fileKind) return 0; // unsupported type, skip
+  if (!fileKind) return { chunks: 0, course: effectiveCourseName }; // unsupported type, skip
 
   const { buffer, exportedMime } = await downloadDriveFile(drive, file.id, file.mimeType);
-  if (buffer.length > 25 * 1024 * 1024) return 0; // skip files > 25MB
+  if (buffer.length > 25 * 1024 * 1024) return { chunks: 0, course: effectiveCourseName }; // skip files > 25MB
 
   // Determine effective kind after export
   // Google Slides → exported as PDF; Google Docs → exported as text/plain
@@ -440,14 +460,14 @@ async function processDriveFile(
   }
 
   const chunks = qualityFilter(rawChunks);
-  if (chunks.length === 0) return 0;
+  if (chunks.length === 0) return { chunks: 0, course: effectiveCourseName };
 
   const sampleText = chunks.slice(0, 3).map(c => c.text).join(" ");
   const docType = await classifyDocType(sampleText, file.name);
 
   const safeFilename = file.name.replace(/[^a-zA-Z0-9._\-\u0590-\u05FF ]/g, "_").slice(0, 200);
 
-  return embedAndUpsert(chunks, {
+  const count = await embedAndUpsert(chunks, {
     filename:      safeFilename,
     folder_path:   fullPath,              // full Drive path for agent context
     type:          docType,
@@ -461,6 +481,7 @@ async function processDriveFile(
     is_shared:     true,
     trust_level:   "verified",
   }, file.id);
+  return { chunks: count, course: effectiveCourseName };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
@@ -583,9 +604,9 @@ export async function GET(req: NextRequest) {
         for (let j = 0; j < batchResults.length; j++) {
           const r = batchResults[j];
           if (r.status === "fulfilled") {
-            totalChunks += r.value;
+            totalChunks += r.value.chunks;
             newlyDoneIds.push(batch[j].id);
-            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value} chunks`);
+            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value.chunks} chunks${r.value.course ? ` [${r.value.course}]` : ""}`);
           } else {
             const errMsg: string = (r.reason as any)?.message ?? "unknown error";
             // Transient errors (credit, rate limit, network) — do NOT mark as done so they're retried
