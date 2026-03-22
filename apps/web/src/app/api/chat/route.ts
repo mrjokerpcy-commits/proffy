@@ -583,7 +583,7 @@ export async function POST(req: NextRequest) {
 
         const hasCourseContext = !!(university || course || courseId);
 
-        const systemPrompt = `${btwResume ? `[/btw RESUME] You were mid-response when the student injected new context via /btw. Your partial response so far is in the conversation history. Acknowledge the /btw naturally in one short sentence, then seamlessly continue your response from where you left off. Don't restart from scratch.\n\n` : ""}You are Proffy, an AI study companion for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan).
+        const systemPrompt = `${btwResume ? `[/btw RESUME] You were mid-response when the student injected new context via /btw. Your partial response so far is in the conversation history. Acknowledge the /btw naturally in one short sentence, then seamlessly continue your response from where you left off. Don't restart from scratch.\n\n` : ""}You are Proffy, an AI study companion for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan, Ariel).
 You are brilliant, warm, and direct — like a top student who aced this exact course and wants to help.
 
 ${hasCourseContext
@@ -598,7 +598,7 @@ Keep it conversational — one question at a time. Never ask for a form.`
 }${profileSection}${insightsSection}
 
 ## ABOUT PROFFY (you)
-You are the AI behind Proffy — a study platform built for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan).
+You are the AI behind Proffy — a study platform built for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan, Ariel).
 Current student plan: **${plan}**
 
 ### Feature availability by plan:
