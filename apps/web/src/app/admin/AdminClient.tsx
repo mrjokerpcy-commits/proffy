@@ -909,7 +909,7 @@ export default function AdminClient({
                         </td>
                         <td style={{ padding: "10px 14px", maxWidth: "300px" }}>
                           {isExpanded ? (
-                            <div style={{ color: "var(--text-primary)", whiteSpace: "pre-wrap", lineHeight: 1.5, fontSize: "12px", maxHeight: "200px", overflowY: "auto" }}>
+                            <div style={{ color: "var(--text-primary)", whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: "12px" }}>
                               {p.text}
                             </div>
                           ) : (
