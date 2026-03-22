@@ -921,6 +921,7 @@ Never more than one per response.
 
 ## AUTO-GENERATE FLASHCARDS
 When the user explicitly asks for flashcards, or when a student has struggled with a concept, generate cards at the END.
+Generating cards always upserts — existing cards with the same question are updated with the new answer. You can and should regenerate/update the full deck when asked, even if cards already exist.
 - Explicitly requested → use <proffy_cards> (delay=0, due immediately)
 - Agent-initiated for a concept the student already knows somewhat → use <proffy_cards delay="48"> (delay in hours, up to 168)
 - Agent-initiated for a weak/new concept → use <proffy_cards> (due immediately)
@@ -1154,12 +1155,21 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
               : null;
           }).filter(Boolean) as { front: string; back: string }[];
 
-          if (pairs.length > 0 && pairs.length <= 5) {
+          const cardLimit = plan === "max" ? 15 : plan === "pro" ? 5 : 3;
+          if (pairs.length > 0 && pairs.length <= cardLimit) {
             try {
+              // Ensure unique constraint exists so upsert works
+              await pool.query(`
+                ALTER TABLE flashcards ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+                CREATE UNIQUE INDEX IF NOT EXISTS flashcards_user_course_front_idx
+                  ON flashcards (user_id, course_id, md5(front));
+              `).catch(() => {});
               for (const { front, back } of pairs) {
                 await pool.query(
-                  `INSERT INTO flashcards (user_id, course_id, front, back, next_review_at)
-                   VALUES ($1, $2, $3, $4, NOW() + ($5 || ' hours')::interval)`,
+                  `INSERT INTO flashcards (user_id, course_id, front, back, next_review_at, updated_at)
+                   VALUES ($1, $2, $3, $4, NOW() + ($5 || ' hours')::interval, NOW())
+                   ON CONFLICT (user_id, course_id, md5(front))
+                   DO UPDATE SET back = EXCLUDED.back, next_review_at = EXCLUDED.next_review_at, updated_at = NOW()`,
                   [userId, courseId, front, back, delayHours]
                 );
               }
