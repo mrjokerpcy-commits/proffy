@@ -14,7 +14,7 @@ interface Props {
   };
 }
 
-const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other"];
+const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"];
 
 const LEARNING_STYLES = [
   { val: "visual",   icon: "🎨", label: "Visual & diagrams" },
