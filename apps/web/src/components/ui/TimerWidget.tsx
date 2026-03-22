@@ -58,8 +58,17 @@ const EXAM_PRESETS = [
 interface Course { id: string; name: string; exam_date: string | null; }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function TimerWidget() {
-  const [open, setOpen]         = useState(false);
+interface TimerWidgetProps {
+  /** If provided, open state is controlled externally */
+  isOpen?: boolean;
+  onOpenChange?: (v: boolean) => void;
+}
+
+export default function TimerWidget({ isOpen, onOpenChange }: TimerWidgetProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const controlled = isOpen !== undefined;
+  const open = controlled ? isOpen : internalOpen;
+  function setOpen(v: boolean) { controlled ? onOpenChange?.(v) : setInternalOpen(v); }
   const [tab, setTab]           = useState<"timer" | "exam">("timer");
   const [timerMode, setTimerMode] = useState<"pomodoro" | "session">("pomodoro");
 
@@ -167,9 +176,9 @@ export default function TimerWidget() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* ── Collapsed pill ── */}
+      {/* ── Collapsed pill — only shown when NOT controlled externally ── */}
       <AnimatePresence>
-        {!open && (
+        {!controlled && !open && (
           <motion.button
             key="pill"
             initial={{ opacity: 0, scale: 0.85 }}

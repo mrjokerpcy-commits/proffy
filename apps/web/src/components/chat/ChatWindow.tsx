@@ -22,12 +22,21 @@ const SUGGESTED = [
   "Key concepts summary",
 ];
 
+function getTimeGreeting(): string {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "Good morning";
+  if (h >= 12 && h < 17) return "Good afternoon";
+  if (h >= 17 && h < 21) return "Good evening";
+  return "Hey";
+}
+
 function makeGreeting(hasCourses: boolean, courseName?: string): ChatMessage {
+  const tod = getTimeGreeting();
   const content = courseName
-    ? `Hey! Ready to study **${courseName}**? Ask me anything. I can explain concepts, quiz you, build a study plan, or help you prep for the exam.`
+    ? `${tod}! Ready to study **${courseName}**? Ask me anything. I can explain concepts, quiz you, build a study plan, or help you prep for the exam.`
     : hasCourses
-    ? `Hey! Which course do you want to work on today? Pick one from the sidebar, or just tell me what you're studying.`
-    : `Hey! I'm Proffy, your AI study companion.\n\nTell me what you're studying. Share the course name, your university, and your professor if you know them, and I'll set everything up right away.`;
+    ? `${tod}! Which course do you want to work on today? Pick one from the sidebar, or just tell me what you're studying.`
+    : `${tod}! I'm Proffy, your AI study companion.\n\nTell me what you're studying. Share the course name, your university, and your professor if you know them, and I'll set everything up right away.`;
   return { id: "greeting", role: "assistant", content };
 }
 
@@ -147,9 +156,23 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         signal: abortRef.current.signal,
       });
 
+      if (res.status === 400) {
+        const data = await res.json().catch(() => ({}));
+        if (data.error === "injection_attempt") {
+          const warnMsg = data.message ?? "This type of message violates Proffy's terms of use. Repeated attempts may result in account suspension.";
+          setMessages(prev => prev.filter(m => m.id !== assistantId).concat({
+            id: assistantId,
+            role: "assistant",
+            content: `⚠️ **Message blocked.** ${warnMsg}`,
+            streaming: false,
+          }));
+          setStreaming(false);
+          return;
+        }
+      }
       if (res.status === 429) {
         const data = await res.json().catch(() => ({}));
-        const msg = data.error ?? "Daily free limit reached. Upgrade to Pro for unlimited messages.";
+        const msg = data.error ?? "Monthly free limit reached. Upgrade to Pro for more.";
         setLimitBanner(msg);
         if (limitToastRef.current) clearTimeout(limitToastRef.current);
         limitToastRef.current = setTimeout(() => setLimitBanner(null), 10000);
@@ -336,11 +359,26 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
       {course && (
         <div style={{
           flexShrink: 0, display: "flex", alignItems: "center", gap: "10px",
-          padding: "14px 20px", borderBottom: "1px solid var(--border)",
+          padding: "10px 20px", borderBottom: "1px solid var(--border)",
           background: "var(--bg-surface)",
         }}>
+          <a
+            href="/dashboard"
+            title="Back to general chat"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: "28px", height: "28px", borderRadius: "7px", flexShrink: 0,
+              background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+              color: "var(--text-muted)", textDecoration: "none", transition: "all 0.15s",
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </a>
           <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px #34d399", flexShrink: 0 }} />
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <h1 style={{ fontWeight: 600, fontSize: "14px", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
               {course.name}
             </h1>

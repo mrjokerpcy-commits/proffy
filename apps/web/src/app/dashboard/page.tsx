@@ -13,11 +13,14 @@ const pool = new Pool({
 });
 
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: { semester?: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
 
   const uid = session.user.id;
+  const semester = (searchParams.semester ?? "a").toLowerCase();
+  const validSemesters = new Set(["a", "b", "s"]);
+  const safeSemester = validSemesters.has(semester) ? semester : "a";
 
   const [coursesRes, usageRes, planRes, fcRes, notesRes, userRes] = await Promise.all([
     pool.query("SELECT * FROM courses WHERE user_id = $1 ORDER BY created_at DESC", [uid]),
@@ -27,6 +30,34 @@ export default async function DashboardPage() {
     pool.query("SELECT COUNT(*) as c FROM course_notes WHERE user_id = $1", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
     pool.query("SELECT onboarding_done, email_verified FROM users WHERE id = $1", [uid]).catch(() => ({ rows: [{ onboarding_done: true, email_verified: true }] })),
   ]);
+
+  // Get or create a general chat session per semester (so each semester has its own memory)
+  let generalSessionId: string | undefined;
+  let generalMessages: { id: string; role: string; content: string }[] = [];
+  try {
+    const { rows: sessionRows } = await pool.query(
+      `SELECT id FROM chat_sessions
+       WHERE user_id = $1 AND course_id IS NULL AND title = $2
+       ORDER BY created_at DESC LIMIT 1`,
+      [uid, `general_${safeSemester}`]
+    );
+    if (sessionRows.length > 0) {
+      generalSessionId = sessionRows[0].id;
+    } else {
+      const { rows: newSession } = await pool.query(
+        `INSERT INTO chat_sessions (user_id, title) VALUES ($1, $2) RETURNING id`,
+        [uid, `general_${safeSemester}`]
+      );
+      generalSessionId = newSession[0].id;
+    }
+    if (generalSessionId) {
+      const { rows: msgs } = await pool.query(
+        `SELECT id, role, content FROM chat_messages WHERE session_id = $1 ORDER BY created_at ASC`,
+        [generalSessionId]
+      );
+      generalMessages = msgs;
+    }
+  } catch { /* non-fatal — chat still works without session */ }
 
   if (!userRes.rows[0]?.email_verified) redirect("/verify-email");
   if (!userRes.rows[0]?.onboarding_done) redirect("/onboarding");
@@ -119,6 +150,8 @@ export default async function DashboardPage() {
               userPlan={userPlan}
               initialUsedTokens={monthTokens}
               tokenLimit={tokenLimit}
+              sessionId={generalSessionId}
+              initialMessages={generalMessages as any}
             />
           </div>
         </div>

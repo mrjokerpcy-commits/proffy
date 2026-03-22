@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { Course } from "@/lib/types";
 import UpgradeModal from "./UpgradeModal";
+import TimerWidget from "@/components/ui/TimerWidget";
 
 // ── Version — update this when releasing Proffy 1.0, 2.0, etc. ──
 const PROFFY_VERSION = "beta";
@@ -14,6 +15,7 @@ interface Props {
   courses: Course[];
   activeCourseId?: string;
   flashcardsDue?: number;
+  userPlan?: "free" | "pro" | "max";
   onOpenFlashcards?: () => void;
   onOpenNotes?: () => void;
 }
@@ -95,10 +97,8 @@ const SEMESTERS = [
   { key: "s", label: "Summer" },
 ];
 
-// TODO: derive from user's plan
-const USER_PLAN: "free" | "pro" | "max" = "free"; // TODO: derive from session
 
-export default function Sidebar({ courses, activeCourseId, flashcardsDue: initialFcDue = 0, onOpenFlashcards, onOpenNotes }: Props) {
+export default function Sidebar({ courses, activeCourseId, flashcardsDue: initialFcDue = 0, userPlan = "free", onOpenFlashcards, onOpenNotes }: Props) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const userInitial = session?.user?.name?.[0]?.toUpperCase() ?? session?.user?.email?.[0]?.toUpperCase() ?? "?";
@@ -108,6 +108,12 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [timerOpen, setTimerOpen] = useState(false);
+  const [mainTab, setMainTab] = useState<"courses" | "history">("courses");
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historySessions, setHistorySessions] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyDetail, setHistoryDetail] = useState<{ session: any; messages: any[] } | null>(null);
   const router = useRouter();
 
   // Semester filter: derive default from courses (most common semester letter), fallback "a"
@@ -120,7 +126,19 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
     }
     return Object.entries(counts).sort((x, y) => y[1] - x[1])[0]?.[0] ?? "a";
   }
-  const [selectedSemester, setSelectedSemester] = useState<string>(defaultSemester);
+  // Sync selected semester with URL params on dashboard
+  function getSemesterFromUrl(): string | null {
+    if (typeof window === "undefined") return null;
+    const s = new URLSearchParams(window.location.search).get("semester");
+    return s && ["a","b","s"].includes(s) ? s : null;
+  }
+  const [selectedSemester, setSelectedSemester] = useState<string>(() => getSemesterFromUrl() ?? defaultSemester());
+
+  // Keep semester in sync when navigating
+  useEffect(() => {
+    const fromUrl = getSemesterFromUrl();
+    if (fromUrl) setSelectedSemester(fromUrl);
+  }, [pathname]);
 
   // Filter courses to current semester (courses with no semester set always show)
   const filteredCourses = courses.filter(c => {
@@ -147,7 +165,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   }, [pathname]);
 
   const { fcDue, fcTotal, notesTotal } = stats;
-  const fingerprintLocked = USER_PLAN === "free";
+  const fingerprintLocked = userPlan === "free";
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--bg-surface)", borderRight: "1px solid var(--border)" }}>
@@ -183,7 +201,13 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       <div style={{ padding: "0.875rem 0.875rem 0.5rem", flexShrink: 0 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "3px", padding: "3px", borderRadius: "10px", background: "var(--bg-elevated)" }}>
           {SEMESTERS.map((s) => (
-            <button key={s.key} onClick={() => setSelectedSemester(s.key)} style={{
+            <button key={s.key} onClick={() => {
+              setSelectedSemester(s.key);
+              // On dashboard, navigate to ?semester=X to load a separate chat session
+              if (pathname === "/dashboard") {
+                router.push(`/dashboard?semester=${s.key}`);
+              }
+            }} style={{
               fontSize: "12px", padding: "6px 0", borderRadius: "7px", fontWeight: 600, transition: "all 0.15s",
               background: selectedSemester === s.key ? "var(--blue)" : "transparent",
               color: selectedSemester === s.key ? "#fff" : "var(--text-muted)",
@@ -195,18 +219,215 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
         </div>
       </div>
 
-      {/* ── Courses list ── */}
-      <div data-tour="sidebar-courses" style={{ flex: 1, overflowY: "auto", padding: "0.5rem 0.75rem 0.25rem" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.25rem 0.5rem 0.625rem" }}>
-          <span style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
-            Courses
-          </span>
-          <Link href="/courses/new" style={{ fontSize: "12px", fontWeight: 700, color: "var(--blue)", textDecoration: "none" }}>
-            + Add
-          </Link>
+      {/* ── Courses / History tab ── */}
+      <div data-tour="sidebar-courses" style={{ flex: 1, overflowY: "auto", padding: "0.5rem 0.75rem 0.25rem", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "6px" }}>
+          {(["courses", "history"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => {
+                setMainTab(tab);
+                if (tab === "history" && historySessions.length === 0) {
+                  setHistoryLoading(true);
+                  fetch("/api/chat-history")
+                    .then(r => r.json())
+                    .then(d => { if (d.sessions) setHistorySessions(d.sessions); })
+                    .catch(() => {})
+                    .finally(() => setHistoryLoading(false));
+                }
+              }}
+              style={{
+                flex: 1, padding: "5px 0", borderRadius: "7px", fontSize: "11px", fontWeight: 700,
+                border: "none", cursor: "pointer", transition: "all 0.15s",
+                background: mainTab === tab ? "var(--blue)" : "transparent",
+                color: mainTab === tab ? "#fff" : "var(--text-muted)",
+                letterSpacing: "0.05em", textTransform: "uppercase",
+              }}
+            >
+              {tab === "courses" ? "Courses" : "History"}
+            </button>
+          ))}
+          {mainTab === "courses" && (
+            <Link href="/courses/new" style={{ fontSize: "12px", fontWeight: 700, color: "var(--blue)", textDecoration: "none", paddingLeft: "4px" }}>
+              + Add
+            </Link>
+          )}
         </div>
 
-        <AnimatePresence initial={false}>
+        {/* ── History panel ── */}
+        {mainTab === "history" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px", overflow: "hidden" }}>
+            {/* Search */}
+            <div style={{ position: "relative" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                style={{ position: "absolute", left: "9px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search history..."
+                value={historySearch}
+                onChange={e => setHistorySearch(e.target.value)}
+                style={{
+                  width: "100%", padding: "6px 8px 6px 28px", borderRadius: "7px",
+                  background: "var(--bg-elevated)", border: "1px solid var(--border)",
+                  color: "var(--text-primary)", fontSize: "12px", outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              {historyLoading ? (
+                <div style={{ padding: "20px", textAlign: "center", fontSize: "12px", color: "var(--text-muted)" }}>Loading...</div>
+              ) : historySessions.length === 0 ? (
+                <div style={{ padding: "20px 8px", textAlign: "center", fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.7 }}>
+                  No chat history yet.<br/>Start a conversation in any course.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  {historySessions
+                    .filter((s: any) => {
+                      if (!historySearch.trim()) return true;
+                      const q = historySearch.toLowerCase();
+                      return (s.course_name ?? "").toLowerCase().includes(q)
+                        || (s.course_number ?? "").toLowerCase().includes(q)
+                        || (s.semester ?? "").toLowerCase().includes(q);
+                    })
+                    .map((s: any) => (
+                    <button
+                      key={s.id}
+                      onClick={async () => {
+                        const res = await fetch(`/api/chat-history?sessionId=${s.id}`);
+                        const data = await res.json();
+                        setHistoryDetail({ session: s, messages: data.messages ?? [] });
+                      }}
+                      style={{
+                        display: "flex", flexDirection: "column", alignItems: "flex-start",
+                        gap: "4px", padding: "8px 10px", borderRadius: "7px",
+                        background: "transparent", border: "1px solid transparent",
+                        cursor: "pointer", textAlign: "left", width: "100%",
+                        transition: "all 0.15s",
+                      }}
+                      className="sidebar-item"
+                    >
+                      <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
+                        {s.course_name ?? "General chat"}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                        {s.course_number && (
+                          <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px", background: "rgba(79,142,247,0.1)", color: "var(--blue)", border: "1px solid rgba(79,142,247,0.2)" }}>
+                            #{s.course_number}
+                          </span>
+                        )}
+                        {s.semester && (
+                          <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px", background: "rgba(167,139,250,0.1)", color: "var(--purple)", border: "1px solid rgba(167,139,250,0.2)" }}>
+                            {s.semester.toUpperCase()}
+                          </span>
+                        )}
+                        <span style={{ fontSize: "10px", color: "var(--text-disabled)" }}>
+                          {new Date(s.last_message_at ?? s.created_at).toLocaleDateString("en-IL", { day: "numeric", month: "short" })}
+                        </span>
+                        <span style={{ fontSize: "10px", color: "var(--text-disabled)" }}>·</span>
+                        <span style={{ fontSize: "10px", color: "var(--text-disabled)" }}>{s.message_count} msgs</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── History detail popup ── */}
+        <AnimatePresence>
+          {historyDetail && (
+            <motion.div
+              key="history-detail"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setHistoryDetail(null)}
+              style={{
+                position: "fixed", inset: 0, zIndex: 200,
+                background: "rgba(0,0,0,0.7)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "20px",
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  width: "100%", maxWidth: "600px", maxHeight: "80vh",
+                  background: "var(--bg-surface)", border: "1px solid var(--border)",
+                  borderRadius: "16px", display: "flex", flexDirection: "column",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Header */}
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "16px 20px", borderBottom: "1px solid var(--border)", flexShrink: 0,
+                }}>
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-primary)" }}>
+                      {historyDetail.session.course_name ?? "General chat"}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                      {new Date(historyDetail.session.created_at).toLocaleDateString("en-IL", { day: "numeric", month: "short", year: "numeric" })} · {historyDetail.messages.length} messages
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setHistoryDetail(null)}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+                {/* Messages */}
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {historyDetail.messages.map((msg: any) => (
+                    <div
+                      key={msg.id}
+                      style={{
+                        alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+                        maxWidth: "85%",
+                        padding: "10px 14px", borderRadius: "12px",
+                        fontSize: "13px", lineHeight: 1.6,
+                        background: msg.role === "user" ? "var(--blue)" : "var(--bg-elevated)",
+                        color: msg.role === "user" ? "#fff" : "var(--text-primary)",
+                        border: msg.role === "user" ? "none" : "1px solid var(--border)",
+                        whiteSpace: "pre-wrap", wordBreak: "break-word",
+                      }}
+                    >
+                      {msg.content}
+                    </div>
+                  ))}
+                </div>
+                {/* Footer with link to course */}
+                {historyDetail.session.course_id && (
+                  <div style={{ padding: "12px 20px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
+                    <a
+                      href={`/course/${historyDetail.session.course_id}`}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: "6px",
+                        fontSize: "12px", fontWeight: 600, color: "var(--blue)",
+                        textDecoration: "none",
+                      }}
+                    >
+                      Continue in {historyDetail.session.course_name} →
+                    </a>
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Courses list (hidden when history tab active) ── */}
+        {mainTab === "courses" && <AnimatePresence initial={false}>
           {courses.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               style={{ padding: "1.5rem 0.5rem", textAlign: "center", fontSize: "13px", lineHeight: 1.7, color: "var(--text-muted)" }}>
@@ -289,11 +510,43 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
               })}
             </div>
           )}
-        </AnimatePresence>
+        </AnimatePresence>}
       </div>
 
       {/* ── Feature widget boxes ── */}
       <div style={{ flexShrink: 0, padding: "0.5rem 0.75rem 0.5rem", display: "flex", flexDirection: "column", gap: "8px" }}>
+
+        {/* Timer */}
+        <button
+          onClick={() => setTimerOpen(v => !v)}
+          className="sidebar-item"
+          style={{
+            display: "flex", alignItems: "center", gap: "12px",
+            padding: "10px 14px", borderRadius: "10px",
+            background: timerOpen ? "rgba(245,158,11,0.08)" : "var(--bg-elevated)",
+            border: `1px solid ${timerOpen ? "rgba(245,158,11,0.25)" : "var(--border)"}`,
+            width: "100%", cursor: "pointer", transition: "all 0.15s",
+          }}
+        >
+          <div style={{
+            width: "30px", height: "30px", borderRadius: "8px", flexShrink: 0,
+            background: timerOpen ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.05)",
+            border: `1px solid ${timerOpen ? "rgba(245,158,11,0.3)" : "var(--border)"}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={timerOpen ? "#f59e0b" : "var(--text-muted)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: timerOpen ? "#f59e0b" : "var(--text-secondary)", lineHeight: 1.25 }}>
+              Study Timer
+            </div>
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
+              Pomodoro &amp; exam mode
+            </div>
+          </div>
+        </button>
 
         {/* Flashcards */}
         <button
@@ -463,7 +716,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                 </Link>
               ))}
 
-              {USER_PLAN !== "max" && (
+              {userPlan !== "max" && (
                 <button onClick={() => { setMenuOpen(false); setUpgradeOpen(true); }} style={{
                   display: "flex", alignItems: "center", gap: "10px", padding: "9px 14px",
                   fontSize: "13px", fontWeight: 600, color: "#a78bfa", width: "100%",
@@ -526,7 +779,8 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           </span>
         </div>
       </div>
-      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} currentPlan={USER_PLAN} />
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} currentPlan={userPlan} />
+      <TimerWidget isOpen={timerOpen} onOpenChange={setTimerOpen} />
     </div>
   );
 }

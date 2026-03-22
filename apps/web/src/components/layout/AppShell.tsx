@@ -50,6 +50,7 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
           courses={courses}
           activeCourseId={activeCourse?.id}
           flashcardsDue={flashcardsDue}
+          userPlan={userPlan}
           onOpenFlashcards={() => { setOpenPanel("flashcards"); if (isMobile) setSidebarOpen(false); }}
           onOpenNotes={() => { setOpenPanel("notes"); if (isMobile) setSidebarOpen(false); }}
         />
