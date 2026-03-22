@@ -94,6 +94,19 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "save_note",
+    description: "Save an informative note from the course material to the student's personal Course Notes. Call this when the student asks you to save a note, add a note, or save something from the material. Write clear, informative notes — not headers or one-liners, but actual content. Requires courseId to be set.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        title:    { type: "string", description: "Short title for the note (e.g. 'Contract Formation Elements')" },
+        content:  { type: "string", description: "The full note content — informative, well-structured, from the course material. Use markdown." },
+        note_type: { type: "string", enum: ["note", "trick", "prof_said", "formula"], description: "Type of note" },
+      },
+      required: ["title", "content"],
+    },
+  },
+  {
     name: "update_user_profile",
     description: "Update the student's profile when you learn their university, field of study, study goal, or preferences.",
     input_schema: {
@@ -270,6 +283,23 @@ async function executeTool(
     }
   }
 
+  if (name === "save_note") {
+    if (!courseId) return { result: "Cannot save note: no course is currently selected. The student must be in a course chat." };
+    const title   = typeof input.title   === "string" ? input.title.replace(/[\x00-\x1F\x7F]/g, "").trim().slice(0, 200) : null;
+    const content = typeof input.content === "string" ? input.content.slice(0, 4000) : null;
+    const note_type = typeof input.note_type === "string" && ["note","trick","prof_said","formula"].includes(input.note_type) ? input.note_type : "note";
+    if (!title || !content) return { result: "Missing title or content for note." };
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO course_notes (user_id, course_id, title, content, note_type) VALUES ($1,$2,$3,$4,$5) RETURNING id, title`,
+        [userId, courseId, title, content, note_type]
+      );
+      return { result: `Note saved: "${title}"`, event: { type: "note_saved", note: rows[0] } };
+    } catch {
+      return { result: "Failed to save note." };
+    }
+  }
+
   if (name === "update_user_profile") {
     const updates: string[] = [];
     const values: unknown[] = [];
@@ -383,7 +413,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch user profile + exam date + student insights + course knowledge doc
-  const [profileResult, examResult, insightsResult, platformMemoryResult, courseKnowledgeResult, recentSlotResult] = await Promise.all([
+  const [profileResult, examResult, insightsResult, platformMemoryResult, courseKnowledgeResult, recentSlotResult, userCoursesResult] = await Promise.all([
     pool.query(
       `SELECT name, university, field_of_study, study_challenge, hours_per_week, study_goal, learning_style, courses_created, current_semester
        FROM users WHERE id = $1`,
@@ -438,9 +468,15 @@ export async function POST(req: NextRequest) {
           [userId, courseId]
         ).catch(() => ({ rows: [] }))
       : Promise.resolve({ rows: [] }),
+    // Always fetch user's existing courses so AI knows what's already created
+    pool.query(
+      `SELECT id, name, university, course_number, professor, exam_date FROM courses WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
+      [userId]
+    ).catch(() => ({ rows: [] })),
   ]);
   const profile = profileResult.rows[0] ?? {};
-  const coursesCreated: number = profile.courses_created ?? 0;
+  const userCourses: { id: string; name: string; university: string; course_number: string | null; professor: string | null; exam_date: string | null }[] = userCoursesResult.rows;
+  const coursesCreated: number = Math.max(profile.courses_created ?? 0, userCourses.length);
   const FREE_COURSE_LIMIT = 3;
   const platformMemory: { topic: string; insight: string; insight_type: string; confidence: number }[] = platformMemoryResult.rows;
   const knowledgeDoc = courseKnowledgeResult.rows[0] ?? null;
@@ -499,18 +535,17 @@ export async function POST(req: NextRequest) {
             const vector = embRes.data[0].embedding;
 
             // Build filter: user's private uploads OR shared platform content for this course
-            // Prefer course_number as the primary identifier (same course = same number regardless of name variation)
-            const courseFilter: unknown[] = [];
-            if (university) courseFilter.push({ key: "university", match: { value: university } });
-            if (courseNumber) {
-              courseFilter.push({ key: "course_number", match: { value: courseNumber } });
-            } else if (course) {
-              courseFilter.push({ key: "course", match: { value: course } });
-            }
+            // NOTE: Qdrant strict mode only allows filtering on indexed payload fields.
+            // Indexed fields: university, is_shared, type, course_number, user_id, course_id
+            // NOT indexed (do NOT filter on): course (name), trust_level, professor, filename, text
+            // Vector similarity handles course relevance when course name is not indexed.
+            const indexedCourseFilter: unknown[] = [];
+            if (university) indexedCourseFilter.push({ key: "university", match: { value: university } });
+            if (courseNumber) indexedCourseFilter.push({ key: "course_number", match: { value: courseNumber } });
 
-            const userFilter    = [...courseFilter, { key: "user_id", match: { value: userId } }];
-            // Only use official or verified shared material (not student-uploaded unverified content)
-            const sharedFilter  = [...courseFilter, { key: "is_shared", match: { value: true } }, { key: "trust_level", match: { any: ["official", "verified"] } }];
+            const userFilter   = [...indexedCourseFilter, { key: "user_id", match: { value: userId } }];
+            // For shared content: filter by university + is_shared only (let vector similarity find the right course)
+            const sharedFilter = [...indexedCourseFilter, { key: "is_shared", match: { value: true } }];
 
             let searchResults: unknown[] = [];
             try {
@@ -660,10 +695,15 @@ Course: ${course || "Unknown"}
 University: ${university || "Unknown"}${courseNumber ? `\nCourse number: ${courseNumber}` : ""}${professor ? `\nProfessor: ${professor}` : ""}${semester ? `\nSemester: ${semester}` : ""}${examContext ? `\nExam: ${examContext}` : ""}${dbCourseGoal ? `\nStudent's goal: ${dbCourseGoal === "excellent" ? "top grade" : dbCourseGoal === "good" ? "good grade (80+)" : "pass"}` : ""}${dbCourseLevel ? `\nStudent level: ${dbCourseLevel}` : ""}${dbCourseHours ? `\nStudy time available: ${dbCourseHours}h/week` : ""}
 You are now in the chat for this specific course. You know exactly which course this is. NEVER ask the student what course they're in. NEVER ask for course name, number, or professor — you already have it all.${missingWarning}`
   : `## ONBOARDING MODE
-No course is selected. Your job right now:
+No course is currently selected. The student is chatting from the dashboard.
+${userCourses.length > 0 ? `## STUDENT'S EXISTING COURSES (already created — do NOT re-create these):
+${userCourses.map(c => `- ${c.name} (${c.university})${c.course_number ? ` #${c.course_number}` : ""}${c.professor ? ` · ${c.professor}` : ""} [id: ${c.id}]`).join("\n")}
+
+If the student asks to study or add a note for one of these existing courses, reference them by name. If they say "the asd course" or a short abbreviation, match it to the closest existing course.
+` : ""}Your job right now:
 1. Greet the student ONLY if this appears to be their very first message (no history). If there is already conversation history, skip the greeting entirely — just respond naturally.
 2. Find out what they're studying. University is already known from their profile if set — NEVER ask for it again. Course name is enough to start.
-3. Call create_course as soon as you have the course name — use the university from their profile automatically, never ask for it.
+3. Call create_course as soon as you have a NEW course name — use the university from their profile automatically, never ask for it.
 4. Immediately shift into study mode for that course.
 Keep it conversational — one question at a time. No forms, no lists of questions, no "please provide X, Y, Z".
 NEVER say "I'm Proffy" or re-introduce yourself in follow-up messages or if history already exists.`
@@ -728,6 +768,7 @@ You have tools to take real actions:
 - **lookup_course**: For Technion students, ALWAYS call this first when they mention a course name or number. Show them the top matches and ask them to confirm before creating. Handles course numbers with varying zero-padding (e.g. "044142" ≈ "44142" ≈ "0440142"). For non-Technion universities, skip this and go straight to create_course.
 - **create_course**: Call AFTER the user confirms the course details (or immediately for non-Technion). IMPORTANT: Free users can only have 3 courses total (lifetime). If they already have 3, tell them they need to upgrade to Pro before calling this tool. If the university is "Other", after creating the course say something like: "I've added your course! Since your university isn't one of the main ones I have pre-loaded material for, you'll get the best results by uploading your slides or course material — want to do that now?" (only ask once, don't repeat).
 - **submit_course_material**: Call when a student shares a Google Drive link, professor website, or any URL containing slides/exams/notes. Queues it for admin ingestion — helps ALL future students. Also call proactively when you detect sparse material coverage (see below).
+- **save_note**: Save an informative note to the student's personal Course Notes. Call this when the student says "add note", "save note", "save this", or "add this to my notes". Write the full content — don't save headers or empty shells. Pull from the course material if available. A note should be informative enough to study from. Requires a course to be active.
 - **update_course_knowledge**: Write a verified fact to this course's persistent knowledge file. ONLY when you are confident the information is accurate — confirmed by official material, by the student, or seen many times. Never for guesses. Sections: exam_focus (what the exam focuses on — course-wide, not professor-specific), common_struggles, prof_patterns (professor-specific style if professor is known, otherwise general course exam style), key_concepts, important_notes.
 - **update_user_profile**: Use when you learn their university, goals, study style, or hours available.
 

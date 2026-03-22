@@ -70,5 +70,10 @@ export async function POST(req: NextRequest) {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
     [session.user.id, name, name_hebrew, university, department, professor, course_number, semester, exam_date, credits, user_level, goal, hours_per_week]
   );
+  // Keep lifetime counter in sync for plan enforcement
+  await pool.query(
+    `UPDATE users SET courses_created = GREATEST(courses_created + 1, (SELECT COUNT(*) FROM courses WHERE user_id = $1)) WHERE id = $1`,
+    [session.user.id]
+  ).catch(() => {});
   return NextResponse.json({ course: rows[0] }, { status: 201 });
 }
