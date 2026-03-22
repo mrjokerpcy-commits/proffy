@@ -71,9 +71,15 @@ function extractFolderId(url: string): string | null {
   return null;
 }
 
-// ── List all files in a Drive folder (non-recursive) ─────────────────────────
-async function listDriveFiles(drive: ReturnType<typeof google.drive>, folderId: string) {
-  const files: { id: string; name: string; mimeType: string; size: string }[] = [];
+// ── List all files in a Drive folder (recursive, subfolder name = course) ─────
+async function listDriveFiles(
+  drive: ReturnType<typeof google.drive>,
+  folderId: string,
+  subfolderName: string | null = null,
+  depth = 0,
+): Promise<{ id: string; name: string; mimeType: string; size: string; courseName: string | null }[]> {
+  if (depth > 3) return []; // cap recursion depth
+  const files: { id: string; name: string; mimeType: string; size: string; courseName: string | null }[] = [];
   let pageToken: string | undefined;
   do {
     const res = await drive.files.list({
@@ -83,8 +89,13 @@ async function listDriveFiles(drive: ReturnType<typeof google.drive>, folderId: 
       pageToken,
     });
     for (const f of res.data.files ?? []) {
-      if (f.id && f.name && f.mimeType) {
-        files.push({ id: f.id, name: f.name, mimeType: f.mimeType, size: f.size ?? "0" });
+      if (!f.id || !f.name || !f.mimeType) continue;
+      if (f.mimeType === "application/vnd.google-apps.folder") {
+        // Recurse — the folder name becomes the course context for its files
+        const nested = await listDriveFiles(drive, f.id, f.name, depth + 1);
+        files.push(...nested);
+      } else {
+        files.push({ id: f.id, name: f.name, mimeType: f.mimeType, size: f.size ?? "0", courseName: subfolderName });
       }
     }
     pageToken = res.data.nextPageToken ?? undefined;
@@ -267,9 +278,11 @@ async function embedAndUpsert(chunks: Chunk[], payload: Record<string, unknown>)
 // ── Process a single Drive file ──────────────────────────────────────────────
 async function processDriveFile(
   drive: ReturnType<typeof google.drive>,
-  file: { id: string; name: string; mimeType: string },
+  file: { id: string; name: string; mimeType: string; courseName: string | null },
   queueRow: { university: string; course_name: string; course_number?: string; professor?: string; semester?: string }
 ): Promise<number> {
+  // Subfolder name overrides the queue-level course name (more specific)
+  const effectiveCourseName = file.courseName ?? queueRow.course_name;
   const effectiveMime = file.mimeType === "application/vnd.google-apps.presentation"
     ? "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     : file.mimeType === "application/vnd.google-apps.document"
@@ -317,7 +330,7 @@ async function processDriveFile(
     type:          docType,
     professor:     queueRow.professor ?? null,
     university:    queueRow.university,
-    course:        queueRow.course_name,
+    course:        effectiveCourseName,   // subfolder name if available
     course_number: queueRow.course_number ?? null,
     course_id:     null, // shared content — not tied to a specific user's course
     user_id:       null,
