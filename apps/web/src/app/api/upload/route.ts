@@ -399,26 +399,36 @@ export async function POST(req: NextRequest) {
   }
 
   // Save document record
-  const { rows: docRows } = await pool.query(
-    `INSERT INTO documents (course_id, user_id, filename, type, professor, size_bytes, chunk_count)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-    [courseId, session.user.id, safeFilename, file_type_detected, course.professor ?? null, file.size, chunkCount]
-  );
+  let documentId: string | null = null;
+  try {
+    const { rows: docRows } = await pool.query(
+      `INSERT INTO documents (course_id, user_id, filename, type, professor, size_bytes, chunk_count)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [courseId, session.user.id, safeFilename, file_type_detected, course.professor ?? null, file.size, chunkCount]
+    );
+    documentId = docRows[0]?.id ?? null;
+  } catch (err) {
+    console.error("Document insert error:", err);
+  }
 
   // Upsert professor patterns if exam
   if (patterns.length > 0) {
-    await pool.query("DELETE FROM professor_patterns WHERE course_id = $1 AND user_id = $2", [courseId, session.user.id]);
-    for (const p of patterns) {
-      await pool.query(
-        `INSERT INTO professor_patterns (course_id, user_id, topic, pct, source_file) VALUES ($1,$2,$3,$4,$5)`,
-        [courseId, session.user.id, p.topic, p.pct, file.name]
-      );
+    try {
+      await pool.query("DELETE FROM professor_patterns WHERE course_id = $1 AND user_id = $2", [courseId, session.user.id]);
+      for (const p of patterns) {
+        await pool.query(
+          `INSERT INTO professor_patterns (course_id, user_id, topic, pct, source_file) VALUES ($1,$2,$3,$4,$5)`,
+          [courseId, session.user.id, p.topic, p.pct, file.name]
+        );
+      }
+    } catch (err) {
+      console.error("Professor patterns insert error:", err);
     }
   }
 
   return NextResponse.json({
     success:             true,
-    documentId:          docRows[0].id,
+    documentId:          documentId,
     chunks_created:      chunkCount,
     file_type_detected,
     pages_found:         pages,
