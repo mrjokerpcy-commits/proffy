@@ -21,7 +21,7 @@ const PLAN_TOKEN_LIMITS: Record<string, number> = {
   max: 500_000,  // ~60-70 msgs/day — beats Claude.ai, justifies premium price
 };
 
-const ALLOWED_UNIS = new Set(["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other"]);
+const ALLOWED_UNIS = new Set(["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"]);
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SEMESTER_RE = /^20\d{2}[abs]$/i;
 
@@ -33,7 +33,7 @@ const TOOLS: Anthropic.Tool[] = [
       type: "object" as const,
       properties: {
         name: { type: "string", description: "Course name in English" },
-        university: { type: "string", enum: ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other"] },
+        university: { type: "string", enum: ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"] },
         professor: { type: "string", description: "Professor's name" },
         exam_date: { type: "string", description: "Exam date in YYYY-MM-DD format" },
         semester: { type: "string", description: "e.g. 2025a, 2025b, 2025s" },
@@ -556,7 +556,7 @@ export async function POST(req: NextRequest) {
 
         const hasCourseContext = !!(university || course || courseId);
 
-        const systemPrompt = `You are Proffy, an AI study companion for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan).
+        const systemPrompt = `You are Proffy, an AI study companion for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan, Ariel).
 You are brilliant, warm, and direct — like a top student who aced this exact course and wants to help.
 
 ${hasCourseContext
@@ -571,7 +571,7 @@ Keep it conversational — one or two questions at a time. Never ask for a form.
 }${profileSection}${insightsSection}
 
 ## ABOUT PROFFY (you)
-You are the AI behind Proffy — a study platform built for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan).
+You are the AI behind Proffy — a study platform built for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan, Ariel).
 Current student plan: **${plan}**
 
 ### Feature availability by plan:

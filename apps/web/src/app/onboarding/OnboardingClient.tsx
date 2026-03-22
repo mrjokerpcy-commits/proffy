@@ -3,11 +3,30 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 
-const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other"];
+const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"];
 const FIELDS = [
-  "Computer Science", "Electrical Engineering", "Mechanical Engineering",
-  "Civil Engineering", "Mathematics", "Physics", "Biology", "Chemistry",
-  "Medicine", "Economics", "Business", "Law", "Psychology", "Other",
+  // Engineering & Technology
+  "Computer Science", "Software Engineering", "Electrical Engineering",
+  "Mechanical Engineering", "Civil Engineering", "Industrial Engineering",
+  "Aerospace Engineering", "Biomedical Engineering", "Chemical Engineering",
+  "Materials Engineering", "Environmental Engineering",
+  // Natural Sciences
+  "Mathematics", "Statistics", "Physics", "Chemistry", "Biology",
+  "Biochemistry", "Biotechnology", "Earth Sciences", "Neuroscience",
+  // Medicine & Health
+  "Medicine", "Dentistry", "Pharmacy", "Nursing", "Physiotherapy",
+  "Nutrition & Dietetics", "Occupational Therapy", "Public Health",
+  // Social Sciences & Humanities
+  "Economics", "Business Administration", "Accounting", "Finance",
+  "Management Information Systems", "Marketing",
+  "Law", "Psychology", "Social Work", "Education",
+  "Political Science", "Sociology", "Criminology",
+  "History", "Philosophy", "Literature", "Linguistics",
+  "Communication", "Journalism", "Film & Television",
+  // Architecture & Design
+  "Architecture", "Urban Planning", "Interior Design", "Industrial Design",
+  // Other
+  "Other",
 ];
 const CHALLENGES = [
   { icon: "😶", text: "Hard to focus and stick to a plan" },
