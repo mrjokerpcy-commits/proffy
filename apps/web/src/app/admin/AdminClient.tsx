@@ -97,6 +97,12 @@ export default function AdminClient({
   const [queueItems, setQueueItems] = useState<QueueItem[]>(queue);
 
   const [processing, setProcessing] = useState(false);
+  const [envVars, setEnvVars] = useState<Record<string, boolean> | null>(null);
+
+  useEffect(() => {
+    if (tab !== "queue" || envVars) return;
+    fetch("/api/admin/env-check").then(r => r.json()).then(d => { if (d.vars) setEnvVars(d.vars); }).catch(() => {});
+  }, [tab]);
 
   async function refreshQueue() {
     const r = await fetch("/api/admin/queue-status").catch(() => null);
@@ -413,6 +419,32 @@ export default function AdminClient({
         {/* ── QUEUE ── */}
         {tab === "queue" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+
+            {/* Env vars status panel */}
+            {envVars && (
+              <div style={{ ...cardStyle, borderColor: Object.values(envVars).every(Boolean) ? "rgba(52,211,153,0.3)" : "rgba(248,113,113,0.4)" }}>
+                <h3 style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "13px", color: Object.values(envVars).every(Boolean) ? "var(--green)" : "#f87171" }}>
+                  {Object.values(envVars).every(Boolean) ? "All env vars set" : "Missing env vars detected"}
+                </h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {Object.entries(envVars).map(([key, set]) => (
+                    <span key={key} style={{
+                      padding: "3px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 700,
+                      background: set ? "rgba(52,211,153,0.12)" : "rgba(248,113,113,0.15)",
+                      color: set ? "#34d399" : "#f87171",
+                      border: `1px solid ${set ? "rgba(52,211,153,0.25)" : "rgba(248,113,113,0.3)"}`,
+                    }}>
+                      {set ? "✓" : "✗"} {key}
+                    </span>
+                  ))}
+                </div>
+                {!envVars["GOOGLE_SERVICE_ACCOUNT_KEY"] && (
+                  <div style={{ marginTop: "10px", padding: "8px 12px", borderRadius: "8px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", fontSize: "12px", color: "#f87171" }}>
+                    GOOGLE_SERVICE_ACCOUNT_KEY is not set. Drive processing will fail. Add it in Vercel project settings.
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Add Drive Folder form */}
             <div style={{ ...cardStyle, borderColor: "rgba(79,142,247,0.3)" }}>

@@ -20,7 +20,9 @@
         "RESEND_FROM",
         "QDRANT_URL",
         "QDRANT_API_KEY",
-        "ADMIN_EMAIL"
+        "ADMIN_EMAIL",
+        "CRON_SECRET",
+        "GOOGLE_SERVICE_ACCOUNT_KEY"
       ]
     },
     "dev": {
