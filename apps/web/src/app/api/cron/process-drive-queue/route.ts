@@ -136,6 +136,10 @@ const GENERIC_FOLDER_NAMES = new Set([
   "lectures", "tutorials", "תרגולים", "הרצאות", "notes", "סיכומים",
 ]);
 
+// Per-invocation cache: folder path string → inferred course name
+// Avoids calling AI for every file in the same folder (can be thousands)
+const coursePathCache = new Map<string, string | null>();
+
 // ── Use AI to extract course name from folder path + filename ─────────────────
 async function inferCourseFromPath(folderPath: string[], filename: string): Promise<string | null> {
   // Strip generic folder names from the path — keep meaningful course-level folders
@@ -148,6 +152,9 @@ async function inferCourseFromPath(folderPath: string[], filename: string): Prom
   if (meaningfulPath.length === 1) return meaningfulPath[0];
 
   const pathStr = meaningfulPath.join(" / ");
+
+  // Cache hit: same folder path already resolved this run
+  if (coursePathCache.has(pathStr)) return coursePathCache.get(pathStr)!;
 
   try {
     const res = await anthropic.messages.create({
@@ -169,11 +176,15 @@ Course name:`,
       }],
     });
     const text = res.content[0].type === "text" ? res.content[0].text.trim() : null;
-    if (text && text.length > 0 && text.length < 100) return text;
+    const result = (text && text.length > 0 && text.length < 100) ? text : (meaningfulPath.length > 0 ? meaningfulPath[0] : null);
+    coursePathCache.set(pathStr, result);
+    return result;
   } catch {}
 
   // Fallback: use the first meaningful folder (most likely the course-level one)
-  return meaningfulPath.length > 0 ? meaningfulPath[0] : null;
+  const fallback = meaningfulPath.length > 0 ? meaningfulPath[0] : null;
+  coursePathCache.set(pathStr, fallback);
+  return fallback;
 }
 
 // ── Download a Drive file as Buffer ─────────────────────────────────────────
