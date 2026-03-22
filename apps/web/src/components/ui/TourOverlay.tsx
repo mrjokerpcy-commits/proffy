@@ -14,7 +14,7 @@ const STEPS: Step[] = [
   {
     target: "chat-input",
     title: "Talk to Proffy",
-    description: "Type any question here — ask Proffy to explain a concept, quiz you, create flashcards, or set up your first course.",
+    description: "Type any question here. Ask Proffy to explain a concept, quiz you, create flashcards, or set up your first course.",
     side: "top",
     padding: 8,
   },

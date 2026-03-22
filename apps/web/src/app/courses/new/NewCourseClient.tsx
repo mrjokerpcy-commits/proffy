@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other"];
+const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"];
 const LEVELS = [
   { val: "beginner", label: "Beginner",     desc: "Starting fresh" },
   { val: "some",     label: "Some background", desc: "Know the basics" },

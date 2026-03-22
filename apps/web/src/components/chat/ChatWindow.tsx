@@ -26,10 +26,10 @@ const SUGGESTED = [
 
 function makeGreeting(hasCourses: boolean, courseName?: string): ChatMessage {
   const content = courseName
-    ? `Hey! Ready to study **${courseName}**? Ask me anything — I can explain concepts, quiz you, build a study plan, or help you prep for the exam.`
+    ? `Hey! Ready to study **${courseName}**? Ask me anything. I can explain concepts, quiz you, build a study plan, or help you prep for the exam.`
     : hasCourses
     ? `Hey! Which course do you want to work on today? Pick one from the sidebar, or just tell me what you're studying.`
-    : `Hey! I'm Proffy, your AI study companion.\n\nTell me what you're studying — the course name, your university, and your professor if you know them — and I'll set everything up and start helping you right away.`;
+    : `Hey! I'm Proffy, your AI study companion.\n\nTell me what you're studying. Share the course name, your university, and your professor if you know them, and I'll set everything up right away.`;
   return { id: "greeting", role: "assistant", content };
 }
 

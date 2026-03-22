@@ -217,7 +217,7 @@ export default async function HomePage() {
           }}
         >
           <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#60a5fa", display: "inline-block" }} />
-          TAU &middot; Technion &middot; HUJI &middot; BGU &middot; Bar Ilan
+          TAU &middot; Technion &middot; HUJI &middot; BGU &middot; Bar Ilan &middot; Ariel
         </div>
 
         {/* Headline */}
@@ -485,7 +485,7 @@ export default async function HomePage() {
             {
               step: "02",
               title: "Ask anything",
-              desc: "Get answers grounded in your specific slides. Every response cites the exact source — no hallucinated facts.",
+              desc: "Get answers grounded in your specific slides. Every response cites the exact source, no hallucinated facts.",
               color: "var(--purple)",
               glow: "rgba(167,139,250,0.12)",
               illustration: <AskIllustration />,
@@ -533,7 +533,7 @@ export default async function HomePage() {
             <span className="gradient-text-blue">A tutor that knows your course.</span>
           </h2>
           <p style={{ fontSize: "1.15rem", maxWidth: "36rem", margin: "0 auto", color: "var(--text-secondary)", lineHeight: 1.65 }}>
-            Built specifically for Israeli university students — in Hebrew and English.
+            Built specifically for Israeli university students, in Hebrew and English.
           </p>
         </div>
 
@@ -546,7 +546,7 @@ export default async function HomePage() {
                 </svg>
               ),
               title: "Answers from your actual slides",
-              desc: "Upload your professor's material. Every answer cites the exact slide and page number — not generic internet knowledge.",
+              desc: "Upload your professor's material. Every answer cites the exact slide and page number, not generic internet knowledge.",
               tag: null,
               accent: "var(--blue)",
             },
@@ -591,20 +591,9 @@ export default async function HomePage() {
                 </svg>
               ),
               title: "Hebrew handwriting recognition",
-              desc: "Snap a photo of handwritten Hebrew notes. The AI reads, explains, and quizzes you on them — cursive and print.",
+              desc: "Snap a photo of handwritten Hebrew notes. The AI reads, explains, and quizzes you on them. Works with cursive and print.",
               tag: null,
               accent: "var(--blue)",
-            },
-            {
-              icon: (
-                <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                </svg>
-              ),
-              title: "Also on Telegram",
-              desc: "Full access without a browser. Same AI, same material, full Hebrew support — directly in your Telegram.",
-              tag: null,
-              accent: "var(--purple)",
             },
           ].map(f => (
             <div
@@ -757,7 +746,7 @@ export default async function HomePage() {
           <div style={{ position: "relative", zIndex: 10, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1.5rem", padding: "2.5rem 2rem" }}>
             <div>
               <h3 className="text-2xl font-bold mb-2">Ready to stop guessing what&apos;s on the exam?</h3>
-              <p style={{ color: "var(--text-secondary)" }}>Join students from TAU, Technion, HUJI, BGU and Bar Ilan.</p>
+              <p style={{ color: "var(--text-secondary)" }}>Join students from TAU, Technion, HUJI, BGU, Bar Ilan and Ariel.</p>
             </div>
             <Link href="/register" className="btn-primary" style={{ whiteSpace: "nowrap", flexShrink: 0, fontSize: "1.05rem", padding: "0.9rem 2.5rem", borderRadius: "1rem", fontWeight: 700 }}>
               Start free today →

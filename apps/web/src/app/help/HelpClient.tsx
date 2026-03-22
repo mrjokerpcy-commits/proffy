@@ -8,7 +8,7 @@ const SECTIONS = [
     items: [
       {
         q: "How do I add a course?",
-        a: "Just tell Proffy in the chat — say something like 'I'm studying Algorithms at the Technion' and it will set everything up. You can also click '+ Add' in the sidebar.",
+        a: "Just tell Proffy in the chat. Say something like 'I'm studying Algorithms at the Technion' and it will set everything up. You can also click '+ Add' in the sidebar.",
       },
       {
         q: "What information does Proffy need about my course?",
@@ -46,7 +46,7 @@ const SECTIONS = [
     items: [
       {
         q: "How are flashcards created?",
-        a: "Proffy automatically creates flashcards when you struggle with a concept or when you explicitly ask. They appear in the Flashcards tab and use spaced repetition — cards you find easy are pushed further out; hard ones come back sooner.",
+        a: "Proffy automatically creates flashcards when you struggle with a concept or when you explicitly ask. They appear in the Flashcards tab and use spaced repetition. Cards you find easy are pushed further out; hard ones come back sooner.",
       },
       {
         q: "Where do my notes go?",
@@ -63,7 +63,7 @@ const SECTIONS = [
     items: [
       {
         q: "What is /btw?",
-        a: "A way to inject context mid-conversation without interrupting the flow. Type '/btw my exam is in 3 days' and Proffy will factor it in from that point on. Pro/Max users can even use /btw while Proffy is still typing — it'll finish its thought and then acknowledge.",
+        a: "A way to inject context mid-conversation without interrupting the flow. Type '/btw my exam is in 3 days' and Proffy will factor it in from that point on. Pro/Max users can even use /btw while Proffy is still typing and it will finish its thought, then acknowledge.",
       },
       {
         q: "What are the daily limits?",
@@ -71,7 +71,7 @@ const SECTIONS = [
       },
       {
         q: "Why does Proffy ask me about my professor or exam style?",
-        a: "Proffy builds a picture of your course over time — what the professor focuses on, exam formats, common traps. This intelligence is saved and helps other students in the same course too (anonymously).",
+        a: "Proffy builds a picture of your course over time: what the professor focuses on, exam formats, common traps. This intelligence is saved and helps other students in the same course too (anonymously).",
       },
       {
         q: "What is 'professor fingerprinting'?",

@@ -1,17 +1,23 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Smooth glowing blue circle cursor.
 // Uses `pointermove` (not mousemove) so it tracks correctly during click-drag.
 // Snaps instantly on pointerdown so it doesn't lag while holding a click.
+// Hidden on touch/mobile devices where there is no cursor.
 export default function CursorGlow() {
   const glowRef = useRef<HTMLDivElement>(null);
   const pos = useRef({ x: -999, y: -999 });
   const cur = useRef({ x: -999, y: -999 });
   const dragging = useRef(false);
   const rafRef = useRef<number>(0);
+  const [isTouch, setIsTouch] = useState(false);
 
   useEffect(() => {
+    if (window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0) {
+      setIsTouch(true);
+      return;
+    }
     const el = glowRef.current;
     if (!el) return;
 
@@ -59,5 +65,6 @@ export default function CursorGlow() {
     };
   }, []);
 
+  if (isTouch) return null;
   return <div id="cursor-glow" ref={glowRef} aria-hidden="true" />;
 }

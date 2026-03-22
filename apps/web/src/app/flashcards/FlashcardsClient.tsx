@@ -106,7 +106,7 @@ export default function FlashcardsClient({ courses, initialCards, courseId, tota
         <div>
           <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "4px" }}>Flashcards</h1>
           <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-            Spaced repetition — SM-2 algorithm schedules your reviews
+            Spaced repetition (SM-2) schedules your reviews automatically
           </p>
         </div>
         <select
