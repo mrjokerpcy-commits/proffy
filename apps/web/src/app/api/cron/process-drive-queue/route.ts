@@ -587,9 +587,13 @@ export async function GET(req: NextRequest) {
             newlyDoneIds.push(batch[j].id);
             await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value} chunks`);
           } else {
-            // Still mark as done so we don't retry failing files forever
-            newlyDoneIds.push(batch[j].id);
-            await appendLog(row.id, `  ✗ ${batch[j].name} → ${(r.reason as any)?.message ?? "unknown error"}`);
+            const errMsg: string = (r.reason as any)?.message ?? "unknown error";
+            // Transient errors (credit, rate limit, network) — do NOT mark as done so they're retried
+            const isTransient = /credit balance|rate.?limit|529|overloaded|timeout|ECONNRESET|ETIMEDOUT/i.test(errMsg);
+            if (!isTransient) {
+              newlyDoneIds.push(batch[j].id); // permanent failure — skip on next run
+            }
+            await appendLog(row.id, `  ✗ ${batch[j].name} → ${errMsg}${isTransient ? " (will retry)" : ""}`);
           }
         }
         // Save progress after each mini-batch so a timeout doesn't lose work
