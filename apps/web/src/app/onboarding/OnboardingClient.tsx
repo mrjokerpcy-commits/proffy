@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import WeeklyTimetable from "@/components/ui/WeeklyTimetable";
 
 const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"];
 const FIELDS = [
@@ -37,6 +38,7 @@ interface Answers {
   hours: string;
   goal: string;
   learningStyle: string;
+  timetable: string;
 }
 
 const STEPS = [
@@ -48,6 +50,7 @@ const STEPS = [
   { key: "learningStyle", question: () => "How do you learn best?",                                                     skippable: true },
   { key: "hours",         question: () => "How many hours a week can you study?",                                       skippable: true },
   { key: "goal",          question: () => "What's your main goal?",                                                     skippable: true },
+  { key: "timetable",    question: () => "Set up your weekly lecture schedule",                                        skippable: true },
 ] as const;
 
 const TOTAL_STEPS = STEPS.length + 1; // +1 for done screen
@@ -165,7 +168,7 @@ export default function OnboardingClient({ userName }: { userName: string }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({
     name: userName || "", university: "", semester: "", field: "",
-    challenge: "", hours: "", goal: "", learningStyle: "",
+    challenge: "", hours: "", goal: "", learningStyle: "", timetable: "",
   });
   const [saving, setSaving] = useState(false);
   const [erasing, setErasing] = useState(false);
@@ -439,6 +442,29 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                     </button>
                   ))}
                   <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)" }}>Skip for now</button>
+                </div>
+              )}
+
+              {/* Step 8: Timetable */}
+              {step === 8 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                    Click any cell to add a lecture, tutorial, or lab. Proffy will check in after each class.
+                  </div>
+                  <div style={{
+                    background: "var(--bg-elevated)", border: "1px solid var(--border)",
+                    borderRadius: "12px", padding: "10px", overflowX: "auto",
+                  }}>
+                    <WeeklyTimetable compact />
+                  </div>
+                  <button onClick={() => answer("timetable", "done")} style={{
+                    padding: "12px 18px", borderRadius: "10px", border: "none",
+                    background: "linear-gradient(135deg,#4f8ef7,#a78bfa)",
+                    color: "#fff", fontSize: "14px", fontWeight: 700, cursor: "pointer",
+                  }}>
+                    Continue →
+                  </button>
+                  <button onClick={skip} style={{ ...optBtn(), padding: "10px 18px", fontSize: "13px", color: "var(--text-muted)" }}>Skip for now</button>
                 </div>
               )}
 

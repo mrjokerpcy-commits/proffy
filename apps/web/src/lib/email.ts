@@ -166,6 +166,93 @@ export async function sendWelcomeEmail(email: string, name?: string) {
   }
 }
 
+export async function sendPostLectureEmail(email: string, name: string | undefined, courseName: string, slotType: string) {
+  const firstName = name ? name.split(" ")[0] : "there";
+  const typeLabel = slotType === "tutorial" ? "tutorial" : slotType === "lab" ? "lab" : "lecture";
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How was your ${typeLabel}?</title>
+</head>
+<body style="margin:0;padding:0;background:#0f0f12;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f12;min-height:100vh;">
+    <tr><td align="center" style="padding:48px 16px;">
+      <table width="100%" style="max-width:480px;" cellpadding="0" cellspacing="0">
+        <tr><td align="center" style="padding-bottom:28px;">
+          <table cellpadding="0" cellspacing="0"><tr>
+            <td style="padding-right:10px;">
+              <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#4f8ef7,#a78bfa);display:inline-block;"></div>
+            </td>
+            <td>
+              <span style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;">Proffy</span>
+            </td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="background:#18181b;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:36px 32px;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#4f8ef7;">After class check-in</p>
+          <h1 style="margin:0 0 14px;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;">
+            How was your ${typeLabel}, ${firstName}?
+          </h1>
+          <p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#a1a1aa;">
+            You just had <strong style="color:#ffffff;">${courseName}</strong>. While it's fresh, tell me what you learned or upload your slides so I can help you review.
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+            <tr>
+              <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                <span style="font-size:20px;margin-right:10px;">📤</span>
+                <span style="font-size:14px;color:#e4e4e7;font-weight:600;">Upload your slides or notes</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                <span style="font-size:20px;margin-right:10px;">💬</span>
+                <span style="font-size:14px;color:#e4e4e7;font-weight:600;">Tell me 3 things you learned today</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;">
+                <span style="font-size:20px;margin-right:10px;">❓</span>
+                <span style="font-size:14px;color:#e4e4e7;font-weight:600;">Ask me anything you didn't understand</span>
+              </td>
+            </tr>
+          </table>
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td align="center">
+              <a href="https://proffy.co.il/dashboard" style="display:inline-block;background:linear-gradient(135deg,#4f8ef7,#a78bfa);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:13px 32px;border-radius:10px;">
+                Open Proffy →
+              </a>
+            </td>
+          </tr></table>
+        </td></tr>
+        <tr><td align="center" style="padding-top:24px;">
+          <p style="margin:0;font-size:12px;color:#3f3f46;">
+            © 2025 Proffy · You can manage notifications in your schedule settings.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    if (DEV_MODE) {
+      console.log(`[DEV] Post-lecture email for ${email}: ${courseName} ${typeLabel}`);
+      return;
+    }
+    await resend.emails.send({
+      from: FROM,
+      to: email,
+      subject: `How was your ${courseName} ${typeLabel}? Tell Proffy`,
+      html,
+    });
+  } catch {
+    // Non-fatal
+  }
+}
+
 export async function sendVerificationEmail(email: string, code: string, name?: string) {
   // In dev or without a real API key, log the code to console instead of failing
   if (DEV_MODE) {

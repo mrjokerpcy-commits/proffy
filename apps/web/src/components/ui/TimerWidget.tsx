@@ -176,47 +176,6 @@ export default function TimerWidget({ isOpen, onOpenChange }: TimerWidgetProps =
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* ── Collapsed pill — only shown when NOT controlled externally ── */}
-      <AnimatePresence>
-        {!controlled && !open && (
-          <motion.button
-            key="pill"
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.85 }}
-            onClick={() => setOpen(true)}
-            title="Study timer"
-            style={{
-              position: "fixed", bottom: "20px", right: "20px", zIndex: 9000,
-              display: "flex", alignItems: "center", gap: "8px",
-              padding: "8px 14px 8px 10px", borderRadius: "99px",
-              background: "rgba(20,22,36,0.93)",
-              border: "1px solid rgba(79,142,247,0.22)",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-              backdropFilter: "blur(12px)",
-              cursor: "pointer", color: "#fff", fontSize: "12px", fontWeight: 600,
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-              stroke={running ? color : "rgba(255,255,255,0.4)"}
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <span style={{ color: running ? color : "rgba(255,255,255,0.5)", fontVariantNumeric: "tabular-nums" }}>
-              {running ? fmtTimer(timeLeft) : "Timer"}
-            </span>
-            {nextExam && (
-              <>
-                <div style={{ width: "1px", height: "14px", background: "rgba(255,255,255,0.12)" }} />
-                <span style={{ color: nextExam.ms < 86400000 * 2 ? "#f87171" : "rgba(255,255,255,0.35)", fontVariantNumeric: "tabular-nums" }}>
-                  {fmtCountdown(nextExam.ms).d}d {pad(fmtCountdown(nextExam.ms).h)}h
-                </span>
-              </>
-            )}
-          </motion.button>
-        )}
-      </AnimatePresence>
-
       {/* ── Expanded card ── */}
       <AnimatePresence>
         {open && (
@@ -227,7 +186,7 @@ export default function TimerWidget({ isOpen, onOpenChange }: TimerWidgetProps =
             exit={{ opacity: 0, scale: 0.9, y: 8 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              position: "fixed", bottom: "20px", right: "20px", zIndex: 9000,
+              position: "fixed", bottom: "80px", left: "268px", zIndex: 9000,
               width: "292px",
               background: "rgba(14,16,28,0.97)",
               border: "1px solid rgba(255,255,255,0.07)",

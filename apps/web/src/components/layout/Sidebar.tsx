@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Course } from "@/lib/types";
 import UpgradeModal from "./UpgradeModal";
 import TimerWidget from "@/components/ui/TimerWidget";
+import MathCalc from "@/components/ui/MathCalc";
 
 // ── Version — update this when releasing Proffy 1.0, 2.0, etc. ──
 const PROFFY_VERSION = "beta";
@@ -109,6 +110,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
+  const [calcOpen, setCalcOpen] = useState(false);
   const [mainTab, setMainTab] = useState<"courses" | "history">("courses");
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historySessions, setHistorySessions] = useState<any[]>([]);
@@ -516,7 +518,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       {/* ── Feature widget boxes ── */}
       <div style={{ flexShrink: 0, padding: "0.5rem 0.75rem 0.5rem", display: "flex", flexDirection: "column", gap: "8px" }}>
 
-        {/* Timer */}
+        {/* Timer button */}
         <button
           onClick={() => setTimerOpen(v => !v)}
           className="sidebar-item"
@@ -544,6 +546,42 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
             </div>
             <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
               Pomodoro &amp; exam mode
+            </div>
+          </div>
+        </button>
+
+        {/* Math Calculator button */}
+        <button
+          onClick={() => setCalcOpen(v => !v)}
+          className="sidebar-item"
+          style={{
+            display: "flex", alignItems: "center", gap: "12px",
+            padding: "10px 14px", borderRadius: "10px",
+            background: calcOpen ? "rgba(52,211,153,0.08)" : "var(--bg-elevated)",
+            border: `1px solid ${calcOpen ? "rgba(52,211,153,0.25)" : "var(--border)"}`,
+            width: "100%", cursor: "pointer", transition: "all 0.15s",
+          }}
+        >
+          <div style={{
+            width: "30px", height: "30px", borderRadius: "8px", flexShrink: 0,
+            background: calcOpen ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.05)",
+            border: `1px solid ${calcOpen ? "rgba(52,211,153,0.3)" : "var(--border)"}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={calcOpen ? "#34d399" : "var(--text-muted)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <line x1="8" y1="6" x2="16" y2="6"/>
+              <line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/>
+              <line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/>
+              <line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/>
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: calcOpen ? "#34d399" : "var(--text-secondary)", lineHeight: 1.25 }}>
+              Calculator
+            </div>
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
+              sin, log, integrals &amp; more
             </div>
           </div>
         </button>
@@ -779,8 +817,9 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           </span>
         </div>
       </div>
-      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} currentPlan={userPlan} />
       <TimerWidget isOpen={timerOpen} onOpenChange={setTimerOpen} />
+      <MathCalc isOpen={calcOpen} onOpenChange={setCalcOpen} />
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} currentPlan={userPlan} />
     </div>
   );
 }

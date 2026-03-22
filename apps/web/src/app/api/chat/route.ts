@@ -377,7 +377,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch user profile + exam date + student insights + course knowledge doc
-  const [profileResult, examResult, insightsResult, platformMemoryResult, courseKnowledgeResult] = await Promise.all([
+  const [profileResult, examResult, insightsResult, platformMemoryResult, courseKnowledgeResult, recentSlotResult] = await Promise.all([
     pool.query(
       `SELECT name, university, field_of_study, study_challenge, hours_per_week, study_goal, learning_style, courses_created, current_semester
        FROM users WHERE id = $1`,
@@ -413,6 +413,21 @@ export async function POST(req: NextRequest) {
           [university, course]
         ).catch(() => ({ rows: [] }))
       : Promise.resolve({ rows: [] }),
+    // Recent schedule slot for this course (last 7 days) — to detect post-lecture context
+    courseId
+      ? pool.query(
+          `SELECT slot_type, start_time, end_time, day_of_week
+           FROM schedule_slots
+           WHERE user_id = $1 AND course_id = $2
+             AND (
+               day_of_week = EXTRACT(DOW FROM NOW() AT TIME ZONE 'Asia/Jerusalem')::int
+               OR day_of_week = EXTRACT(DOW FROM (NOW() AT TIME ZONE 'Asia/Jerusalem') - INTERVAL '1 day')::int
+               OR day_of_week = EXTRACT(DOW FROM (NOW() AT TIME ZONE 'Asia/Jerusalem') - INTERVAL '2 days')::int
+             )
+           ORDER BY end_time DESC LIMIT 1`,
+          [userId, courseId]
+        ).catch(() => ({ rows: [] }))
+      : Promise.resolve({ rows: [] }),
   ]);
   const profile = profileResult.rows[0] ?? {};
   const coursesCreated: number = profile.courses_created ?? 0;
@@ -422,6 +437,7 @@ export async function POST(req: NextRequest) {
   const examDate: Date | null = examResult.rows[0]?.exam_date ?? null;
   const hoursUntilExam = examDate ? Math.round((examDate.getTime() - Date.now()) / 3_600_000) : null;
   const studentInsights: { topic: string; status: string; note: string }[] = insightsResult.rows;
+  const recentSlot: { slot_type: string; start_time: string; end_time: string } | null = recentSlotResult.rows[0] ?? null;
 
   // Increment message count (tokens updated after response)
   await pool.query(
@@ -697,6 +713,11 @@ When no material is found, answer directly and confidently from your training kn
 Only say something like "I don't have your specific slides on this" if the student explicitly asks whether you have their course material.
 If they share a URL → call submit_course_material immediately.
 Never make the student feel blocked. You can always help.
+${courseId && sources.length === 0 ? `
+## MISSING COURSE FILES
+This student has no uploaded slides or notes for this course yet.${recentSlot ? ` Their schedule shows they had a ${recentSlot.slot_type} recently (${recentSlot.start_time}–${recentSlot.end_time}).` : ""}
+Once per conversation, when it flows naturally — especially if they ask about lecture content or something specific that was taught — mention warmly: ${recentSlot ? `"I see you had your ${recentSlot.slot_type} recently — if you share the slides I can help you go through them directly. Just use the upload button in the top right."` : `"By the way, uploading your slides would let me answer directly from them — makes a big difference. Upload button is in the top right."`}
+Keep it short, one sentence. Never block answering. Never repeat the nudge in the same conversation.` : ""}
 
 ## TEACHING METHOD — ALWAYS FOLLOW THIS
 When a student asks you to explain a concept, do NOT dump the full answer immediately. Follow these steps:
