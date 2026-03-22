@@ -56,6 +56,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const [usedMsgs, setUsedMsgs] = useState(initialUsedMsgs);
   const [usedTokens, setUsedTokens] = useState(initialUsedTokens);
   const [btwDismissed, setBtwDismissed] = useState(false);
+  const [pendingBtw, setPendingBtw] = useState<string[]>([]);
   const [hasFirstResponse, setHasFirstResponse] = useState(initialMessages.length > 1);
   const [wasCompacted, setWasCompacted] = useState(false);
   const [ratingReminderDismissed, setRatingReminderDismissed] = useState(false);
@@ -68,6 +69,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const limitToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isBtw = input.trimStart().startsWith("/btw");
+  const canTypeWhileStreaming = userPlan === "pro" || userPlan === "max";
   const resetHours = getResetHours();
 
   useEffect(() => {
@@ -82,7 +84,27 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   }
 
   const send = useCallback(async (text: string) => {
-    if (!text.trim() || streaming) return;
+    if (!text.trim()) return;
+
+    // Pro/Max: /btw while streaming — inject context without interrupting stream
+    if (streaming && canTypeWhileStreaming && text.trimStart().startsWith("/btw")) {
+      const context = text.trimStart().slice(4).trim();
+      if (context) {
+        const btwMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text.trim() };
+        setMessages(prev => [...prev, btwMsg]);
+        setPendingBtw(prev => [...prev, context]);
+        setInput("");
+        if (textareaRef.current) textareaRef.current.style.height = "auto";
+      }
+      return;
+    }
+
+    // Pro/Max: regular message while streaming — abort current stream, start fresh
+    if (streaming && canTypeWhileStreaming) {
+      abortRef.current?.abort();
+    } else if (streaming) {
+      return; // free users: block
+    }
 
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text.trim() };
     const assistantId = crypto.randomUUID();
@@ -90,6 +112,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
 
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setInput("");
+    setPendingBtw([]);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     setStreaming(true);
     abortRef.current = new AbortController();
@@ -99,7 +122,9 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: text.trim(),
+          message: pendingBtw.length > 0
+            ? `${text.trim()}\n\n[Context from /btw: ${pendingBtw.join(" | ")}]`
+            : text.trim(),
           courseId: course?.id,
           university: course?.university,
           course: course?.name,
@@ -416,8 +441,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
 
       {/* ── Usage bar + /btw tip ── */}
       <div style={{ flexShrink: 0, padding: "6px 16px 0", display: "flex", flexDirection: "column", gap: "4px" }}>
-        {/* /btw tip — only after first AI response */}
-        {hasFirstResponse && !btwDismissed && !isBtw && (
+        {/* /btw tip — Pro/Max only, after first AI response */}
+        {canTypeWhileStreaming && hasFirstResponse && !btwDismissed && !isBtw && (
           <div style={{
             display: "flex", alignItems: "center", gap: "6px",
             padding: "5px 10px", borderRadius: "8px",
@@ -487,11 +512,11 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             onKeyDown={handleKeyDown}
             placeholder={isBtw ? "Add context the AI should remember…" : course ? `Ask about ${course.name}…` : "Ask anything…"}
             rows={1}
-            disabled={streaming}
+            disabled={streaming && !canTypeWhileStreaming}
             style={{
               flex: 1, background: "transparent", fontSize: "14px", outline: "none",
               resize: "none", maxHeight: "140px", lineHeight: 1.6, border: "none",
-              color: isBtw ? "var(--purple)" : "var(--text-primary)", opacity: streaming ? 0.5 : 1,
+              color: isBtw ? "var(--purple)" : "var(--text-primary)", opacity: (streaming && !canTypeWhileStreaming) ? 0.5 : 1,
               fontFamily: "inherit", paddingTop: "2px",
             }}
           />

@@ -169,7 +169,7 @@ async function extractFromOffice(buffer: Buffer, filename: string): Promise<{ ch
   const processorUrl = process.env.PROCESSOR_URL || "http://localhost:8001";
   try {
     const formData = new FormData();
-    formData.append("file", new Blob([buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)]), filename);
+    formData.append("file", new Blob([new Uint8Array(buffer)]), filename);
     const res = await fetch(`${processorUrl}/extract/pptx`, {
       method: "POST",
       body: formData,
