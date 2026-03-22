@@ -17,15 +17,33 @@ export async function POST(req: NextRequest) {
 
   const normalizedEmail = email.toLowerCase().trim();
 
-  const { rows } = await pool.query(
-    `SELECT id FROM email_verifications
-     WHERE email = $1 AND code = $2 AND used = false AND expires_at > NOW()
+  // Brute-force protection: find the active code for this email
+  const { rows: activeRows } = await pool.query(
+    `SELECT id, code, attempts FROM email_verifications
+     WHERE email = $1 AND used = false AND expires_at > NOW()
      ORDER BY created_at DESC LIMIT 1`,
-    [normalizedEmail, code]
+    [normalizedEmail]
   );
 
-  if (rows.length === 0)
+  if (activeRows.length === 0)
     return NextResponse.json({ error: "Invalid or expired code" }, { status: 400 });
+
+  const activeCode = activeRows[0];
+
+  // Max 5 wrong attempts before locking the code
+  if (activeCode.attempts >= 5)
+    return NextResponse.json({ error: "Too many attempts. Request a new code." }, { status: 429 });
+
+  if (activeCode.code !== code) {
+    // Wrong code — increment attempt counter
+    await pool.query(
+      "UPDATE email_verifications SET attempts = attempts + 1 WHERE id = $1",
+      [activeCode.id]
+    );
+    return NextResponse.json({ error: "Invalid or expired code" }, { status: 400 });
+  }
+
+  const rows = [activeCode];
 
   // Mark code used + verify user
   await pool.query("UPDATE email_verifications SET used = true WHERE id = $1", [rows[0].id]);

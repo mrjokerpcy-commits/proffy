@@ -9,7 +9,7 @@ const pool = new Pool({
 });
 
 const ALLOWED_GOALS          = new Set(["pass", "good", "excellent"]);
-const ALLOWED_UNIVERSITIES   = new Set(["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other"]);
+const ALLOWED_UNIVERSITIES   = new Set(["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"]);
 const ALLOWED_LEARNING_STYLE = new Set(["visual", "practice", "reading", "mixed"]);
 
 export async function PATCH(req: NextRequest) {

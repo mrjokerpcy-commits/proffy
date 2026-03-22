@@ -37,8 +37,11 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { courseId, topic } = await req.json();
-  if (!courseId || !UUID_RE.test(courseId)) return NextResponse.json({ error: "Valid courseId required" }, { status: 400 });
+  let body: Record<string, unknown>;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
+  const { courseId, topic } = body;
+  if (!courseId || typeof courseId !== "string" || !UUID_RE.test(courseId))
+    return NextResponse.json({ error: "Valid courseId required" }, { status: 400 });
 
   // Sanitise topic — max 120 chars, strip control characters
   const safeTopic = typeof topic === "string"

@@ -10,9 +10,35 @@ const pool = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
+if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("NEXTAUTH_SECRET is not set. This is required in production.");
+}
+
+const isProd = process.env.NODE_ENV === "production";
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET ?? "dev-secret-change-in-prod",
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 }, // 30 days
+
+  cookies: {
+    sessionToken: {
+      name: isProd ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        path: "/",
+        secure: isProd,
+      },
+    },
+    callbackUrl: {
+      name: isProd ? "__Secure-next-auth.callback-url" : "next-auth.callback-url",
+      options: { sameSite: "lax" as const, path: "/", secure: isProd },
+    },
+    csrfToken: {
+      name: isProd ? "__Host-next-auth.csrf-token" : "next-auth.csrf-token",
+      options: { httpOnly: true, sameSite: "lax" as const, path: "/", secure: isProd },
+    },
+  },
 
   providers: [
     GoogleProvider({

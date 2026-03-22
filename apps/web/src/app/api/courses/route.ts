@@ -9,7 +9,7 @@ const pool = new Pool({
 });
 
 const ALLOWED_UNIVERSITIES = new Set([
-  "TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Other",
+  "TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other",
 ]);
 const ALLOWED_LEVELS = new Set(["beginner", "some", "strong"]);
 const ALLOWED_GOALS  = new Set(["pass", "good", "excellent"]);

@@ -1,10 +1,13 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY ?? "re_placeholder");
+const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
+const resend = new Resend(RESEND_API_KEY || "re_placeholder");
 
-// From address — update to your verified domain in Resend once you have one
-// For now uses Resend's sandbox domain which works for testing
-const FROM = "Proffy <onboarding@resend.dev>";
+// Set RESEND_FROM in your env to your verified domain, e.g. "Proffy <noreply@proffy.co.il>"
+// Falls back to Resend sandbox domain (only works for verified emails on the account)
+const FROM = process.env.RESEND_FROM ?? "Proffy <onboarding@resend.dev>";
+
+const DEV_MODE = !RESEND_API_KEY || process.env.NODE_ENV === "development";
 
 function verificationEmailHtml(code: string, name?: string): string {
   return `<!DOCTYPE html>
@@ -164,6 +167,11 @@ export async function sendWelcomeEmail(email: string, name?: string) {
 }
 
 export async function sendVerificationEmail(email: string, code: string, name?: string) {
+  // In dev or without a real API key, log the code to console instead of failing
+  if (DEV_MODE) {
+    console.log(`[DEV] Verification code for ${email}: ${code}`);
+    return;
+  }
   const { error } = await resend.emails.send({
     from: FROM,
     to: email,

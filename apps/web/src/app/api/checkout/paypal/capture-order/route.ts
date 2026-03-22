@@ -25,8 +25,12 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { orderId } = await req.json();
-  if (!orderId) return NextResponse.json({ error: "orderId required" }, { status: 400 });
+  let body: Record<string, unknown>;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
+  const { orderId } = body;
+  // Validate orderId to prevent path traversal — PayPal order IDs are alphanumeric, 17 chars
+  if (!orderId || typeof orderId !== "string" || !/^[A-Z0-9]{8,25}$/i.test(orderId))
+    return NextResponse.json({ error: "Invalid orderId" }, { status: 400 });
 
   const token = await getPayPalToken();
 

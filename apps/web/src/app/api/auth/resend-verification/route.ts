@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomInt } from "crypto";
 import { Pool } from "pg";
 import { sendVerificationEmail } from "@/lib/email";
 
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
   if (recent.length > 0) return NextResponse.json({ status: "ok" });
 
   await pool.query("UPDATE email_verifications SET used = true WHERE email = $1", [normalizedEmail]);
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const code = String(randomInt(100000, 1000000));
   await pool.query("INSERT INTO email_verifications (email, code) VALUES ($1, $2)", [normalizedEmail, code]);
 
   try { await sendVerificationEmail(normalizedEmail, code, rows[0].name); } catch { /* silent */ }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { randomInt } from "crypto";
 import { Pool } from "pg";
 import { sendVerificationEmail } from "@/lib/email";
 
@@ -10,11 +11,25 @@ const pool = new Pool({
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 
+// Cryptographically secure 6-digit code
 function randomCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: max 5 registrations per IP per hour
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  try {
+    const { rows: ipRows } = await pool.query(
+      `SELECT COUNT(*) as cnt FROM users WHERE created_at > NOW() - INTERVAL '1 hour'
+       AND created_ip = $1`,
+      [ip]
+    );
+    if (parseInt(ipRows[0]?.cnt ?? "0", 10) >= 5) {
+      return NextResponse.json({ error: "Too many registrations. Try again later." }, { status: 429 });
+    }
+  } catch { /* ok if created_ip column not yet added */ }
+
   let body: unknown;
   try { body = await req.json(); }
   catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
