@@ -104,6 +104,16 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token?.id) {
         session.user.id = token.id as string;
+        // Fetch current plan fresh on every session check
+        try {
+          const { rows } = await pool.query(
+            "SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+            [token.id]
+          );
+          (session.user as any).plan = rows[0]?.plan ?? "free";
+        } catch {
+          (session.user as any).plan = "free";
+        }
       }
       return session;
     },

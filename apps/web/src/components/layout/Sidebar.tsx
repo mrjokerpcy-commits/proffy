@@ -553,6 +553,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
 
         {/* Professor Fingerprint */}
         <button
+          data-tour="sidebar-fingerprint"
           onClick={() => window.dispatchEvent(new Event("proffy:open-fingerprint"))}
           className="sidebar-item"
           style={{

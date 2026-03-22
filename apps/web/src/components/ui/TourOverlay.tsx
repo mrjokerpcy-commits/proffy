@@ -35,7 +35,7 @@ const STEPS: Step[] = [
   {
     target: "sidebar-flashcards",
     title: "Auto-saved flashcards",
-    description: "When Proffy spots a concept you're struggling with, it saves a flashcard automatically. Spaced repetition keeps them fresh.",
+    description: "When Proffy spots a concept you struggle with, it saves a flashcard automatically. Spaced repetition keeps them fresh.",
     side: "right",
     padding: 6,
   },
@@ -46,9 +46,16 @@ const STEPS: Step[] = [
     side: "right",
     padding: 6,
   },
+  {
+    target: "sidebar-fingerprint",
+    title: "Prof. Fingerprint",
+    description: "Upload past exams and Proffy maps exactly which topics your professor focuses on — with percentage likelihood per topic (Max).",
+    side: "right",
+    padding: 6,
+  },
 ];
 
-const TOUR_KEY = "proffy_tour_done";
+const TOUR_KEY = "proffy_tour_v2";
 const GAP = 16;      // gap between spotlight and tooltip
 const ARROW = 10;    // arrow size
 
