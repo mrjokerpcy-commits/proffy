@@ -397,6 +397,10 @@ export async function POST(req: NextRequest) {
   const { message, history = [], sessionId, btwResume, partialResponse, image } = body;
   // image: { base64: string, mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" }
   const imageAttachment = image && typeof image.base64 === "string" && typeof image.mediaType === "string" ? image : null;
+  // documents: Array<{ base64: string, mediaType: string, name: string }> — PDFs attached via upload modal
+  const docAttachments: { base64: string; mediaType: string; name: string }[] = Array.isArray(body.documents)
+    ? body.documents.filter((d: any) => typeof d.base64 === "string" && d.base64.length < 20_000_000).slice(0, 5)
+    : [];
   // These can be overridden by authoritative DB values below
   let university: string | undefined = body.university;
   let course: string | undefined     = body.course;
@@ -1098,13 +1102,18 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
         if (compacted) send({ type: "compacted" });
 
         // /btw resume: inject partial response + btw context so agent continues naturally
-        // Build the user content — text only, or text + image
-        const userContent: Anthropic.MessageParam["content"] = imageAttachment
-          ? [
-              { type: "image", source: { type: "base64", media_type: imageAttachment.mediaType, data: imageAttachment.base64 } } as any,
-              { type: "text", text: message },
-            ]
-          : message;
+        // Build the user content — text only, text + image, or text + documents
+        const userContent: Anthropic.MessageParam["content"] =
+          docAttachments.length > 0 || imageAttachment
+            ? [
+                ...docAttachments.map(d => ({
+                  type: "document" as const,
+                  source: { type: "base64" as const, media_type: "application/pdf" as const, data: d.base64 },
+                })),
+                ...(imageAttachment ? [{ type: "image" as const, source: { type: "base64" as const, media_type: imageAttachment.mediaType, data: imageAttachment.base64 } }] : []),
+                { type: "text" as const, text: message },
+              ]
+            : message;
 
         let msgs: Anthropic.MessageParam[] = btwResume && partialResponse
           ? [

@@ -167,6 +167,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     setPendingBtw([]);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     const attachedImage = pendingImage;
+    const attachedDocs = pendingDocsRef.current;
+    pendingDocsRef.current = [];
     setPendingImage(null);
     if (attachedImage) setSessionImageCount(c => c + 1);
     setStreaming(true);
@@ -182,6 +184,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             ? `${text.trim()}\n\n[Context from /btw: ${pendingBtw.join(" | ")}]`
             : text.trim(),
           image: attachedImage ? { base64: attachedImage.base64, mediaType: attachedImage.mediaType } : undefined,
+          documents: attachedDocs.length ? attachedDocs : undefined,
           courseId: runtimeCourseId,
           university: course?.university,
           course: course?.name,
@@ -410,12 +413,16 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   // Keep sendRef current so event listeners below can call send without stale closure
   useEffect(() => { sendRef.current = send; }, [send]);
 
-  // Auto-send feature prompt after upload completes in this course's context
+  // Pending documents from upload (base64 PDFs to attach to next message)
+  const pendingDocsRef = useRef<{ base64: string; mediaType: string; name: string }[]>([]);
+
+  // Auto-send feature prompt after upload completes; attach documents if provided
   useEffect(() => {
     const handler = (e: Event) => {
-      const { courseId: uploadedCourseId, prompt } = (e as CustomEvent).detail ?? {};
+      const { courseId: uploadedCourseId, prompt, files } = (e as CustomEvent).detail ?? {};
       if (!prompt) return;
       if (uploadedCourseId && runtimeCourseId && uploadedCourseId !== runtimeCourseId) return;
+      if (files?.length) pendingDocsRef.current = files;
       setTimeout(() => sendRef.current?.(prompt), 400);
     };
     window.addEventListener("proffy:upload-complete", handler);

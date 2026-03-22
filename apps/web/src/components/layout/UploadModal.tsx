@@ -92,35 +92,50 @@ export default function UploadModal() {
     setFiles(prev => [...prev, ...valid].slice(0, 5));
   }, []);
 
+  async function readAsBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function upload() {
     if (!files.length || !courseId) return;
-    setStatus("uploading"); setProgress(0); setError(""); setResult(null);
-    let lastPatterns: { topic: string; pct: number }[] = [];
-    let totalChunks = 0;
-    for (let i = 0; i < files.length; i++) {
-      const fd = new FormData();
-      fd.append("file", files[i]);
-      fd.append("courseId", courseId);
-      fd.append("type", docType);
-      try {
-        const resp = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.error ?? "Upload failed");
-        totalChunks += data.chunkCount ?? 0;
-        if (data.patterns?.length) lastPatterns = data.patterns;
-      } catch (err: any) {
-        setError(err.message ?? "Upload failed");
-        setStatus("error");
-        return;
+    setStatus("uploading"); setError(""); setResult(null);
+
+    try {
+      // Read files as base64 client-side (fast — no server round-trip needed)
+      const filesData = await Promise.all(
+        files.slice(0, 5).map(async f => ({
+          base64: await readAsBase64(f),
+          mediaType: "application/pdf" as const,
+          name: f.name,
+        }))
+      );
+
+      // Fire-and-forget background indexing (for future RAG sessions)
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("courseId", courseId);
+        fd.append("type", docType);
+        fetch("/api/upload", { method: "POST", body: fd }).catch(() => {});
       }
-      setProgress(Math.round(((i + 1) / files.length) * 100));
+
+      setResult({ chunkCount: files.length, patterns: [] });
+      setStatus("success");
+
+      // Dispatch to chat with file content — Claude reads directly, no waiting
+      window.dispatchEvent(new CustomEvent("proffy:upload-complete", {
+        detail: { courseId, docType, prompt: UPLOAD_PROMPTS[docType], files: filesData },
+      }));
+      setTimeout(() => close(), 800);
+    } catch (err: any) {
+      setError(err.message ?? "Failed to read files");
+      setStatus("error");
     }
-    setResult({ chunkCount: totalChunks, patterns: lastPatterns });
-    setStatus("success");
-    // Dispatch event so ChatWindow can auto-send a feature-specific prompt
-    window.dispatchEvent(new CustomEvent("proffy:upload-complete", {
-      detail: { courseId, docType, prompt: UPLOAD_PROMPTS[docType] },
-    }));
   }
 
   async function submitDrive() {
