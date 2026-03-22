@@ -526,7 +526,7 @@ export async function POST(req: NextRequest) {
         let context = "";
         let sources: { filename: string; type: string; professor?: string; score: number }[] = [];
 
-        if (courseId && process.env.OPENAI_API_KEY) {
+        if (process.env.OPENAI_API_KEY) {
           send({ type: "thinking", text: "Searching course material…" });
           try {
             const embRes = await openai.embeddings.create({
@@ -545,21 +545,24 @@ export async function POST(req: NextRequest) {
             if (courseNumber) indexedCourseFilter.push({ key: "course_number", match: { value: courseNumber } });
 
             const userFilter   = [...indexedCourseFilter, { key: "user_id", match: { value: userId } }];
-            // For shared content: filter by university + is_shared only (let vector similarity find the right course)
-            const sharedFilter = [...indexedCourseFilter, { key: "is_shared", match: { value: true } }];
+            // For shared content: filter by university + is_shared (let vector similarity find the right course)
+            // In onboarding mode (no courseId), search all shared content for user's university
+            const sharedFilter = courseId
+              ? [...indexedCourseFilter, { key: "is_shared", match: { value: true } }]
+              : [...(university ? [{ key: "university", match: { value: university } }] : []), { key: "is_shared", match: { value: true } }];
 
             let searchResults: unknown[] = [];
             try {
-              // Search user's private content
-              const privateResults = await qdrant.search("studyai_chunks", {
+              // Search user's private content (only when course is selected)
+              const privateResults = courseId ? await qdrant.search("studyai_chunks", {
                 vector, limit: 6,
                 filter: { must: userFilter },
                 with_payload: true,
-              }).catch(() => []);
+              }).catch(() => []) : [];
 
-              // Search shared platform content (pre-loaded course material)
+              // Search shared platform content
               const sharedResults = await qdrant.search("studyai_chunks", {
-                vector, limit: 6,
+                vector, limit: courseId ? 6 : 10,
                 filter: { must: sharedFilter },
                 with_payload: true,
               }).catch(() => []);
