@@ -24,11 +24,11 @@ export async function GET() {
   ]).catch(() => {});
 
   const { rows } = await pool.query(`
-    SELECT mq.id, mq.url, mq.university, mq.course_name, mq.submitted_at, mq.status,
+    SELECT mq.id, mq.url, mq.university, mq.course_name, mq.created_at AS submitted_at, mq.status,
            mq.files_found, mq.chunks_created, mq.error_msg, mq.processed_at, u.email
     FROM material_queue mq
     LEFT JOIN users u ON u.id = mq.submitted_by
-    ORDER BY mq.submitted_at DESC LIMIT 50
+    ORDER BY mq.created_at DESC LIMIT 50
   `).catch(() => ({ rows: [] }));
 
   return NextResponse.json({ queue: rows });
