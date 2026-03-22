@@ -34,6 +34,7 @@ const TOOLS: Anthropic.Tool[] = [
       properties: {
         name: { type: "string", description: "Course name in English" },
         university: { type: "string", enum: ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"] },
+        course_number: { type: "string", description: "Course number exactly as given by the student (e.g. 234218, 0366-2115)" },
         professor: { type: "string", description: "Professor's name" },
         exam_date: { type: "string", description: "Exam date in YYYY-MM-DD format" },
         semester: { type: "string", description: "e.g. 2025a, 2025b, 2025s" },
@@ -50,8 +51,8 @@ const TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: "object" as const,
       properties: {
-        query:     { type: "string", description: "Course name or partial name to search for" },
-        number:    { type: "string", description: "Course number if the user mentioned one (e.g. '044142', '236501')" },
+        query:     { type: "string", description: "Course name, partial name, or course number to search for. Pass the number here if the user gave one." },
+        number:    { type: "string", description: "Course number exactly as the user typed (e.g. '044142', '236501', '0440142'). Always pass this when the user gives digits." },
         semester:  { type: "string", description: "Semester to search in, e.g. '2025b'" },
       },
       required: ["query"],
@@ -195,6 +196,7 @@ async function executeTool(
       return { result: "Free plan limit reached: this user already has 3 lifetime courses. Tell them to upgrade to Pro for unlimited courses." };
     }
 
+    const course_number = typeof input.course_number === "string" ? input.course_number.replace(/[^\w\-\.]/g, "").slice(0, 30) : null;
     const professor = typeof input.professor === "string" ? input.professor.slice(0, 150) : null;
     const exam_date = typeof input.exam_date === "string" && DATE_RE.test(input.exam_date) ? input.exam_date : null;
     const semester = typeof input.semester === "string" && SEMESTER_RE.test(input.semester) ? input.semester : null;
@@ -203,9 +205,9 @@ async function executeTool(
     const user_level = typeof input.user_level === "string" && ["beginner","some","strong"].includes(input.user_level) ? input.user_level : null;
 
     const { rows } = await pool.query(
-      `INSERT INTO courses (user_id, name, university, professor, exam_date, semester, hours_per_week, goal, user_level)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [userId, courseName, university, professor, exam_date, semester, hours_per_week, goal, user_level]
+      `INSERT INTO courses (user_id, name, university, course_number, professor, exam_date, semester, hours_per_week, goal, user_level)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [userId, courseName, university, course_number, professor, exam_date, semester, hours_per_week, goal, user_level]
     );
     // Increment lifetime course counter (never decremented, even if course deleted)
     await pool.query(
