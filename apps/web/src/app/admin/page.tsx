@@ -89,7 +89,15 @@ export default async function AdminPage() {
     ORDER BY u.created_at DESC
   `);
 
-  // ── Material queue ───────────────────────────────────────────────────────────
+  // ── Material queue — ensure optional columns exist before querying ──────────
+  await Promise.all([
+    pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`),
+    pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS files_found INT`),
+    pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS chunks_created INT`),
+    pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS error_msg TEXT`),
+    pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS processed_at TIMESTAMPTZ`),
+  ]).catch(() => {});
+
   const { rows: queue } = await pool.query(`
     SELECT mq.id, mq.url, mq.university, mq.course_name, mq.submitted_at, mq.status,
            mq.files_found, mq.chunks_created, mq.error_msg, mq.processed_at, u.email
