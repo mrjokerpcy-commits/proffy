@@ -1,16 +1,23 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
 
-// Claude pricing (per 1M tokens, USD)
-const HAIKU_IN  = 0.80;
-const HAIKU_OUT = 4.00;
+// Claude pricing (per 1M tokens, USD) — updated rates
+const HAIKU_IN   = 0.80;
+const HAIKU_OUT  = 4.00;
 const SONNET_IN  = 3.00;
 const SONNET_OUT = 15.00;
+const OPUS_IN    = 15.00;
+const OPUS_OUT   = 75.00;
 
 function calcCost(ti: number, to: number, plan: "free" | "pro" | "max") {
-  const isPaid = plan === "pro" || plan === "max";
-  const inRate  = isPaid ? SONNET_IN  : HAIKU_IN;
-  const outRate = isPaid ? SONNET_OUT : HAIKU_OUT;
+  // Free: Haiku for chat. Pro: Sonnet. Max: Opus for complex, Sonnet otherwise.
+  // Drive processing always uses Sonnet — so blended estimate leans Sonnet.
+  const inRate  = plan === "max" ? (SONNET_IN  + OPUS_IN)  / 2
+                : plan === "pro" ? SONNET_IN
+                : HAIKU_IN;
+  const outRate = plan === "max" ? (SONNET_OUT + OPUS_OUT) / 2
+                : plan === "pro" ? SONNET_OUT
+                : HAIKU_OUT;
   return (ti / 1_000_000) * inRate + (to / 1_000_000) * outRate;
 }
 

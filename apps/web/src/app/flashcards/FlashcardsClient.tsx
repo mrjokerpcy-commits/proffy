@@ -74,6 +74,16 @@ export default function FlashcardsClient({ courses, initialCards, courseId, tota
     }
   }
 
+  function skip() {
+    const next = index + 1;
+    if (next >= cards.length) {
+      setDone(true);
+    } else {
+      setIndex(next);
+      setFlipped(false);
+    }
+  }
+
   async function generateCards() {
     if (!selectedCourse) return;
     setGenerating(true);
@@ -255,8 +265,20 @@ export default function FlashcardsClient({ courses, initialCards, courseId, tota
               )}
             </AnimatePresence>
 
+            <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
+              <button
+                onClick={skip}
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  fontSize: "12px", color: "var(--text-muted)", padding: "4px 10px",
+                  borderRadius: "6px",
+                }}
+              >
+                Skip →
+              </button>
+            </div>
             {!flipped && (
-              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "8px" }}>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "4px" }}>
                 Tap the card to flip
               </p>
             )}
