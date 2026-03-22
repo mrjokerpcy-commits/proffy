@@ -1128,6 +1128,7 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
             model: plan === "free" ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
             max_tokens: plan === "free" ? 1024 : 10000,
             ...(useThinking ? { thinking: { type: "enabled", budget_tokens: 5000 } } : {}),
+            ...(useThinking ? { betas: ["interleaved-thinking-2025-05-14"] } : {}),
             system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
             messages: msgs,
             tools: TOOLS,
