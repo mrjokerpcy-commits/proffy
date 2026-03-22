@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
+import { unzipSync } from "fflate";
 import type { Course } from "@/lib/types";
 
 type DocType = "slides" | "exam" | "notes" | "textbook";
@@ -36,6 +37,7 @@ export default function UploadModal() {
   const [docType, setDocType] = useState<DocType>("slides");
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [zipExtracting, setZipExtracting] = useState(false);
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<{ chunkCount: number; patterns: { topic: string; pct: number }[] } | null>(null);
@@ -85,11 +87,35 @@ export default function UploadModal() {
   const canUseDocType = (dt: DocType) =>
     PLAN_RANK[userPlan] >= PLAN_RANK[DOC_TYPES.find(d => d.value === dt)!.minPlan];
 
-  const addFiles = useCallback((newFiles: FileList | File[]) => {
-    const valid = Array.from(newFiles).filter(f =>
+  const addFiles = useCallback(async (newFiles: FileList | File[]) => {
+    const list = Array.from(newFiles);
+    const zips = list.filter(f => f.name.toLowerCase().endsWith(".zip") || f.type === "application/zip" || f.type === "application/x-zip-compressed");
+    const direct = list.filter(f => !zips.includes(f) && (
       f.type === "application/pdf" || f.name.endsWith(".pdf") || f.name.endsWith(".txt")
-    );
-    setFiles(prev => [...prev, ...valid].slice(0, 5));
+    ));
+
+    let extracted: File[] = [];
+    if (zips.length > 0) {
+      setZipExtracting(true);
+      try {
+        for (const zip of zips) {
+          const buf = await zip.arrayBuffer();
+          const unzipped = unzipSync(new Uint8Array(buf));
+          for (const [path, data] of Object.entries(unzipped)) {
+            if (path.startsWith("__MACOSX/") || path.startsWith(".")) continue;
+            const ext = path.split(".").pop()?.toLowerCase() ?? "";
+            if (!["pdf", "txt", "jpg", "jpeg", "png", "webp"].includes(ext)) continue;
+            const mime = ext === "pdf" ? "application/pdf" : ext === "txt" ? "text/plain" : `image/${ext}`;
+            const name = path.split("/").pop() ?? path;
+            extracted.push(new File([data], name, { type: mime }));
+          }
+        }
+      } finally {
+        setZipExtracting(false);
+      }
+    }
+
+    setFiles(prev => [...prev, ...direct, ...extracted].slice(0, 20));
   }, []);
 
   async function readAsBase64(file: File): Promise<string> {
@@ -106,16 +132,17 @@ export default function UploadModal() {
     setStatus("uploading"); setError(""); setResult(null);
 
     try {
-      // Read files as base64 client-side (fast — no server round-trip needed)
+      // Attach up to 5 PDFs to chat (Claude reads them directly)
+      const pdfFiles = files.filter(f => f.type === "application/pdf" || f.name.endsWith(".pdf"));
       const filesData = await Promise.all(
-        files.slice(0, 5).map(async f => ({
+        pdfFiles.slice(0, 5).map(async f => ({
           base64: await readAsBase64(f),
           mediaType: "application/pdf" as const,
           name: f.name,
         }))
       );
 
-      // Fire-and-forget background indexing (for future RAG sessions)
+      // Background-index ALL files (for future RAG sessions)
       for (const file of files) {
         const fd = new FormData();
         fd.append("file", file);
@@ -302,10 +329,14 @@ export default function UploadModal() {
                           transition: "all 0.2s",
                         }}
                       >
-                        <input ref={fileRef} type="file" accept=".pdf,.txt" multiple style={{ display: "none" }}
+                        <input ref={fileRef} type="file" accept=".pdf,.txt,.zip" multiple style={{ display: "none" }}
                           onChange={e => e.target.files && addFiles(e.target.files)} />
-                        <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{files.length ? "📂" : "⬆️"}</div>
-                        {files.length > 0 ? (
+                        <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+                          {zipExtracting ? "⏳" : files.length ? "📂" : "⬆️"}
+                        </div>
+                        {zipExtracting ? (
+                          <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Extracting ZIP…</p>
+                        ) : files.length > 0 ? (
                           <div>
                             {files.map((f, i) => (
                               <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--text-secondary)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 10px", margin: "3px" }}>
@@ -314,12 +345,14 @@ export default function UploadModal() {
                                   style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 0, fontSize: "12px" }}>×</button>
                               </div>
                             ))}
-                            <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px" }}>Click to add more (max 5)</p>
+                            <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px" }}>
+                              {files.length} file{files.length > 1 ? "s" : ""} — click to add more
+                            </p>
                           </div>
                         ) : (
                           <>
-                            <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "4px" }}>Drop PDF files here or click to browse</p>
-                            <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>PDF · TXT · Up to 5 files</p>
+                            <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "4px" }}>Drop files here or click to browse</p>
+                            <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>PDF · TXT · ZIP (of PDFs)</p>
                           </>
                         )}
                       </div>
