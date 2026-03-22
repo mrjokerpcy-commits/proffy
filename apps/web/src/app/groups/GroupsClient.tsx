@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const GROUPS = [
   {
@@ -86,271 +86,285 @@ const ONLINE_USERS = [
 
 export default function GroupsClient() {
   const [activeGroup, setActiveGroup] = useState("1");
+  const [isMobile, setIsMobile] = useState(false);
+  const [view, setView] = useState<"list" | "chat">("list"); // mobile only
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const group = GROUPS.find(g => g.id === activeGroup)!;
   const messages = MESSAGES[activeGroup] ?? [];
 
-  return (
-    <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
+  function selectGroup(id: string) {
+    setActiveGroup(id);
+    if (isMobile) setView("chat");
+  }
 
-      {/* Under construction banner */}
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, zIndex: 50,
-        background: "rgba(245,158,11,0.12)", borderBottom: "1px solid rgba(245,158,11,0.3)",
-        padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
-        backdropFilter: "blur(8px)",
-      }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-        <span style={{ fontSize: "12px", fontWeight: 700, color: "#f59e0b", letterSpacing: "0.04em" }}>
-          Under Construction — this is a preview of how Study Groups will work
-        </span>
-        <span style={{ fontSize: "11px", color: "rgba(245,158,11,0.6)", fontWeight: 500 }}>
-          Messages are not real
-        </span>
-      </div>
+  const BANNER_H = 0; // no longer used — banner is in flow
 
-      {/* Groups sidebar */}
-      <div style={{
-        width: "260px", flexShrink: 0,
-        borderRight: "1px solid var(--border)",
-        background: "var(--bg-surface)",
-        display: "flex", flexDirection: "column",
-        paddingTop: "45px",
-      }}>
-        {/* Header */}
-        <div style={{ padding: "16px 16px 10px", borderBottom: "1px solid var(--border)" }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px" }}>
-            TAU — Your Groups
-          </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            padding: "7px 10px", borderRadius: "8px",
-            background: "var(--bg-elevated)", border: "1px solid var(--border)",
-          }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round">
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Search groups…</span>
-          </div>
+  // ── Shared sub-components ──────────────────────────────────────────────────
+
+  const GroupsList = (
+    <div style={{
+      width: isMobile ? "100%" : "260px", flexShrink: 0,
+      borderRight: isMobile ? "none" : "1px solid var(--border)",
+      background: "var(--bg-surface)",
+      display: "flex", flexDirection: "column",
+      overflow: "hidden",
+    }}>
+      <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: "8px" }}>
+          TAU — Your Groups
         </div>
-
-        {/* Group list */}
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          {GROUPS.map(g => (
-            <button
-              key={g.id}
-              onClick={() => setActiveGroup(g.id)}
-              style={{
-                width: "100%", display: "flex", alignItems: "flex-start", gap: "11px",
-                padding: "12px 14px", border: "none", cursor: "pointer",
-                background: activeGroup === g.id ? "rgba(79,142,247,0.08)" : "transparent",
-                borderLeft: activeGroup === g.id ? `3px solid ${g.color}` : "3px solid transparent",
-                transition: "all 0.12s", textAlign: "left",
-              }}
-            >
-              {/* Avatar */}
-              <div style={{
-                width: "38px", height: "38px", borderRadius: "10px", flexShrink: 0,
-                background: g.color + "18", border: `1px solid ${g.color}30`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "13px", fontWeight: 800, color: g.color,
-              }}>
-                {g.course.split(" ").map(w => w[0]).join("").slice(0, 2)}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "130px" }}>{g.course}</span>
-                  <span style={{ fontSize: "10px", color: "var(--text-muted)", flexShrink: 0 }}>{g.time}</span>
-                </div>
-                <div style={{ fontSize: "11px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "3px" }}>
-                  {g.lastMsg}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-                    <span style={{ color: "#34d399" }}>●</span> {g.online} online
-                  </span>
-                  <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>· {g.members} members</span>
-                  {g.unread > 0 && (
-                    <span style={{
-                      marginLeft: "auto", minWidth: "18px", height: "18px", borderRadius: "99px",
-                      background: "#f87171", color: "#fff",
-                      fontSize: "10px", fontWeight: 800,
-                      display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px",
-                    }}>{g.unread}</span>
-                  )}
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Chat area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, paddingTop: "45px" }}>
-
-        {/* Chat header */}
         <div style={{
-          flexShrink: 0, padding: "12px 20px",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--bg-surface)",
-          display: "flex", alignItems: "center", gap: "12px",
+          display: "flex", alignItems: "center", gap: "8px",
+          padding: "7px 10px", borderRadius: "8px",
+          background: "var(--bg-elevated)", border: "1px solid var(--border)",
         }}>
-          <div style={{
-            width: "36px", height: "36px", borderRadius: "10px",
-            background: group.color + "18", border: `1px solid ${group.color}30`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "12px", fontWeight: 800, color: group.color, flexShrink: 0,
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Search groups…</span>
+        </div>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {GROUPS.map(g => (
+          <button key={g.id} onClick={() => selectGroup(g.id)} style={{
+            width: "100%", display: "flex", alignItems: "flex-start", gap: "11px",
+            padding: "12px 14px", border: "none", cursor: "pointer",
+            background: activeGroup === g.id && !isMobile ? "rgba(79,142,247,0.08)" : "transparent",
+            borderLeft: activeGroup === g.id && !isMobile ? `3px solid ${g.color}` : "3px solid transparent",
+            transition: "all 0.12s", textAlign: "left",
           }}>
-            {group.course.split(" ").map(w => w[0]).join("").slice(0, 2)}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)" }}>{group.course}</div>
-            <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-              {group.code} · {group.members} members ·{" "}
-              <span style={{ color: "#34d399" }}>● {group.online} online</span>
+            <div style={{
+              width: "42px", height: "42px", borderRadius: "12px", flexShrink: 0,
+              background: g.color + "18", border: `1px solid ${g.color}30`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "13px", fontWeight: 800, color: g.color,
+            }}>
+              {g.course.split(" ").map(w => w[0]).join("").slice(0, 2)}
             </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "150px" }}>{g.course}</span>
+                <span style={{ fontSize: "10px", color: "var(--text-muted)", flexShrink: 0 }}>{g.time}</span>
+              </div>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>
+                {g.lastMsg}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                  <span style={{ color: "#34d399" }}>●</span> {g.online} online · {g.members} members
+                </span>
+                {g.unread > 0 && (
+                  <span style={{
+                    marginLeft: "auto", minWidth: "18px", height: "18px", borderRadius: "99px",
+                    background: "#f87171", color: "#fff", fontSize: "10px", fontWeight: 800,
+                    display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px",
+                  }}>{g.unread}</span>
+                )}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const ChatView = (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+      {/* Chat header */}
+      <div style={{
+        flexShrink: 0, padding: "10px 14px",
+        borderBottom: "1px solid var(--border)",
+        background: "var(--bg-surface)",
+        display: "flex", alignItems: "center", gap: "10px",
+      }}>
+        {/* Back button on mobile */}
+        {isMobile && (
+          <button onClick={() => setView("list")} style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: "var(--text-muted)", padding: "4px", display: "flex", alignItems: "center", flexShrink: 0,
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+          </button>
+        )}
+        <div style={{
+          width: "34px", height: "34px", borderRadius: "9px", flexShrink: 0,
+          background: group.color + "18", border: `1px solid ${group.color}30`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "11px", fontWeight: 800, color: group.color,
+        }}>
+          {group.course.split(" ").map(w => w[0]).join("").slice(0, 2)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{group.course}</div>
+          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+            {group.code} · <span style={{ color: "#34d399" }}>● {group.online} online</span>
           </div>
-          {/* Online avatars */}
+        </div>
+        {/* Stacked avatars — hide on mobile */}
+        {!isMobile && (
           <div style={{ display: "flex", alignItems: "center" }}>
             {ONLINE_USERS.slice(0, 4).map((u, i) => (
               <div key={u.name} style={{
-                width: "26px", height: "26px", borderRadius: "50%",
+                width: "24px", height: "24px", borderRadius: "50%",
                 background: u.color + "30", border: `2px solid var(--bg-surface)`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "10px", fontWeight: 700, color: u.color,
-                marginLeft: i > 0 ? "-8px" : "0",
-              }}>
-                {u.name[0]}
-              </div>
+                fontSize: "9px", fontWeight: 700, color: u.color,
+                marginLeft: i > 0 ? "-7px" : "0",
+              }}>{u.name[0]}</div>
             ))}
             <div style={{
-              width: "26px", height: "26px", borderRadius: "50%",
+              width: "24px", height: "24px", borderRadius: "50%",
               background: "var(--bg-elevated)", border: "2px solid var(--bg-surface)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "9px", fontWeight: 700, color: "var(--text-muted)",
-              marginLeft: "-8px",
-            }}>
-              +{group.online - 4}
-            </div>
+              fontSize: "8px", fontWeight: 700, color: "var(--text-muted)", marginLeft: "-7px",
+            }}>+{group.online - 4}</div>
           </div>
-        </div>
-
-        {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
-          {/* Date divider */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
-            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Today</span>
-            <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
+        )}
+        {/* Members count on mobile */}
+        {isMobile && (
+          <div style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0 }}>
+            {group.members} members
           </div>
-
-          {messages.map(msg => (
-            <div key={msg.id} style={{
-              display: "flex", alignItems: "flex-start", gap: "10px",
-              flexDirection: msg.isMe ? "row-reverse" : "row",
-            }}>
-              {/* Avatar */}
-              <div style={{
-                width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
-                background: msg.color + "25", border: `1px solid ${msg.color}40`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "11px", fontWeight: 800, color: msg.color,
-              }}>
-                {msg.avatar}
-              </div>
-              <div style={{ maxWidth: "65%", display: "flex", flexDirection: "column", alignItems: msg.isMe ? "flex-end" : "flex-start" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", flexDirection: msg.isMe ? "row-reverse" : "row" }}>
-                  <span style={{ fontSize: "12px", fontWeight: 700, color: msg.isMe ? "#60a5fa" : "var(--text-secondary)" }}>
-                    {msg.isMe ? "You" : msg.user}
-                  </span>
-                  <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{msg.time}</span>
-                </div>
-                <div style={{
-                  padding: "9px 13px", borderRadius: msg.isMe ? "14px 4px 14px 14px" : "4px 14px 14px 14px",
-                  background: msg.isMe ? "rgba(79,142,247,0.15)" : "var(--bg-elevated)",
-                  border: msg.isMe ? "1px solid rgba(79,142,247,0.25)" : "1px solid var(--border)",
-                  fontSize: "13px", lineHeight: 1.55, color: "var(--text-primary)",
-                }}>
-                  {msg.text}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Input bar — disabled / coming soon */}
-        <div style={{
-          flexShrink: 0, padding: "12px 16px",
-          borderTop: "1px solid var(--border)",
-          background: "var(--bg-surface)",
-        }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "10px",
-            padding: "10px 14px", borderRadius: "12px",
-            background: "var(--bg-elevated)", border: "1px solid var(--border)",
-            opacity: 0.5, cursor: "not-allowed",
-          }}>
-            <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)" }}>
-              Messaging coming soon…
-            </span>
-            <div style={{
-              padding: "5px 12px", borderRadius: "8px",
-              background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.25)",
-              fontSize: "11px", fontWeight: 700, color: "#f59e0b",
-            }}>
-              Coming soon
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Right: online members panel */}
-      <div style={{
-        width: "200px", flexShrink: 0,
-        borderLeft: "1px solid var(--border)",
-        background: "var(--bg-surface)",
-        padding: "12px 0",
-        paddingTop: "57px",
-        display: "flex", flexDirection: "column",
-      }}>
-        <div style={{ padding: "0 14px 8px", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          Online now — {group.online}
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "14px 12px" : "20px", display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
+          <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>Today</span>
+          <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
         </div>
-        {ONLINE_USERS.map(u => (
-          <div key={u.name} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 14px" }}>
+        {messages.map(msg => (
+          <div key={msg.id} style={{
+            display: "flex", alignItems: "flex-start", gap: "8px",
+            flexDirection: msg.isMe ? "row-reverse" : "row",
+          }}>
             <div style={{
-              width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
-              background: u.color + "20", border: `1px solid ${u.color}35`,
+              width: "30px", height: "30px", borderRadius: "50%", flexShrink: 0,
+              background: msg.color + "25", border: `1px solid ${msg.color}40`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "11px", fontWeight: 800, color: u.color,
-              position: "relative",
-            }}>
-              {u.name[0]}
-              <div style={{ position: "absolute", bottom: "0", right: "0", width: "7px", height: "7px", borderRadius: "50%", background: "#34d399", border: "1.5px solid var(--bg-surface)" }} />
+              fontSize: "10px", fontWeight: 800, color: msg.color,
+            }}>{msg.avatar}</div>
+            <div style={{ maxWidth: isMobile ? "78%" : "65%", display: "flex", flexDirection: "column", alignItems: msg.isMe ? "flex-end" : "flex-start" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "3px", flexDirection: msg.isMe ? "row-reverse" : "row" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: msg.isMe ? "#60a5fa" : "var(--text-secondary)" }}>
+                  {msg.isMe ? "You" : msg.user}
+                </span>
+                <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{msg.time}</span>
+              </div>
+              <div style={{
+                padding: "8px 12px",
+                borderRadius: msg.isMe ? "14px 4px 14px 14px" : "4px 14px 14px 14px",
+                background: msg.isMe ? "rgba(79,142,247,0.15)" : "var(--bg-elevated)",
+                border: msg.isMe ? "1px solid rgba(79,142,247,0.25)" : "1px solid var(--border)",
+                fontSize: "13px", lineHeight: 1.55, color: "var(--text-primary)",
+              }}>{msg.text}</div>
             </div>
-            <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>{u.name}</span>
           </div>
         ))}
-        <div style={{ padding: "4px 14px", marginTop: "4px" }}>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "6px", fontWeight: 600 }}>Offline</div>
-          {["Or T.", "Karin M.", "Avi S.", "Shai B."].map(n => (
-            <div key={n} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0", opacity: 0.45 }}>
-              <div style={{
-                width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
-                background: "var(--bg-elevated)", border: "1px solid var(--border)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "11px", fontWeight: 800, color: "var(--text-muted)",
-              }}>
-                {n[0]}
-              </div>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>{n}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
+      {/* Input */}
+      <div style={{ flexShrink: 0, padding: "10px 12px", borderTop: "1px solid var(--border)", background: "var(--bg-surface)" }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: "10px",
+          padding: "10px 14px", borderRadius: "12px",
+          background: "var(--bg-elevated)", border: "1px solid var(--border)",
+          opacity: 0.5, cursor: "not-allowed",
+        }}>
+          <span style={{ flex: 1, fontSize: "13px", color: "var(--text-muted)" }}>Messaging coming soon…</span>
+          <div style={{
+            padding: "4px 10px", borderRadius: "7px", flexShrink: 0,
+            background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.25)",
+            fontSize: "10px", fontWeight: 700, color: "#f59e0b",
+          }}>Soon</div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const MembersPanel = (
+    <div style={{
+      width: "190px", flexShrink: 0,
+      borderLeft: "1px solid var(--border)",
+      background: "var(--bg-surface)",
+      display: "flex", flexDirection: "column",
+      overflowY: "auto",
+    }}>
+      <div style={{ padding: "0 14px 8px", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
+        Online — {group.online}
+      </div>
+      {ONLINE_USERS.map(u => (
+        <div key={u.name} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 14px" }}>
+          <div style={{
+            width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+            background: u.color + "20", border: `1px solid ${u.color}35`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "11px", fontWeight: 800, color: u.color, position: "relative",
+          }}>
+            {u.name[0]}
+            <div style={{ position: "absolute", bottom: 0, right: 0, width: "7px", height: "7px", borderRadius: "50%", background: "#34d399", border: "1.5px solid var(--bg-surface)" }} />
+          </div>
+          <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>{u.name}</span>
+        </div>
+      ))}
+      <div style={{ padding: "6px 14px 0" }}>
+        <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px", fontWeight: 600 }}>Offline</div>
+        {["Or T.", "Karin M.", "Avi S.", "Shai B."].map(n => (
+          <div key={n} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0", opacity: 0.4 }}>
+            <div style={{
+              width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+              background: "var(--bg-elevated)", border: "1px solid var(--border)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "11px", fontWeight: 800, color: "var(--text-muted)",
+            }}>{n[0]}</div>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>{n}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+
+      {/* Under construction banner — in normal flow, no z-index conflict with sidebar */}
+      <div style={{
+        flexShrink: 0,
+        background: "rgba(245,158,11,0.1)", borderBottom: "1px solid rgba(245,158,11,0.28)",
+        padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+      }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span style={{ fontSize: "11px", fontWeight: 700, color: "#f59e0b" }}>
+          Under Construction — preview only, messages are not real
+        </span>
+      </div>
+
+      {/* Content row */}
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        {isMobile ? (
+          view === "list" ? GroupsList : ChatView
+        ) : (
+          <>
+            {GroupsList}
+            {ChatView}
+            {MembersPanel}
+          </>
+        )}
+      </div>
     </div>
   );
 }
