@@ -227,9 +227,11 @@ const BUTTONS: BtnDef[][] = [
 interface Props {
   isOpen?: boolean;
   onOpenChange?: (v: boolean) => void;
+  /** If true, positions popup from top-right (below top bar). Otherwise bottom-left near sidebar. */
+  topBar?: boolean;
 }
 
-export default function MathCalc({ isOpen, onOpenChange }: Props) {
+export default function MathCalc({ isOpen, onOpenChange, topBar = false }: Props) {
   const [expr, setExpr] = useState("");
   const [preview, setPreview] = useState("");
   const [history, setHistory] = useState<HistEntry[]>([]);
@@ -264,7 +266,16 @@ export default function MathCalc({ isOpen, onOpenChange }: Props) {
     inputRef.current?.focus();
   }
 
-  const cardStyle: React.CSSProperties = {
+  const cardStyle: React.CSSProperties = topBar ? {
+    position: "fixed", top: "58px", right: "120px", zIndex: 9001,
+    width: "280px",
+    background: "rgba(14,16,28,0.98)",
+    border: "1px solid rgba(255,255,255,0.07)",
+    borderRadius: "18px",
+    boxShadow: "0 16px 48px rgba(0,0,0,0.65)",
+    backdropFilter: "blur(18px)",
+    overflow: "hidden",
+  } : {
     position: "fixed", bottom: "80px", left: "268px", zIndex: 9001,
     width: "280px",
     background: "rgba(14,16,28,0.98)",

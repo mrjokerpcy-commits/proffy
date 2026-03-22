@@ -7,6 +7,7 @@ import ChatWindow from "@/components/chat/ChatWindow";
 import CoursesStrip from "./CoursesStrip";
 import OpenUploadButton from "@/components/ui/OpenUploadButton";
 import CalendarButton from "@/components/ui/CalendarButton";
+import CalcButton from "@/components/ui/CalcButton";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
@@ -136,6 +137,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <CalcButton />
             <CalendarButton />
             <OpenUploadButton />
           </div>
