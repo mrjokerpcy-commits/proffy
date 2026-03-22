@@ -919,12 +919,14 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
           } catch { /* table may not exist yet */ }
         }
 
-        // Save assistant message
+        // Save assistant message and capture its ID for feedback
+        let savedMessageId: string | null = null;
         if (sessionId) {
-          await pool.query(
-            "INSERT INTO chat_messages (session_id, role, content, sources) VALUES ($1, 'assistant', $2, $3)",
+          const { rows: msgRows } = await pool.query(
+            "INSERT INTO chat_messages (session_id, role, content, sources) VALUES ($1, 'assistant', $2, $3) RETURNING id",
             [sessionId, cleanContent, JSON.stringify(sources)]
-          );
+          ).catch(() => ({ rows: [] }));
+          savedMessageId = msgRows[0]?.id ?? null;
         }
 
         // Save token usage
@@ -951,6 +953,7 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
           usedTokens: usedTokensNow,
           msgLimit: plan === "free" ? PLAN_MSG_LIMIT : null,
           tokenLimit: tokenLimit ?? null,
+          messageId: savedMessageId, // for thumbs up/down feedback
         });
       } catch (err: unknown) {
         console.error("Chat error:", err);

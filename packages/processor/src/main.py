@@ -1,8 +1,10 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import os
+import tempfile
+import json
 from dotenv import load_dotenv
 
 from .pipeline import ProcessingPipeline
@@ -59,3 +61,61 @@ async def process_url(request: ProcessRequest, background_tasks: BackgroundTasks
     """Process a file from a URL (Google Drive, web) in the background."""
     background_tasks.add_task(pipeline.process_url, request.url, request.metadata)
     return {"status": "queued", "url": request.url}
+
+
+class SlideData(BaseModel):
+    slide_number: int
+    title: str
+    content: List[str]
+    notes: str
+
+
+@app.post("/extract/pptx", response_model=List[SlideData])
+async def extract_pptx(file: UploadFile = File(...)):
+    """Extract slides from a PPTX file. Returns slide-by-slide content with slide numbers.
+    Used by the upload route to preserve slide_number for exact citations.
+    """
+    try:
+        from pptx import Presentation
+    except ImportError:
+        raise HTTPException(status_code=501, detail="python-pptx not installed")
+
+    content = await file.read()
+    with tempfile.NamedTemporaryFile(suffix=".pptx", delete=False) as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        prs = Presentation(tmp_path)
+        slides = []
+        for i, slide in enumerate(prs.slides):
+            title = ""
+            body_parts = []
+            for shape in slide.shapes:
+                if not shape.has_text_frame:
+                    continue
+                text = shape.text_frame.text.strip()
+                if not text:
+                    continue
+                # Title placeholder types: 13 (CENTER_TITLE), 15 (TITLE)
+                if shape.shape_type in (13, 15) or (hasattr(shape, "placeholder_format") and
+                        shape.placeholder_format is not None and
+                        shape.placeholder_format.idx == 0):
+                    title = text
+                else:
+                    body_parts.append(text)
+            notes = ""
+            if slide.has_notes_slide:
+                notes_frame = slide.notes_slide.notes_text_frame
+                if notes_frame:
+                    notes = notes_frame.text.strip()
+            if title or body_parts:
+                slides.append(SlideData(
+                    slide_number=i + 1,
+                    title=title,
+                    content=body_parts,
+                    notes=notes,
+                ))
+        return slides
+    finally:
+        os.unlink(tmp_path)
