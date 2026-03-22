@@ -222,19 +222,58 @@ function detectDocType(filename: string): string | null {
   return null;
 }
 
-async function classifyDocType(text: string, filename: string): Promise<string> {
-  const fromName = detectDocType(filename);
-  if (fromName) return fromName;
+// Combined: verifies course name against content AND classifies doc type in one AI call.
+// Returns { course, docType, mismatch }.
+// mismatch = true means the content looks like a different subject than pathCourse.
+async function inferCourseAndDocType(
+  folderPath: string[],
+  filename: string,
+  sampleText: string,
+  pathCourse: string,    // course name from path inference (may be wrong)
+  fallbackCourse: string // queue-level course name
+): Promise<{ course: string; docType: string; mismatch: boolean }> {
+  const docTypeFromName = detectDocType(filename);
+
+  // Build meaningful path string for context
+  const meaningfulPath = folderPath.filter(p => {
+    const lower = p.trim().toLowerCase();
+    return !GENERIC_FOLDER_NAMES.has(lower) && !GENERIC_FOLDER_NAMES.has(p.trim()) && p.trim().length > 1;
+  });
+  const pathStr = meaningfulPath.join(" / ");
+
   try {
     const res = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 10,
-      messages: [{ role: "user", content: `Classify this university document into exactly one word: exam / slides / notes / textbook\n\nFilename: ${filename}\nFirst 500 chars:\n${text.slice(0, 500)}\n\nOne word only.` }],
+      max_tokens: 60,
+      messages: [{
+        role: "user",
+        content: `You are a university course material tagger. Analyze this file and respond with JSON only.
+
+Folder path: ${pathStr || "(root)"}
+Filename: ${filename}
+Expected course (from folder): ${pathCourse}
+First 400 chars of content:
+${sampleText.slice(0, 400)}
+
+Respond with exactly this JSON (no markdown, no extra text):
+{"course":"<actual course name>","type":"<exam|slides|notes|textbook>","match":<true|false>}
+
+- course: the real course this material belongs to (use content to verify, correct if path is wrong)
+- type: document type based on content
+- match: true if content matches the expected course, false if it looks like a different subject`,
+      }],
     });
-    const t = res.content[0].type === "text" ? res.content[0].text.trim().toLowerCase() : "";
-    if (["exam", "slides", "notes", "textbook"].includes(t)) return t;
+    const raw = res.content[0].type === "text" ? res.content[0].text.trim() : "";
+    const parsed = JSON.parse(raw);
+    const course   = typeof parsed.course === "string" && parsed.course.length > 0 && parsed.course.length < 120
+      ? parsed.course : pathCourse || fallbackCourse;
+    const docType  = ["exam", "slides", "notes", "textbook"].includes(parsed.type) ? parsed.type : (docTypeFromName ?? "notes");
+    const mismatch = parsed.match === false;
+    return { course, docType, mismatch };
   } catch {}
-  return "notes";
+
+  // Fallback
+  return { course: pathCourse || fallbackCourse, docType: docTypeFromName ?? "notes", mismatch: false };
 }
 
 interface Chunk { text: string; slide_number: number | null; word_count: number }
@@ -426,18 +465,13 @@ async function processDriveFile(
   drive: ReturnType<typeof google.drive>,
   file: { id: string; name: string; mimeType: string; folderPath: string[] },
   queueRow: { university: string; course_name: string; course_number?: string; professor?: string; semester?: string }
-): Promise<{ chunks: number; course: string }> {
-  // AI infers the course from full path; falls back to queue-level course name
-  const inferredCourse = file.folderPath.length > 0
-    ? await inferCourseFromPath(file.folderPath, file.name)
-    : null;
-  const effectiveCourseName = inferredCourse ?? queueRow.course_name;
+): Promise<{ chunks: number; course: string; mismatch?: boolean }> {
   const fullPath = [...file.folderPath, file.name].join(" / ");
   const fileKind = ALLOWED_MIME_DRIVE[file.mimeType];
-  if (!fileKind) return { chunks: 0, course: effectiveCourseName }; // unsupported type, skip
+  if (!fileKind) return { chunks: 0, course: queueRow.course_name }; // unsupported type, skip
 
   const { buffer, exportedMime } = await downloadDriveFile(drive, file.id, file.mimeType);
-  if (buffer.length > 25 * 1024 * 1024) return { chunks: 0, course: effectiveCourseName }; // skip files > 25MB
+  if (buffer.length > 25 * 1024 * 1024) return { chunks: 0, course: queueRow.course_name }; // skip files > 25MB
 
   // Determine effective kind after export
   // Google Slides → exported as PDF; Google Docs → exported as text/plain
@@ -471,10 +505,21 @@ async function processDriveFile(
   }
 
   const chunks = qualityFilter(rawChunks);
-  if (chunks.length === 0) return { chunks: 0, course: effectiveCourseName };
+  if (chunks.length === 0) return { chunks: 0, course: queueRow.course_name };
 
   const sampleText = chunks.slice(0, 3).map(c => c.text).join(" ");
-  const docType = await classifyDocType(sampleText, file.name);
+
+  // Path-level course inference (cached per folder path)
+  const pathCourse = file.folderPath.length > 0
+    ? (await inferCourseFromPath(file.folderPath, file.name)) ?? queueRow.course_name
+    : queueRow.course_name;
+
+  // Content-aware: verify course name against extracted text and get doc type in one call
+  const { course: effectiveCourseName, docType, mismatch } = await inferCourseAndDocType(
+    file.folderPath, file.name, sampleText, pathCourse, queueRow.course_name
+  );
+
+  // mismatch is surfaced in the return value so the caller can log it
 
   const safeFilename = file.name.replace(/[^a-zA-Z0-9._\-\u0590-\u05FF ]/g, "_").slice(0, 200);
 
@@ -492,7 +537,7 @@ async function processDriveFile(
     is_shared:     true,
     trust_level:   "verified",
   }, file.id);
-  return { chunks: count, course: effectiveCourseName };
+  return { chunks: count, course: effectiveCourseName, mismatch };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
@@ -617,7 +662,7 @@ export async function GET(req: NextRequest) {
           if (r.status === "fulfilled") {
             totalChunks += r.value.chunks;
             newlyDoneIds.push(batch[j].id);
-            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value.chunks} chunks${r.value.course ? ` [${r.value.course}]` : ""}`);
+            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value.chunks} chunks${r.value.course ? ` [${r.value.course}]` : ""}${r.value.mismatch ? " ⚠ content differs from folder" : ""}`);
           } else {
             const errMsg: string = (r.reason as any)?.message ?? "unknown error";
             // Transient errors (credit, rate limit, network) — do NOT mark as done so they're retried
