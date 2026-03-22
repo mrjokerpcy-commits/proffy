@@ -1,0 +1,27 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+});
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!session?.user?.email || session.user.email !== adminEmail) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { rows } = await pool.query(`
+    SELECT mq.id, mq.url, mq.university, mq.course_name, mq.submitted_at, mq.status,
+           mq.files_found, mq.chunks_created, mq.error_msg, mq.processed_at, u.email
+    FROM material_queue mq
+    LEFT JOIN users u ON u.id = mq.submitted_by
+    ORDER BY mq.submitted_at DESC LIMIT 50
+  `).catch(() => ({ rows: [] }));
+
+  return NextResponse.json({ queue: rows });
+}

@@ -91,7 +91,8 @@ export default async function AdminPage() {
 
   // ── Material queue ───────────────────────────────────────────────────────────
   const { rows: queue } = await pool.query(`
-    SELECT mq.id, mq.url, mq.submitted_at, mq.status, u.email
+    SELECT mq.id, mq.url, mq.university, mq.course_name, mq.submitted_at, mq.status,
+           mq.files_found, mq.chunks_created, mq.error_msg, mq.processed_at, u.email
     FROM material_queue mq
     LEFT JOIN users u ON u.id = mq.submitted_by
     ORDER BY mq.submitted_at DESC LIMIT 50

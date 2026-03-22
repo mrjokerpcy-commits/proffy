@@ -22,19 +22,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "url required" }, { status: 400 });
   }
 
+  // Ensure status column exists (added by cron migration)
   await pool.query(
-    `INSERT INTO material_queue
-       (university, course_name, url, url_type, submitted_by, note, status)
-     VALUES ($1, $2, $3, 'drive_folder', $4, $5, 'pending')
-     ON CONFLICT DO NOTHING`,
-    [
-      university ?? "TAU",
-      faculty ?? null,
-      url.trim(),
-      session.user.id,
-      note ?? null,
-    ]
-  );
+    `ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`
+  ).catch(() => {});
+
+  try {
+    await pool.query(
+      `INSERT INTO material_queue
+         (university, course_name, url, url_type, submitted_by, note)
+       VALUES ($1, $2, $3, 'drive_folder', $4, $5)`,
+      [
+        university ?? "TAU",
+        faculty ?? null,
+        url.trim(),
+        session.user.id,
+        note ?? null,
+      ]
+    );
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message ?? "DB error" }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }

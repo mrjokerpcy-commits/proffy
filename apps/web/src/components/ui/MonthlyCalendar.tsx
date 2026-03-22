@@ -73,6 +73,7 @@ export default function MonthlyCalendar({ isOpen, onOpenChange }: Props) {
   const [newTitle, setNewTitle] = useState("");
   const [newType, setNewType] = useState<"goal" | "task" | "note" | "reminder">("task");
   const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -122,19 +123,30 @@ export default function MonthlyCalendar({ isOpen, onOpenChange }: Props) {
   }
 
   async function addEvent() {
-    if (!newTitle.trim() || selectedDay === null || adding) return;
+    if (!newTitle.trim() || adding) return;
+    const day = selectedDay ?? 1;
     setAdding(true);
-    const date = fmtDate(viewYear, viewMonth, selectedDay);
-    const res = await fetch("/api/calendar-events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date, title: newTitle.trim(), type: newType }),
-    });
-    const d = await res.json();
-    if (d.event) setEvents(prev => [...prev, d.event]);
-    setNewTitle("");
-    setAdding(false);
-    inputRef.current?.focus();
+    setAddError("");
+    try {
+      const date = fmtDate(viewYear, viewMonth, day);
+      const res = await fetch("/api/calendar-events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, title: newTitle.trim(), type: newType }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error ?? "Failed");
+      if (d.event) {
+        setEvents(prev => [...prev, d.event]);
+        if (!selectedDay) setSelectedDay(day);
+      }
+      setNewTitle("");
+    } catch (e: any) {
+      setAddError(e.message ?? "Could not add");
+    } finally {
+      setAdding(false);
+      inputRef.current?.focus();
+    }
   }
 
   async function toggleEvent(id: string, done: boolean) {
@@ -391,13 +403,16 @@ export default function MonthlyCalendar({ isOpen, onOpenChange }: Props) {
                         }}>{t}</button>
                       ))}
                     </div>
+                    {addError && (
+                      <p style={{ fontSize: "11px", color: "#f87171", margin: "0 0 4px" }}>{addError}</p>
+                    )}
                     <div style={{ display: "flex", gap: "6px" }}>
                       <input
                         ref={inputRef}
                         value={newTitle}
-                        onChange={e => setNewTitle(e.target.value)}
+                        onChange={e => { setNewTitle(e.target.value); setAddError(""); }}
                         onKeyDown={e => { if (e.key === "Enter") addEvent(); }}
-                        placeholder={`Add ${newType}...`}
+                        placeholder={selectedDay ? `Add ${newType} on ${DAY_NAMES[new Date(viewYear, viewMonth, selectedDay).getDay()]} ${selectedDay}...` : `Add ${newType}...`}
                         style={{
                           flex: 1, padding: "7px 10px", borderRadius: "7px",
                           background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",

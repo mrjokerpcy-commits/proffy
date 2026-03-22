@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 // Claude pricing (per 1M tokens, USD)
 const HAIKU_IN  = 0.80;
@@ -67,7 +67,12 @@ type Stats = {
   dailyBreakdown: Array<{ date: string; questions: number; ti: number; to_: number }>;
 };
 
-type QueueItem = { id: string; url: string; submitted_at: string; status: string; email: string | null };
+type QueueItem = {
+  id: string; url: string; university: string | null; course_name: string | null;
+  submitted_at: string; status: string; email: string | null;
+  files_found: number | null; chunks_created: number | null;
+  error_msg: string | null; processed_at: string | null;
+};
 
 export default function AdminClient({
   stats,
@@ -91,6 +96,19 @@ export default function AdminClient({
   const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [queueItems, setQueueItems] = useState<QueueItem[]>(queue);
 
+  // Auto-refresh queue every 8s when processing items exist
+  useEffect(() => {
+    const hasPending = queueItems.some(q => q.status === "pending" || q.status === "processing");
+    if (!hasPending) return;
+    const id = setInterval(async () => {
+      const r = await fetch("/api/admin/queue-status").catch(() => null);
+      if (!r?.ok) return;
+      const d = await r.json().catch(() => ({}));
+      if (d.queue) setQueueItems(d.queue);
+    }, 8000);
+    return () => clearInterval(id);
+  }, [queueItems]);
+
   async function submitDrive() {
     if (!driveUrl.trim()) return;
     setDriveStatus("loading");
@@ -102,7 +120,7 @@ export default function AdminClient({
       });
       if (!r.ok) throw new Error();
       setDriveStatus("ok");
-      setQueueItems(prev => [{ id: crypto.randomUUID(), url: driveUrl.trim(), submitted_at: new Date().toISOString(), status: "pending", email: null }, ...prev]);
+      setQueueItems(prev => [{ id: crypto.randomUUID(), url: driveUrl.trim(), university: driveUniversity || null, course_name: driveFaculty || null, submitted_at: new Date().toISOString(), status: "pending", email: null, files_found: null, chunks_created: null, error_msg: null, processed_at: null }, ...prev]);
       setDriveUrl(""); setDriveFaculty(""); setDriveNote("");
       setTimeout(() => setDriveStatus("idle"), 3000);
     } catch {
@@ -426,35 +444,56 @@ export default function AdminClient({
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                  {["URL", "Submitted by", "Submitted at", "Status"].map(h => (
+                  {["Drive Folder", "Faculty / University", "Status", "Progress", "Submitted"].map(h => (
                     <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "var(--text-muted)", fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {queueItems.map(item => (
-                  <tr key={item.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td style={{ padding: "8px 12px", maxWidth: "360px" }}>
-                      <a href={item.url} target="_blank" rel="noopener noreferrer"
-                        style={{ color: "var(--blue)", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", display: "block", whiteSpace: "nowrap" }}>
-                        {item.url}
-                      </a>
-                    </td>
-                    <td style={{ padding: "8px 12px", color: "var(--text-muted)" }}>{item.email ?? "—"}</td>
-                    <td style={{ padding: "8px 12px", color: "var(--text-muted)", whiteSpace: "nowrap" }}>{fmtDate(item.submitted_at)}</td>
-                    <td style={{ padding: "8px 12px" }}>
-                      <span style={{
-                        padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700,
-                        background: item.status === "pending" ? "rgba(251,191,36,0.15)" : item.status === "done" ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.06)",
-                        color: item.status === "pending" ? "var(--amber)" : item.status === "done" ? "var(--green)" : "var(--text-muted)",
-                      }}>
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {queueItems.map(item => {
+                  const isPending = item.status === "pending";
+                  const isProcessing = item.status === "processing";
+                  const isDone = item.status === "done";
+                  const isError = item.status === "error";
+                  const statusColor = isDone ? "var(--green)" : isProcessing ? "var(--blue)" : isPending ? "var(--amber)" : "#f87171";
+                  const statusBg = isDone ? "rgba(52,211,153,0.15)" : isProcessing ? "rgba(79,142,247,0.15)" : isPending ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)";
+                  return (
+                    <tr key={item.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                      <td style={{ padding: "8px 12px", maxWidth: "240px" }}>
+                        <a href={item.url} target="_blank" rel="noopener noreferrer"
+                          style={{ color: "var(--blue)", textDecoration: "none", fontSize: "11px", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {item.url.replace("https://drive.google.com/drive/", "Drive/")}
+                        </a>
+                      </td>
+                      <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontSize: "12px" }}>
+                        {[item.course_name, item.university].filter(Boolean).join(" · ") || "—"}
+                      </td>
+                      <td style={{ padding: "8px 12px" }}>
+                        <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700, background: statusBg, color: statusColor }}>
+                          {isProcessing ? "⏳ processing" : item.status}
+                        </span>
+                        {isError && item.error_msg && (
+                          <div style={{ fontSize: "10px", color: "#f87171", marginTop: "4px", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                            title={item.error_msg}>{item.error_msg}</div>
+                        )}
+                      </td>
+                      <td style={{ padding: "8px 12px" }}>
+                        {isDone ? (
+                          <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600 }}>
+                            {item.files_found ?? 0} files · {item.chunks_created ?? 0} chunks
+                          </span>
+                        ) : isProcessing ? (
+                          <div style={{ width: "80px", height: "4px", borderRadius: "4px", background: "rgba(79,142,247,0.15)", overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: "60%", background: "var(--blue)", borderRadius: "4px", animation: "pulse 1.5s ease infinite" }} />
+                          </div>
+                        ) : "—"}
+                      </td>
+                      <td style={{ padding: "8px 12px", color: "var(--text-muted)", whiteSpace: "nowrap", fontSize: "11px" }}>{fmtDate(item.submitted_at)}</td>
+                    </tr>
+                  );
+                })}
                 {queueItems.length === 0 && (
-                  <tr><td colSpan={4} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>Queue is empty</td></tr>
+                  <tr><td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>Queue is empty</td></tr>
                 )}
               </tbody>
             </table>
