@@ -58,6 +58,7 @@ const STEPS: Step[] = [
 const TOUR_KEY = "proffy_tour_v2";
 const GAP = 16;      // gap between spotlight and tooltip
 const ARROW = 10;    // arrow size
+const SIDEBAR_STEPS = new Set(["sidebar-courses", "sidebar-flashcards", "sidebar-notes", "sidebar-fingerprint"]);
 
 function getRect(target: string): DOMRect | null {
   const el = document.querySelector(`[data-tour="${target}"]`);
@@ -142,14 +143,26 @@ export default function TourOverlay() {
     setRect(getRect(current.target));
   }, [active, current]);
 
-  // Auto-show on first visit
+  // Auto-show on first visit — skip for existing users who already have courses
   useEffect(() => {
     if (typeof localStorage === "undefined") return;
-    if (!localStorage.getItem(TOUR_KEY)) {
-      // Small delay so layout renders first
-      const t = setTimeout(() => setActive(true), 800);
-      return () => clearTimeout(t);
-    }
+    if (localStorage.getItem(TOUR_KEY)) return;
+    fetch("/api/courses")
+      .then(r => r.json())
+      .then((data: { courses?: unknown[] }) => {
+        if (data.courses && data.courses.length > 0) {
+          // Existing user — mark tour as done silently
+          localStorage.setItem(TOUR_KEY, "1");
+        } else {
+          const t = setTimeout(() => setActive(true), 800);
+          return () => clearTimeout(t);
+        }
+      })
+      .catch(() => {
+        // If check fails, show tour anyway
+        const t = setTimeout(() => setActive(true), 800);
+        return () => clearTimeout(t);
+      });
   }, []);
 
   // Re-trigger from Help page or anywhere
@@ -160,9 +173,13 @@ export default function TourOverlay() {
   }, []);
 
   // Get target rect whenever step or active changes
+  // For sidebar steps on mobile, open the sidebar first and wait for animation
   useLayoutEffect(() => {
     if (!active) return;
-    const t = setTimeout(() => setRect(getRect(current.target)), 60);
+    const isSidebarStep = SIDEBAR_STEPS.has(current.target);
+    if (isSidebarStep) window.dispatchEvent(new CustomEvent("proffy:open-sidebar"));
+    const delay = isSidebarStep ? 300 : 60;
+    const t = setTimeout(() => setRect(getRect(current.target)), delay);
     return () => clearTimeout(t);
   }, [active, step, current?.target]);
 

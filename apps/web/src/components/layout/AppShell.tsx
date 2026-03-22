@@ -35,6 +35,13 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Tour can request sidebar open (e.g. on mobile before showing sidebar steps)
+  useEffect(() => {
+    function onOpenSidebar() { setSidebarOpen(true); }
+    window.addEventListener("proffy:open-sidebar", onOpenSidebar);
+    return () => window.removeEventListener("proffy:open-sidebar", onOpenSidebar);
+  }, []);
   const [openPanel, setOpenPanel] = useState<"flashcards" | "notes" | null>(null);
 
   return (
