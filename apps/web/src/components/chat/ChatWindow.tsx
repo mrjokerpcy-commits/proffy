@@ -70,15 +70,16 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   // Updated when agent creates a course mid-chat so subsequent saves use the right ID
   const [runtimeCourseId, setRuntimeCourseId] = useState<string | undefined>(course?.id);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollBoxRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const btwBreakRef = useRef<string | null>(null);
   const noteToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardsToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const limitToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // RAF-based stream buffering for smooth rendering
-  const rafRef = useRef<number | null>(null);
-  const pendingStreamRef = useRef<{ id: string; text: string } | null>(null);
+  // Typewriter: drip characters at ~3 chars/16ms for smooth letter-by-letter rendering
+  const twRef = useRef<{ full: string; shown: number; msgId: string; timer: ReturnType<typeof setInterval> | null }>
+    ({ full: "", shown: 0, msgId: "", timer: null });
   // Image upload
   const [pendingImage, setPendingImage] = useState<{ base64: string; mediaType: string; preview: string } | null>(null);
   const [sessionImageCount, setSessionImageCount] = useState(0);
@@ -90,9 +91,38 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const isBtw = input.trimStart().startsWith("/btw");
   const resetDate = getResetDate();
 
+  // Scroll to bottom — instant during streaming, smooth otherwise
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const box = scrollBoxRef.current;
+    if (!box) return;
+    const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+    if (streaming) {
+      if (nearBottom) box.scrollTop = box.scrollHeight;
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, streaming]);
+
+  function startTypewriter(msgId: string) {
+    twRef.current.msgId = msgId;
+    if (twRef.current.timer) return;
+    twRef.current.timer = setInterval(() => {
+      const tw = twRef.current;
+      if (tw.shown >= tw.full.length) return;
+      tw.shown = Math.min(tw.shown + 3, tw.full.length);
+      const text = tw.full.slice(0, tw.shown);
+      setMessages(prev => prev.map(m => m.id === tw.msgId ? { ...m, content: text, thinkingText: undefined } : m));
+    }, 16);
+  }
+
+  function flushTypewriter() {
+    const tw = twRef.current;
+    if (tw.timer) { clearInterval(tw.timer); tw.timer = null; }
+    if (tw.msgId && tw.full) {
+      setMessages(prev => prev.map(m => m.id === tw.msgId ? { ...m, content: tw.full, thinkingText: undefined } : m));
+    }
+    tw.full = ""; tw.shown = 0; tw.msgId = "";
+  }
 
   const sendRef = useRef<((text: string) => void) | null>(null);
 
@@ -217,14 +247,12 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               setWasCompacted(true);
             } else if (data.type === "done") {
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
-              // Store DB message ID for feedback
               if (data.messageId) {
                 setMessages(prev => prev.map(m =>
                   m.id === assistantId ? { ...m, dbMessageId: data.messageId } : m
                 ));
               }
               setAssistantMsgCount(c => c + 1);
-              router.refresh();
             } else if (data.type === "course_created") {
               if (data.course?.id) setRuntimeCourseId(data.course.id);
               router.refresh();
@@ -241,15 +269,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             } else if (data.type === "token") {
               content += data.text;
               setHasFirstResponse(true);
-              // RAF-throttled update for smooth letter-by-letter rendering
-              pendingStreamRef.current = { id: assistantId, text: content };
-              if (rafRef.current === null) {
-                rafRef.current = requestAnimationFrame(() => {
-                  rafRef.current = null;
-                  const p = pendingStreamRef.current;
-                  if (p) setMessages(prev => prev.map(m => m.id === p.id ? { ...m, content: p.text, thinkingText: undefined } : m));
-                });
-              }
+              twRef.current.full = content;
+              startTypewriter(assistantId);
               // Paragraph break detected — flush pending /btw
               if (btwBreakRef.current && content.endsWith("\n\n")) {
                 const btwCtx = btwBreakRef.current;
@@ -277,8 +298,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         }
       }
 
+      flushTypewriter();
       if (!btwTriggered && btwBreakRef.current) {
-        // /btw was pending but no paragraph break occurred — fire it now at completion
         const btwCtx = btwBreakRef.current;
         btwBreakRef.current = null;
         btwTriggered = true;
@@ -292,6 +313,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         ));
       }
     } catch (err: any) {
+      flushTypewriter();
       if (err.name !== "AbortError") {
         setMessages(prev => prev.map(m =>
           m.id === assistantId ? { ...m, content: "Something went wrong. Please try again.", streaming: false } : m
@@ -354,14 +376,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             const data = JSON.parse(line.slice(6));
             if (data.type === "token") {
               content += data.text;
-              pendingStreamRef.current = { id: assistantId, text: content };
-              if (rafRef.current === null) {
-                rafRef.current = requestAnimationFrame(() => {
-                  rafRef.current = null;
-                  const p = pendingStreamRef.current;
-                  if (p) setMessages(prev => prev.map(m => m.id === p.id ? { ...m, content: p.text, thinkingText: undefined } : m));
-                });
-              }
+              twRef.current.full = content;
+              startTypewriter(assistantId);
             } else if (data.type === "done") {
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
               router.refresh();
@@ -375,8 +391,10 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         }
       }
 
+      flushTypewriter();
       setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, streaming: false } : m));
     } catch (err: any) {
+      flushTypewriter();
       if (err.name !== "AbortError") {
         setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: "Something went wrong.", streaming: false } : m));
       } else {
@@ -449,7 +467,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
       )}
 
       {/* ── Messages ── */}
-      <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+      <div ref={scrollBoxRef} style={{ flex: 1, overflowY: "auto", position: "relative" }}>
         <div style={{ padding: "20px 0 8px", display: "flex", flexDirection: "column", gap: "18px" }}>
           {wasCompacted && (
             <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 20px", margin: "4px 0" }}>
