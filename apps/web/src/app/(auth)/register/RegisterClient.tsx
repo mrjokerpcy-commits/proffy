@@ -40,10 +40,20 @@ export default function RegisterClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
+    const data = await res.json();
     if (!res.ok) {
-      const data = await res.json();
       setError(data.error || "Registration failed");
       setLoading(false);
+      return;
+    }
+    // Email not configured — user was auto-verified, sign in directly
+    if (data.status === "auto_verified") {
+      await signIn("credentials", {
+        email: form.email,
+        password: form.password,
+        redirect: false,
+      });
+      router.push(plan ? `/checkout?plan=${plan}` : "/onboarding");
       return;
     }
     const encoded = encodeURIComponent(form.password);
