@@ -61,6 +61,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const [wasCompacted, setWasCompacted] = useState(false);
   const [ratingReminderDismissed, setRatingReminderDismissed] = useState(false);
   const [assistantMsgCount, setAssistantMsgCount] = useState(0);
+  // Updated when agent creates a course mid-chat so subsequent saves use the right ID
+  const [runtimeCourseId, setRuntimeCourseId] = useState<string | undefined>(course?.id);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -125,7 +127,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
           message: pendingBtw.length > 0
             ? `${text.trim()}\n\n[Context from /btw: ${pendingBtw.join(" | ")}]`
             : text.trim(),
-          courseId: course?.id,
+          courseId: runtimeCourseId,
           university: course?.university,
           course: course?.name,
           professor: course?.professor,
@@ -188,7 +190,10 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               }
               setAssistantMsgCount(c => c + 1);
               router.refresh();
-            } else if (data.type === "course_created" || data.type === "profile_updated") {
+            } else if (data.type === "course_created") {
+              if (data.course?.id) setRuntimeCourseId(data.course.id);
+              router.refresh();
+            } else if (data.type === "profile_updated") {
               router.refresh();
             } else if (data.type === "sources") {
               sources = data.sources;
@@ -261,7 +266,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
           message: `[/btw: ${btwCtx}]`,
           btwResume: true,
           partialResponse: partial,
-          courseId: course?.id,
+          courseId: runtimeCourseId,
           university: course?.university,
           course: course?.name,
           professor: course?.professor,
@@ -300,7 +305,10 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               if (data.usedMsgs !== undefined) setUsedMsgs(data.usedMsgs);
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
               router.refresh();
-            } else if (data.type === "course_created" || data.type === "profile_updated") {
+            } else if (data.type === "course_created") {
+              if (data.course?.id) setRuntimeCourseId(data.course.id);
+              router.refresh();
+            } else if (data.type === "profile_updated") {
               router.refresh();
             }
           } catch { /* ignore */ }
@@ -383,7 +391,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
                   await fetch("/api/notes/save-message", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ content, courseId: course?.id, courseName: course?.name }),
+                    body: JSON.stringify({ content, courseId: runtimeCourseId, courseName: course?.name }),
                   });
                   setUserSavedToast(true);
                   setTimeout(() => setUserSavedToast(false), 3000);

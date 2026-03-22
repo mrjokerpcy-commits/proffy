@@ -110,6 +110,24 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const router = useRouter();
 
+  // Semester filter: derive default from courses (most common semester letter), fallback "a"
+  function defaultSemester(): string {
+    if (courses.length === 0) return "a";
+    const counts: Record<string, number> = {};
+    for (const c of courses) {
+      const key = c.semester?.slice(-1).toLowerCase() ?? "";
+      if (key === "a" || key === "b" || key === "s") counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return Object.entries(counts).sort((x, y) => y[1] - x[1])[0]?.[0] ?? "a";
+  }
+  const [selectedSemester, setSelectedSemester] = useState<string>(defaultSemester);
+
+  // Filter courses to current semester (courses with no semester set always show)
+  const filteredCourses = courses.filter(c => {
+    if (!c.semester) return true;
+    return c.semester.slice(-1).toLowerCase() === selectedSemester;
+  });
+
   useEffect(() => {
     if (!menuOpen) return;
     function handleClick(e: MouseEvent) {
@@ -164,11 +182,12 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       {/* ── Semester tabs ── */}
       <div style={{ padding: "0.875rem 0.875rem 0.5rem", flexShrink: 0 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "3px", padding: "3px", borderRadius: "10px", background: "var(--bg-elevated)" }}>
-          {SEMESTERS.map((s, i) => (
-            <button key={s.key} style={{
+          {SEMESTERS.map((s) => (
+            <button key={s.key} onClick={() => setSelectedSemester(s.key)} style={{
               fontSize: "12px", padding: "6px 0", borderRadius: "7px", fontWeight: 600, transition: "all 0.15s",
-              background: i === 0 ? "var(--blue)" : "transparent",
-              color: i === 0 ? "#fff" : "var(--text-muted)",
+              background: selectedSemester === s.key ? "var(--blue)" : "transparent",
+              color: selectedSemester === s.key ? "#fff" : "var(--text-muted)",
+              cursor: "pointer", border: "none",
             }}>
               {s.label}
             </button>
@@ -194,9 +213,14 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
               No courses yet.<br/>
               <Link href="/courses/new" style={{ color: "var(--blue)", textDecoration: "none", fontWeight: 600 }}>Add your first →</Link>
             </motion.div>
+          ) : filteredCourses.length === 0 ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ padding: "1.5rem 0.5rem", textAlign: "center", fontSize: "12px", lineHeight: 1.7, color: "var(--text-muted)" }}>
+              No courses in semester {selectedSemester.toUpperCase()}.
+            </motion.div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              {courses.map((course, i) => {
+              {filteredCourses.map((course, i) => {
                 const isActive = activeCourseId === course.id;
                 const isHovered = hoveredId === course.id;
                 return (

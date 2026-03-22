@@ -325,7 +325,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { message, university, course, professor, semester, history = [], sessionId, courseId, courseNumber, btwResume, partialResponse } = body;
+  const { message, university, course, professor, semester, history = [], sessionId, courseNumber, btwResume, partialResponse } = body;
+  // let so it can be updated mid-request when create_course tool runs
+  let courseId: string | null = typeof body.courseId === "string" ? body.courseId : null;
 
   // Input validation
   if (!message || typeof message !== "string") {
@@ -729,7 +731,12 @@ The content — concise, self-contained.
 Never more than one per response.
 
 ## AUTO-GENERATE FLASHCARDS
-When a student has struggled with a concept, generate 2-5 cards at the END:
+When the user explicitly asks for flashcards, or when a student has struggled with a concept, generate 2-5 cards at the END.
+- Explicitly requested → use `<proffy_cards>` (delay=0, due immediately)
+- Agent-initiated for a concept the student already knows somewhat → use `<proffy_cards delay="48">` (delay in hours, up to 168)
+- Agent-initiated for a weak/new concept → use `<proffy_cards>` (due immediately)
+
+Format:
 <proffy_cards>
 Q: [question]
 A: [answer]
@@ -885,6 +892,10 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
               const { result, event } = await executeTool(block.name, block.input as Record<string, unknown>, userId, plan, coursesCreated, university, course);
               toolResults.push({ type: "tool_result", tool_use_id: block.id, content: result });
               if (event) send(event);
+              // If agent just created a course, track its ID so flashcards/notes in this response save correctly
+              if (event && (event as any).type === "course_created" && (event as any).course?.id) {
+                courseId = (event as any).course.id;
+              }
             }
 
             msgs = [
@@ -899,7 +910,7 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
 
         // Parse and strip special tags from full text
         const NOTE_RE = /<proffy_note\s+type="([^"]{1,20})"\s+title="([^"]{0,200})">\s*([\s\S]{1,2000}?)\s*<\/proffy_note>/;
-        const CARDS_RE = /<proffy_cards>\s*([\s\S]{1,4000}?)\s*<\/proffy_cards>/;
+        const CARDS_RE = /<proffy_cards(?:\s+delay="(\d{1,3})")?>\s*([\s\S]{1,4000}?)\s*<\/proffy_cards>/;
         const INSIGHT_RE = /<proffy_insight\s+topic="([^"]{1,40})"\s+status="(weak|needs_review|mastered)">\s*([\s\S]{1,500}?)\s*<\/proffy_insight>/;
         const PLATFORM_MEMORY_RE = /<proffy_platform_memory\s+type="([^"]{1,40})"\s+topic="([^"]{1,60})">\s*([\s\S]{1,500}?)\s*<\/proffy_platform_memory>/;
         const noteTagMatch = fullAssistantText.match(NOTE_RE);
@@ -934,7 +945,9 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
 
         // Auto-save flashcards
         if (cardsTagMatch && courseId) {
-          const pairs = cardsTagMatch[1].split(/\n---\n/).map(block => {
+          const delayHours = Math.min(168, parseInt(cardsTagMatch[1] ?? "0", 10) || 0);
+          const cardContent = cardsTagMatch[2];
+          const pairs = cardContent.split(/\n---\n/).map(block => {
             const qMatch = block.match(/Q:\s*([\s\S]+?)(?=\nA:|$)/);
             const aMatch = block.match(/A:\s*([\s\S]+)/);
             return qMatch && aMatch
@@ -947,8 +960,8 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
               for (const { front, back } of pairs) {
                 await pool.query(
                   `INSERT INTO flashcards (user_id, course_id, front, back, next_review_at)
-                   VALUES ($1, $2, $3, $4, NOW())`,
-                  [userId, courseId, front, back]
+                   VALUES ($1, $2, $3, $4, NOW() + ($5 || ' hours')::interval)`,
+                  [userId, courseId, front, back, delayHours]
                 );
               }
               send({ type: "cards_saved", count: pairs.length });
