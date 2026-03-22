@@ -589,8 +589,9 @@ export async function POST(req: NextRequest) {
               .map((h, i) => {
                 const p = (h as any).payload;
                 const trustTag = p.trust_level === "official" ? " [Official]" : p.trust_level === "verified" ? " [Verified]" : p.trust_level === "student" ? " [Student-uploaded, unverified]" : "";
+                const courseTag = p.course_number ? ` Course ${p.course_number}` : "";
                 const label = [p.filename, p.type, p.professor].filter(Boolean).join(" · ");
-                return `[Source ${i + 1}: ${label}${trustTag}]\n${p.text}`;
+                return `[Source ${i + 1}:${courseTag} ${label}${trustTag}]\n${p.text}`;
               })
               .join("\n\n---\n\n");
           } catch {
@@ -777,6 +778,7 @@ After using a tool, continue the conversation naturally — don't announce "I us
 
 ## MATERIAL COVERAGE
 ${context && sources.length > 0 ? `${sources.length} relevant source(s) found — cite them with [Source N] where relevant.` : "No course material found for this question."}
+When answering from retrieved material: if any source includes a course number (e.g. "Course 234218"), mention it naturally in your reply when it is relevant — for example: "Based on the material for course 234218..." or "This appears in course 234218." Only mention it once, and only if the student did not already specify a course number.
 When no material is found, answer directly and confidently from your training knowledge — no disclaimer, no preamble, no mention of missing material.
 Only say something like "I don't have your specific slides on this" if the student explicitly asks whether you have their course material.
 If they share a URL → call submit_course_material immediately.
