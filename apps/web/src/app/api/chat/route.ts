@@ -121,27 +121,41 @@ async function executeTool(
     const semester = typeof input.semester === "string" ? input.semester.trim() : "";
 
     try {
-      // Normalize course number: strip leading zeros and non-digits for fuzzy compare
-      // e.g. "044142" → "44142", handles variants like "004400142", "0440142"
-      const coreDigits = number.replace(/\D/g, "").replace(/^0+/, "");
+      // Normalize: strip non-digits, then strip leading zeros
+      const rawDigits  = number.replace(/\D/g, "");
+      const coreDigits = rawDigits.replace(/^0+/, "") || rawDigits; // keep "0" if all zeros
 
       let rows: any[] = [];
 
-      // 1. Try exact / fuzzy number match if number provided
       if (coreDigits) {
+        // Pass 1 — exact match on raw digits (e.g. user typed "044142", DB has "044142")
+        // Pass 2 — both sides stripped of leading zeros (handles "44142" ↔ "044142")
+        // Pass 3 — substring LIKE on leading-zeros-stripped DB value (partial input)
+        // Pass 4 — suffix match: last N digits (handles middle-zero variants like "0440142" ↔ "044142")
         const numResult = await pool.query(
           `SELECT course_number, name, name_hebrew, lecturer, semester, exam_date, credits
            FROM technion_courses
-           WHERE regexp_replace(course_number, '[^0-9]', '', 'g')::text
-                 LIKE $1
-             AND ($2 = '' OR semester = $2)
+           WHERE (
+             -- exact raw-digit match
+             regexp_replace(course_number, '[^0-9]', '', 'g') = $1
+             OR
+             -- leading-zero-stripped exact match
+             ltrim(regexp_replace(course_number, '[^0-9]', '', 'g'), '0') = $2
+             OR
+             -- substring: user digits appear inside DB digits (catches extra leading zeros on DB side)
+             ltrim(regexp_replace(course_number, '[^0-9]', '', 'g'), '0') LIKE $3
+             OR
+             -- suffix match: DB number ends with user's core digits (handles internal zero variants)
+             regexp_replace(course_number, '[^0-9]', '', 'g') LIKE $4
+           )
+           AND ($5 = '' OR semester = $5)
            ORDER BY semester DESC LIMIT 5`,
-          [`%${coreDigits}%`, semester]
+          [rawDigits, coreDigits, `%${coreDigits}%`, `%${coreDigits}`, semester]
         );
         rows = numResult.rows;
       }
 
-      // 2. Fall back to name search if no number results
+      // Fall back to name search if no number results
       if (rows.length === 0) {
         const nameResult = await pool.query(
           `SELECT course_number, name, name_hebrew, lecturer, semester, exam_date, credits
