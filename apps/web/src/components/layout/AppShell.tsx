@@ -4,6 +4,10 @@ import { AnimatePresence } from "framer-motion";
 import Sidebar from "./Sidebar";
 import RightPanel from "./RightPanel";
 import PanelDrawer from "./PanelDrawer";
+import TimerButton from "@/components/ui/TimerButton";
+import CalcButton from "@/components/ui/CalcButton";
+import CalendarButton from "@/components/ui/CalendarButton";
+import OpenUploadButton from "@/components/ui/OpenUploadButton";
 import type { Course } from "@/lib/types";
 
 interface Props {
@@ -84,6 +88,18 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
 
       {/* ── Main content ── */}
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+        {/* ── Global tool bar ── */}
+        <div style={{
+          flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-end",
+          gap: "6px", padding: "8px 14px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg-surface)",
+        }}>
+          <TimerButton />
+          <CalcButton />
+          <CalendarButton />
+          <OpenUploadButton />
+        </div>
         {children}
       </main>
 
