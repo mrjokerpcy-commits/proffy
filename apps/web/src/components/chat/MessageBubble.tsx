@@ -144,6 +144,9 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
             <ThinkingBlock text={message.thinkingText ?? DEFAULT_THINKING} />
           ) : isUser ? (
             <p dir="auto" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{message.content}</p>
+          ) : message.streaming ? (
+            // Plain text while streaming — skip expensive markdown/KaTeX parsing
+            <p dir="auto" style={{ whiteSpace: "pre-wrap", margin: 0, fontFamily: "inherit" }}>{message.content}</p>
           ) : (
             <div className="prose-chat" dir="auto">
               <ReactMarkdown

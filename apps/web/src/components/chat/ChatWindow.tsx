@@ -77,9 +77,9 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const noteToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardsToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const limitToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Typewriter: drip characters at ~3 chars/16ms for smooth letter-by-letter rendering
-  const twRef = useRef<{ full: string; shown: number; msgId: string; timer: ReturnType<typeof setInterval> | null }>
-    ({ full: "", shown: 0, msgId: "", timer: null });
+  // Streaming batch: accumulate tokens in ref, flush to state via RAF (1 setState/frame max)
+  const streamRef = useRef<{ full: string; msgId: string; raf: number | null }>
+    ({ full: "", msgId: "", raf: null });
   // Image upload
   const [pendingImage, setPendingImage] = useState<{ base64: string; mediaType: string; preview: string } | null>(null);
   const [sessionImageCount, setSessionImageCount] = useState(0);
@@ -103,25 +103,27 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     }
   }, [messages, streaming]);
 
-  function startTypewriter(msgId: string) {
-    twRef.current.msgId = msgId;
-    if (twRef.current.timer) return;
-    twRef.current.timer = setInterval(() => {
-      const tw = twRef.current;
-      if (tw.shown >= tw.full.length) return;
-      tw.shown = Math.min(tw.shown + 3, tw.full.length);
-      const text = tw.full.slice(0, tw.shown);
-      setMessages(prev => prev.map(m => m.id === tw.msgId ? { ...m, content: text, thinkingText: undefined } : m));
-    }, 16);
+  function scheduleStreamFlush(msgId: string) {
+    const sr = streamRef.current;
+    sr.msgId = msgId;
+    if (sr.raf !== null) return; // already scheduled this frame
+    sr.raf = requestAnimationFrame(() => {
+      sr.raf = null;
+      setMessages(prev => prev.map(m =>
+        m.id === sr.msgId ? { ...m, content: sr.full, thinkingText: undefined } : m
+      ));
+    });
   }
 
-  function flushTypewriter() {
-    const tw = twRef.current;
-    if (tw.timer) { clearInterval(tw.timer); tw.timer = null; }
-    if (tw.msgId && tw.full) {
-      setMessages(prev => prev.map(m => m.id === tw.msgId ? { ...m, content: tw.full, thinkingText: undefined } : m));
+  function flushStream() {
+    const sr = streamRef.current;
+    if (sr.raf !== null) { cancelAnimationFrame(sr.raf); sr.raf = null; }
+    if (sr.msgId && sr.full) {
+      setMessages(prev => prev.map(m =>
+        m.id === sr.msgId ? { ...m, content: sr.full, streaming: false, thinkingText: undefined } : m
+      ));
     }
-    tw.full = ""; tw.shown = 0; tw.msgId = "";
+    sr.full = ""; sr.msgId = "";
   }
 
   const sendRef = useRef<((text: string) => void) | null>(null);
@@ -269,8 +271,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             } else if (data.type === "token") {
               content += data.text;
               setHasFirstResponse(true);
-              twRef.current.full = content;
-              startTypewriter(assistantId);
+              streamRef.current.full = content;
+              scheduleStreamFlush(assistantId);
               // Paragraph break detected — flush pending /btw
               if (btwBreakRef.current && content.endsWith("\n\n")) {
                 const btwCtx = btwBreakRef.current;
@@ -298,7 +300,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         }
       }
 
-      flushTypewriter();
+      flushStream();
       if (!btwTriggered && btwBreakRef.current) {
         const btwCtx = btwBreakRef.current;
         btwBreakRef.current = null;
@@ -313,7 +315,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         ));
       }
     } catch (err: any) {
-      flushTypewriter();
+      flushStream();
       if (err.name !== "AbortError") {
         setMessages(prev => prev.map(m =>
           m.id === assistantId ? { ...m, content: "Something went wrong. Please try again.", streaming: false } : m
@@ -391,10 +393,10 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         }
       }
 
-      flushTypewriter();
+      flushStream();
       setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, streaming: false } : m));
     } catch (err: any) {
-      flushTypewriter();
+      flushStream();
       if (err.name !== "AbortError") {
         setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: "Something went wrong.", streaming: false } : m));
       } else {
