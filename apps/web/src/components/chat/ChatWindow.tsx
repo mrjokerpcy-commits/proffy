@@ -79,6 +79,11 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   // RAF-based stream buffering for smooth rendering
   const rafRef = useRef<number | null>(null);
   const pendingStreamRef = useRef<{ id: string; text: string } | null>(null);
+  // Image upload
+  const [pendingImage, setPendingImage] = useState<{ base64: string; mediaType: string; preview: string } | null>(null);
+  const [sessionImageCount, setSessionImageCount] = useState(0);
+  const imgInputRef = useRef<HTMLInputElement>(null);
+  const imageLimit = userPlan === "free" ? 2 : userPlan === "pro" ? 10 : 30;
 
   const canTypeWhileStreaming = userPlan === "pro" || userPlan === "max";
   // Show btw styling when: streaming (any message becomes btw injection) OR explicit /btw prefix
@@ -128,6 +133,9 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     setInput("");
     setPendingBtw([]);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
+    const attachedImage = pendingImage;
+    setPendingImage(null);
+    if (attachedImage) setSessionImageCount(c => c + 1);
     setStreaming(true);
     abortRef.current = new AbortController();
     let btwTriggered = false;
@@ -140,6 +148,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
           message: pendingBtw.length > 0
             ? `${text.trim()}\n\n[Context from /btw: ${pendingBtw.join(" | ")}]`
             : text.trim(),
+          image: attachedImage ? { base64: attachedImage.base64, mediaType: attachedImage.mediaType } : undefined,
           courseId: runtimeCourseId,
           university: course?.university,
           course: course?.name,
@@ -665,13 +674,60 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
 
       {/* ── Input area ── */}
       <div style={{ flexShrink: 0, padding: "6px 16px 14px", background: "var(--bg-surface)" }}>
+        {/* Image preview */}
+        {pendingImage && (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", padding: "6px 8px", borderRadius: "10px", background: "var(--bg-elevated)", border: "1px solid var(--border)" }}>
+            <img src={pendingImage.preview} alt="attachment" style={{ width: "48px", height: "48px", objectFit: "cover", borderRadius: "7px", flexShrink: 0 }} />
+            <span style={{ flex: 1, fontSize: "12px", color: "var(--text-muted)" }}>Image attached</span>
+            <button onClick={() => setPendingImage(null)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "16px", lineHeight: 1, padding: "2px 4px" }}>✕</button>
+          </div>
+        )}
+        {/* Hidden file input */}
+        <input
+          ref={imgInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          style={{ display: "none" }}
+          onChange={e => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            if (sessionImageCount >= imageLimit) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+              const dataUrl = ev.target?.result as string;
+              const base64 = dataUrl.split(",")[1];
+              const mediaType = file.type as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+              setPendingImage({ base64, mediaType, preview: dataUrl });
+            };
+            reader.readAsDataURL(file);
+          }}
+        />
         <div style={{
           display: "flex", alignItems: "flex-end", gap: "10px",
           padding: "10px 14px", borderRadius: "12px",
           background: "var(--bg-elevated)",
-          border: `1px solid ${isBtw ? "rgba(167,139,250,0.35)" : "var(--border-light)"}`,
+          border: `1px solid ${isBtw ? "rgba(167,139,250,0.35)" : pendingImage ? "rgba(79,142,247,0.35)" : "var(--border-light)"}`,
           transition: "border-color 0.15s",
         }}>
+          {/* Image upload button */}
+          <button
+            onClick={() => {
+              if (sessionImageCount >= imageLimit) return;
+              imgInputRef.current?.click();
+            }}
+            title={sessionImageCount >= imageLimit ? `Image limit reached (${imageLimit}/session)` : "Attach image"}
+            style={{
+              background: "none", border: "none", cursor: sessionImageCount >= imageLimit ? "not-allowed" : "pointer",
+              color: sessionImageCount >= imageLimit ? "var(--text-disabled)" : "var(--text-muted)",
+              padding: "3px", display: "flex", alignItems: "center", flexShrink: 0,
+              opacity: sessionImageCount >= imageLimit ? 0.4 : 1, transition: "color 0.15s",
+            }}
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+            </svg>
+          </button>
           <textarea
             ref={textareaRef}
             data-tour="chat-input"
