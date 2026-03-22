@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       // Fast path: update by point ID directly
       for (const pointId of pointIds) {
         try {
-          const { points } = await qdrant.retrieve("studyai_chunks", { ids: [pointId], with_payload: true });
+          const points = await qdrant.retrieve("studyai_chunks", { ids: [pointId], with_payload: true });
           const p = points[0]?.payload as any;
           if (!p) continue;
           const total_shown   = (p.total_shown   ?? 0) + 1;
