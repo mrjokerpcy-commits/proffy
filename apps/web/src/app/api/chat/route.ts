@@ -62,6 +62,18 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "search_web",
+    description: "Search the internet for course-specific material: syllabi, past exams, professor pages, course pages, study guides. Call this proactively when you have a course number or course name to find what's available online. Also call when the student asks you to find material for them. Prefer Hebrew + English queries for Israeli university courses.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "string", description: "Search query. For Israeli courses include university name and course number, e.g. 'Technion 234218 מבחנים' or 'TAU business law syllabus'" },
+        purpose: { type: "string", enum: ["find_material", "find_course_page", "find_exams", "general"], description: "What you are looking for" },
+      },
+      required: ["query"],
+    },
+  },
+  {
     name: "submit_course_material",
     description: "Queue a Google Drive folder or URL for ingestion as course material. Call this when a student shares a Drive link, professor website, or any URL. Also call this after a student confirms they shared their Drive folder with the Proffy service account.",
     input_schema: {
@@ -235,6 +247,31 @@ async function executeTool(
       result: `Course "${courseName}" created successfully (id: ${rows[0].id})`,
       event: { type: "course_created", course: rows[0] },
     };
+  }
+
+  if (name === "search_web") {
+    const query = typeof input.query === "string" ? input.query.trim().slice(0, 300) : "";
+    if (!query) return { result: "No query provided." };
+    const tavilyKey = process.env.TAVILY_API_KEY;
+    if (!tavilyKey) return { result: "Web search is not configured (TAVILY_API_KEY missing)." };
+    try {
+      const res = await fetch("https://api.tavily.com/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: tavilyKey, query, max_results: 6, search_depth: "basic", include_answer: false }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return { result: `Search failed (status ${res.status}).` };
+      const data = await res.json();
+      const results: { title: string; url: string; content: string }[] = data.results ?? [];
+      if (results.length === 0) return { result: "No results found." };
+      const formatted = results.map((r, i) =>
+        `${i + 1}. **${r.title}**\n   ${r.url}\n   ${r.content?.slice(0, 200) ?? ""}`
+      ).join("\n\n");
+      return { result: `Found ${results.length} results:\n\n${formatted}` };
+    } catch (e: any) {
+      return { result: `Search error: ${e.message}` };
+    }
   }
 
   if (name === "submit_course_material") {
@@ -575,13 +612,19 @@ export async function POST(req: NextRequest) {
                 const id = (r as any).id;
                 if (!seen.has(id)) { seen.add(id); searchResults.push(r); }
               }
-              searchResults.sort((a: any, b: any) => b.score - a.score);
+              // Blend vector similarity (80%) with helpfulness score (20%) for ranking
+              searchResults.sort((a: any, b: any) => {
+                const scoreA = (a.score ?? 0) * 0.8 + ((a.payload?.helpfulness_score ?? 0.5) - 0.5) * 0.2;
+                const scoreB = (b.score ?? 0) * 0.8 + ((b.payload?.helpfulness_score ?? 0.5) - 0.5) * 0.2;
+                return scoreB - scoreA;
+              });
               searchResults = searchResults.slice(0, 8);
             } catch {
               // Qdrant collection may not exist yet
             }
 
             sources = searchResults.map(h => ({
+              id: (h as any).id,                           // Qdrant point ID for feedback scoring
               filename: (h as any).payload?.filename,
               type: (h as any).payload?.type,
               professor: (h as any).payload?.professor,
@@ -784,6 +827,7 @@ Current student plan: **${plan}**
 You have tools to take real actions:
 - **lookup_course**: For Technion students, ALWAYS call this first when they mention a course name or number. Show them the top matches and ask them to confirm before creating. Handles course numbers with varying zero-padding (e.g. "044142" ≈ "44142" ≈ "0440142"). For non-Technion universities, skip this and go straight to create_course.
 - **create_course**: Call AFTER the user confirms the course details (or immediately for non-Technion). IMPORTANT: Free users can only have 3 courses total (lifetime). If they already have 3, tell them they need to upgrade to Pro before calling this tool. If the university is "Other", after creating the course say something like: "I've added your course! Since your university isn't one of the main ones I have pre-loaded material for, you'll get the best results by uploading your slides or course material — want to do that now?" (only ask once, don't repeat).
+- **search_web**: Search the internet for course-specific material. Call this proactively whenever you have a course name or number — search for syllabi, past exams, professor pages, and course info. Use Hebrew + English queries for Israeli courses (e.g. "Technion 234218 מבחנים" or "TAU business law past exams"). After finding results, share relevant URLs with the student and offer to queue promising ones via submit_course_material.
 - **submit_course_material**: Call when a student shares a Google Drive link, professor website, or any URL containing slides/exams/notes. Queues it for admin ingestion — helps ALL future students. Also call proactively when you detect sparse material coverage (see below).
 - **save_note**: Save an informative note to the student's personal Course Notes. Call this when the student says "add note", "save note", "save this", or "add this to my notes". Write the full content — don't save headers or empty shells. Pull from the course material if available. A note should be informative enough to study from. Requires a course to be active.
 - **update_course_knowledge**: Write a verified fact to this course's persistent knowledge file. ONLY when you are confident the information is accurate — confirmed by official material, by the student, or seen many times. Never for guesses. Sections: exam_focus (what the exam focuses on — course-wide, not professor-specific), common_struggles, prof_patterns (professor-specific style if professor is known, otherwise general course exam style), key_concepts, important_notes.

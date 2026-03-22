@@ -40,47 +40,53 @@ export async function POST(req: NextRequest) {
     [messageId, session.user.id, courseId ?? null, rating]
   ).catch(() => {}); // table may not be migrated yet in all envs
 
-  // On thumbs up: find chunks that were cited in this message and increment helpfulness
-  if (rating === "up") {
-    try {
-      // Fetch the sources stored on the assistant message
-      const { rows } = await pool.query(
-        `SELECT sources FROM chat_messages WHERE id = $1`,
-        [messageId]
-      );
-      const sources: { filename: string }[] = rows[0]?.sources ?? [];
-      if (sources.length > 0) {
-        const filenames = [...new Set(sources.map(s => s.filename).filter(Boolean))];
-        // Update helpfulness in Qdrant for chunks from these files in user's course
-        for (const filename of filenames) {
-          try {
-            // Scroll chunks for this filename + user, then patch payload
-            const { points } = await qdrant.scroll("studyai_chunks", {
-              filter: { must: [
-                { key: "filename", match: { value: filename } },
-                { key: "user_id",  match: { value: session.user.id } },
-              ]},
-              limit: 100,
-              with_payload: true,
-              with_vector: false,
-            });
-            for (const point of points) {
-              const p = point.payload as any;
-              const helpful_count = (p.helpful_count ?? 0) + 1;
-              const total_shown   = (p.total_shown ?? 1);
-              await qdrant.setPayload("studyai_chunks", {
-                points: [point.id as string],
-                payload: {
-                  helpful_count,
-                  helpfulness_score: helpful_count / (total_shown + 1),
-                },
-              }).catch(() => {});
-            }
-          } catch {}
-        }
+  // Update Qdrant chunk scores based on feedback
+  try {
+    const { rows } = await pool.query(
+      `SELECT sources FROM chat_messages WHERE id = $1`,
+      [messageId]
+    );
+    const sources: { id?: string; filename?: string }[] = rows[0]?.sources ?? [];
+    // Prefer direct point IDs (new format), fall back to filename lookup
+    const pointIds = sources.map(s => s.id).filter(Boolean) as string[];
+
+    if (pointIds.length > 0) {
+      // Fast path: update by point ID directly
+      for (const pointId of pointIds) {
+        try {
+          const { points } = await qdrant.retrieve("studyai_chunks", { ids: [pointId], with_payload: true });
+          const p = points[0]?.payload as any;
+          if (!p) continue;
+          const total_shown   = (p.total_shown   ?? 0) + 1;
+          const helpful_count = rating === "up" ? (p.helpful_count ?? 0) + 1 : (p.helpful_count ?? 0);
+          await qdrant.setPayload("studyai_chunks", {
+            points: [pointId],
+            payload: { helpful_count, total_shown, helpfulness_score: helpful_count / total_shown },
+          }).catch(() => {});
+        } catch {}
       }
-    } catch {}
-  }
+    } else if (sources.length > 0 && rating === "up") {
+      // Fallback: filename-based update for old messages
+      const filenames = [...new Set(sources.map(s => s.filename).filter(Boolean))];
+      for (const filename of filenames) {
+        try {
+          const { points } = await qdrant.scroll("studyai_chunks", {
+            filter: { must: [{ key: "filename", match: { value: filename } }] },
+            limit: 50, with_payload: true, with_vector: false,
+          });
+          for (const point of points) {
+            const p = point.payload as any;
+            const total_shown   = (p.total_shown   ?? 0) + 1;
+            const helpful_count = (p.helpful_count ?? 0) + 1;
+            await qdrant.setPayload("studyai_chunks", {
+              points: [point.id as string],
+              payload: { helpful_count, total_shown, helpfulness_score: helpful_count / total_shown },
+            }).catch(() => {});
+          }
+        } catch {}
+      }
+    }
+  } catch {}
 
   return NextResponse.json({ ok: true });
 }
