@@ -514,6 +514,43 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       {/* ── Feature widget boxes ── */}
       <div style={{ flexShrink: 0, padding: "0.5rem 0.75rem 0.5rem", display: "flex", flexDirection: "column", gap: "8px" }}>
 
+        {/* Study Groups */}
+        <a
+          href="/groups"
+          className="sidebar-item"
+          style={{
+            display: "flex", alignItems: "center", gap: "12px",
+            padding: "10px 14px", borderRadius: "10px",
+            background: "rgba(79,142,247,0.06)",
+            border: "1px solid rgba(79,142,247,0.18)",
+            width: "100%", cursor: "pointer", transition: "all 0.15s",
+            textDecoration: "none",
+          }}
+        >
+          <div style={{
+            width: "30px", height: "30px", borderRadius: "8px", flexShrink: 0,
+            background: "rgba(79,142,247,0.12)",
+            border: "1px solid rgba(79,142,247,0.25)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+              <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#4f8ef7", lineHeight: 1.25, display: "flex", alignItems: "center", gap: "6px" }}>
+              Study Groups
+              <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#f59e0b", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "4px", padding: "1px 5px" }}>Soon</span>
+            </div>
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
+              Chat with your coursemates
+            </div>
+          </div>
+        </a>
+
         {/* Professor Fingerprint */}
         <button
           onClick={() => window.dispatchEvent(new Event("proffy:open-fingerprint"))}

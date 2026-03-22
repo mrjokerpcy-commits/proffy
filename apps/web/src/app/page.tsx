@@ -206,15 +206,28 @@ export default async function HomePage() {
       {/* ── Hero ── */}
       <section className="landing-hero" style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
 
-        {/* Badge */}
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: "0.5rem",
-          padding: "0.5rem 1.1rem", borderRadius: "999px",
-          fontSize: "0.85rem", fontWeight: 500, marginBottom: "2.5rem",
-          background: "rgba(79,142,247,0.08)", border: "1px solid rgba(79,142,247,0.2)", color: "var(--blue-hover)",
-        }}>
-          <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#60a5fa", display: "inline-block" }} />
-          TAU &middot; Technion &middot; HUJI &middot; BGU &middot; Bar Ilan &middot; Ariel
+        {/* University badges */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginBottom: "2.5rem" }}>
+          <span style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--text-muted)" }}>
+            Trusted by students at
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", justifyContent: "center" }}>
+            {[
+              { name: "TAU", full: "Tel Aviv University", color: "#4f8ef7" },
+              { name: "Technion", full: "Israel Institute of Technology", color: "#a78bfa" },
+              { name: "HUJI", full: "Hebrew University", color: "#f87171" },
+              { name: "BGU", full: "Ben-Gurion University", color: "#34d399" },
+              { name: "Bar Ilan", full: "Bar-Ilan University", color: "#fbbf24" },
+              { name: "Ariel", full: "Ariel University", color: "#fb923c" },
+            ].map(u => (
+              <div key={u.name} title={u.full} style={{
+                padding: "5px 13px", borderRadius: "8px",
+                background: u.color + "0f", border: `1px solid ${u.color}28`,
+                fontSize: "12px", fontWeight: 700, color: u.color,
+                letterSpacing: "0.01em", cursor: "default",
+              }}>{u.name}</div>
+            ))}
+          </div>
         </div>
 
         {/* Headline */}
@@ -237,9 +250,37 @@ export default async function HomePage() {
           >
             Start studying free →
           </Link>
-          <span style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
-            10 free questions daily · No credit card
-          </span>
+          <Link
+            href="/login"
+            style={{
+              fontSize: "1rem", padding: "0.875rem 1.75rem", borderRadius: "1rem", fontWeight: 600,
+              background: "var(--bg-elevated)", border: "1px solid var(--border)",
+              color: "var(--text-secondary)", textDecoration: "none", transition: "all 0.15s",
+            }}
+          >
+            Sign in
+          </Link>
+        </div>
+
+        {/* Quick feature chips */}
+        <div style={{ marginTop: "1.75rem", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
+          {[
+            { label: "Upload slides", icon: "↑" },
+            { label: "Ask questions", icon: "?" },
+            { label: "Flashcards", icon: "▤" },
+            { label: "Exam countdown", icon: "◷" },
+            { label: "Study groups", icon: "⊞" },
+          ].map(c => (
+            <div key={c.label} style={{
+              display: "inline-flex", alignItems: "center", gap: "6px",
+              padding: "5px 12px", borderRadius: "999px",
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
+              fontSize: "12px", fontWeight: 600, color: "var(--text-muted)",
+            }}>
+              <span style={{ fontSize: "11px", opacity: 0.6 }}>{c.icon}</span>
+              {c.label}
+            </div>
+          ))}
         </div>
 
         {/* ── Product mockup ── */}
