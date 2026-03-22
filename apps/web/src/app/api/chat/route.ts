@@ -1125,7 +1125,7 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
         while (continueLoop) {
           const useThinking = plan !== "free";
           const claudeStream = anthropic.messages.stream({
-            model: plan === "free" ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
+            model: plan === "free" ? "claude-haiku-4-5-20251001" : plan === "max" ? "claude-opus-4-6" : "claude-sonnet-4-6",
             max_tokens: plan === "free" ? 1024 : 10000,
             ...(useThinking ? { thinking: { type: "enabled", budget_tokens: 5000 } } : {}),
             ...(useThinking ? { betas: ["interleaved-thinking-2025-05-14"] } : {}),
@@ -1336,9 +1336,13 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
         });
       } catch (err: unknown) {
         console.error("Chat error:", err);
+        const errStr = String((err as any)?.message ?? err ?? "");
         const isKeyMissing = !process.env.ANTHROPIC_API_KEY;
+        const isOverloaded = /overloaded|529|credit balance|billing|payment/i.test(errStr);
         const msg = isKeyMissing
           ? "ANTHROPIC_API_KEY not set — add it to .env.local"
+          : isOverloaded
+          ? "The AI is a bit busy right now. Please try again in a moment."
           : "Something went wrong. Please try again.";
         send({ type: "error", message: msg });
       } finally {
