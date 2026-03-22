@@ -1057,9 +1057,11 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
         send({ type: "thinking", text: "Thinking…" });
 
         while (continueLoop) {
+          const useThinking = plan !== "free";
           const claudeStream = anthropic.messages.stream({
             model: plan === "free" ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
-            max_tokens: plan === "free" ? 1024 : 2048,
+            max_tokens: plan === "free" ? 1024 : 10000,
+            ...(useThinking ? { thinking: { type: "enabled", budget_tokens: 5000 } } : {}),
             system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
             messages: msgs,
             tools: TOOLS,
@@ -1067,7 +1069,9 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
 
           let turnText = "";
           for await (const chunk of claudeStream) {
-            if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+            if (chunk.type === "content_block_delta" && (chunk.delta as any).type === "thinking_delta") {
+              send({ type: "thinking_step", text: (chunk.delta as any).thinking ?? "" });
+            } else if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
               turnText += chunk.delta.text;
               fullAssistantText += chunk.delta.text;
               send({ type: "token", text: chunk.delta.text });

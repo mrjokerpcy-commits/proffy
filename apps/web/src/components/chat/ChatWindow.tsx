@@ -76,6 +76,9 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const noteToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardsToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const limitToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // RAF-based stream buffering for smooth rendering
+  const rafRef = useRef<number | null>(null);
+  const pendingStreamRef = useRef<{ id: string; text: string } | null>(null);
 
   const isBtw = input.trimStart().startsWith("/btw");
   const canTypeWhileStreaming = userPlan === "pro" || userPlan === "max";
@@ -223,10 +226,20 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             } else if (data.type === "error") {
               content = data.message ?? "Something went wrong. Please try again.";
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, streaming: false } : m));
+            } else if (data.type === "thinking_step") {
+              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, thinkingText: (data.text as string).slice(0, 180) + "…" } : m));
             } else if (data.type === "token") {
               content += data.text;
               setHasFirstResponse(true);
-              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, thinkingText: undefined } : m));
+              // RAF-throttled update for smooth letter-by-letter rendering
+              pendingStreamRef.current = { id: assistantId, text: content };
+              if (rafRef.current === null) {
+                rafRef.current = requestAnimationFrame(() => {
+                  rafRef.current = null;
+                  const p = pendingStreamRef.current;
+                  if (p) setMessages(prev => prev.map(m => m.id === p.id ? { ...m, content: p.text, thinkingText: undefined } : m));
+                });
+              }
               // Paragraph break detected — flush pending /btw
               if (btwBreakRef.current && content.endsWith("\n\n")) {
                 const btwCtx = btwBreakRef.current;
@@ -254,7 +267,16 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
         }
       }
 
-      if (!btwTriggered) {
+      if (!btwTriggered && btwBreakRef.current) {
+        // /btw was pending but no paragraph break occurred — fire it now at completion
+        const btwCtx = btwBreakRef.current;
+        btwBreakRef.current = null;
+        btwTriggered = true;
+        const snapshot = content;
+        const histSnapshot = [...messages];
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, streaming: false } : m));
+        setTimeout(() => resumeWithBtw(snapshot, btwCtx, histSnapshot), 80);
+      } else if (!btwTriggered) {
         setMessages(prev => prev.map(m =>
           m.id === assistantId ? { ...m, content, streaming: false } : m
         ));
@@ -322,7 +344,14 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             const data = JSON.parse(line.slice(6));
             if (data.type === "token") {
               content += data.text;
-              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content, thinkingText: undefined } : m));
+              pendingStreamRef.current = { id: assistantId, text: content };
+              if (rafRef.current === null) {
+                rafRef.current = requestAnimationFrame(() => {
+                  rafRef.current = null;
+                  const p = pendingStreamRef.current;
+                  if (p) setMessages(prev => prev.map(m => m.id === p.id ? { ...m, content: p.text, thinkingText: undefined } : m));
+                });
+              }
             } else if (data.type === "done") {
               if (data.usedTokens !== undefined) setUsedTokens(data.usedTokens);
               router.refresh();
