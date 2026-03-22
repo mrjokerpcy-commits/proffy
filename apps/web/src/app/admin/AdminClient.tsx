@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 // Claude pricing (per 1M tokens, USD)
 const HAIKU_IN  = 0.80;
@@ -72,6 +72,7 @@ type QueueItem = {
   submitted_at: string; status: string; email: string | null;
   files_found: number | null; chunks_created: number | null;
   error_msg: string | null; processed_at: string | null;
+  log: string | null;
 };
 
 export default function AdminClient({
@@ -87,6 +88,24 @@ export default function AdminClient({
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"joined" | "msgs" | "cost" | "plan">("joined");
+
+  const [openLogId, setOpenLogId] = useState<string | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+
+  async function cancelItem(id: string) {
+    setActioningId(id);
+    await fetch("/api/admin/queue-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action: "cancel" }) }).catch(() => {});
+    setQueueItems(prev => prev.map(q => q.id === id ? { ...q, status: "pending" } : q));
+    setActioningId(null);
+  }
+
+  async function deleteItem(id: string) {
+    setActioningId(id);
+    await fetch("/api/admin/queue-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action: "delete" }) }).catch(() => {});
+    setQueueItems(prev => prev.filter(q => q.id !== id));
+    if (openLogId === id) setOpenLogId(null);
+    setActioningId(null);
+  }
 
   // Simulate tab state
   const [simQuestion, setSimQuestion] = useState("");
@@ -565,7 +584,7 @@ export default function AdminClient({
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                  {["Drive Folder", "Faculty / University", "Status", "Progress", "Submitted"].map(h => (
+                  {["Drive Folder", "Faculty / University", "Status", "Progress", "Submitted", "Log"].map(h => (
                     <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "var(--text-muted)", fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
@@ -579,42 +598,86 @@ export default function AdminClient({
                   const statusColor = isDone ? "var(--green)" : isProcessing ? "var(--blue)" : isPending ? "var(--amber)" : "#f87171";
                   const statusBg = isDone ? "rgba(52,211,153,0.15)" : isProcessing ? "rgba(79,142,247,0.15)" : isPending ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)";
                   return (
-                    <tr key={item.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td style={{ padding: "8px 12px", maxWidth: "240px" }}>
-                        <a href={item.url} target="_blank" rel="noopener noreferrer"
-                          style={{ color: "var(--blue)", textDecoration: "none", fontSize: "11px", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {item.url.replace("https://drive.google.com/drive/", "Drive/")}
-                        </a>
-                      </td>
-                      <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontSize: "12px" }}>
-                        {[item.course_name, item.university].filter(Boolean).join(" · ") || "—"}
-                      </td>
-                      <td style={{ padding: "8px 12px" }}>
-                        <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700, background: statusBg, color: statusColor }}>
-                          {isProcessing ? "⏳ processing" : item.status}
-                        </span>
-                        {isError && item.error_msg && (
-                          <div style={{ fontSize: "10px", color: "#f87171", marginTop: "4px", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                            title={item.error_msg}>{item.error_msg}</div>
-                        )}
-                      </td>
-                      <td style={{ padding: "8px 12px" }}>
-                        {isDone ? (
-                          <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600 }}>
-                            {item.files_found ?? 0} files · {item.chunks_created ?? 0} chunks
+                    <React.Fragment key={item.id}>
+                      <tr style={{ borderBottom: openLogId === item.id ? "none" : "1px solid var(--border)" }}>
+                        <td style={{ padding: "8px 12px", maxWidth: "240px" }}>
+                          <a href={item.url} target="_blank" rel="noopener noreferrer"
+                            style={{ color: "var(--blue)", textDecoration: "none", fontSize: "11px", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {item.url.replace("https://drive.google.com/drive/", "Drive/")}
+                          </a>
+                        </td>
+                        <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontSize: "12px" }}>
+                          {[item.course_name, item.university].filter(Boolean).join(" · ") || "—"}
+                        </td>
+                        <td style={{ padding: "8px 12px" }}>
+                          <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700, background: statusBg, color: statusColor }}>
+                            {isProcessing ? "⏳ processing" : item.status}
                           </span>
-                        ) : isProcessing ? (
-                          <div style={{ width: "80px", height: "4px", borderRadius: "4px", background: "rgba(79,142,247,0.15)", overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: "60%", background: "var(--blue)", borderRadius: "4px", animation: "pulse 1.5s ease infinite" }} />
+                          {isError && item.error_msg && (
+                            <div style={{ fontSize: "10px", color: "#f87171", marginTop: "4px", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                              title={item.error_msg}>{item.error_msg}</div>
+                          )}
+                        </td>
+                        <td style={{ padding: "8px 12px" }}>
+                          {isDone ? (
+                            <span style={{ fontSize: "12px", color: "var(--green)", fontWeight: 600 }}>
+                              {item.files_found ?? 0} files · {item.chunks_created ?? 0} chunks
+                            </span>
+                          ) : isProcessing ? (
+                            <div style={{ width: "80px", height: "4px", borderRadius: "4px", background: "rgba(79,142,247,0.15)", overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: "60%", background: "var(--blue)", borderRadius: "4px", animation: "pulse 1.5s ease infinite" }} />
+                            </div>
+                          ) : "—"}
+                        </td>
+                        <td style={{ padding: "8px 12px", color: "var(--text-muted)", whiteSpace: "nowrap", fontSize: "11px" }}>{fmtDate(item.submitted_at)}</td>
+                        <td style={{ padding: "8px 12px" }}>
+                          <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+                            {item.log ? (
+                              <button onClick={() => setOpenLogId(openLogId === item.id ? null : item.id)}
+                                style={{ padding: "2px 8px", borderRadius: "5px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: openLogId === item.id ? "var(--blue)" : "var(--text-muted)", fontSize: "11px", cursor: "pointer", fontFamily: "monospace" }}>
+                                {openLogId === item.id ? "▾ log" : "▸ log"}
+                              </button>
+                            ) : null}
+                            {(isProcessing || isPending) && (
+                              <button onClick={() => cancelItem(item.id)} disabled={actioningId === item.id} title="Reset to pending"
+                                style={{ padding: "2px 7px", borderRadius: "5px", border: "1px solid rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.1)", color: "#fbbf24", fontSize: "11px", cursor: "pointer" }}>
+                                ✕ cancel
+                              </button>
+                            )}
+                            <button onClick={() => deleteItem(item.id)} disabled={actioningId === item.id} title="Delete from queue"
+                              style={{ padding: "2px 7px", borderRadius: "5px", border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.1)", color: "#f87171", fontSize: "11px", cursor: "pointer" }}>
+                              🗑
+                            </button>
                           </div>
-                        ) : "—"}
-                      </td>
-                      <td style={{ padding: "8px 12px", color: "var(--text-muted)", whiteSpace: "nowrap", fontSize: "11px" }}>{fmtDate(item.submitted_at)}</td>
-                    </tr>
+                        </td>
+                      </tr>
+                      {openLogId === item.id && item.log && (
+                        <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                          <td colSpan={6} style={{ padding: "0 12px 12px" }}>
+                            <pre style={{
+                              margin: 0, padding: "14px 16px", borderRadius: "10px",
+                              background: "#0d1117", border: "1px solid rgba(255,255,255,0.08)",
+                              color: "#e6edf3", fontSize: "11px", lineHeight: 1.7,
+                              fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-word",
+                              maxHeight: "320px", overflowY: "auto",
+                            }}>
+                              {item.log.split("\n").filter(Boolean).map((line, i) => {
+                                const color = line.includes("✓") ? "#3fb950"
+                                  : line.includes("✗") || line.includes("ERROR") ? "#f85149"
+                                  : line.includes("Found") || line.includes("Done") ? "#79c0ff"
+                                  : line.includes("batch") || line.includes("Starting") ? "#d2a8ff"
+                                  : "#e6edf3";
+                                return <span key={i} style={{ color, display: "block" }}>{line}</span>;
+                              })}
+                            </pre>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
                 {queueItems.length === 0 && (
-                  <tr><td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>Queue is empty</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>Queue is empty</td></tr>
                 )}
               </tbody>
             </table>

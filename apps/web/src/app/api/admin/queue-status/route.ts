@@ -21,11 +21,12 @@ export async function GET() {
     pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS chunks_created INT`),
     pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS error_msg TEXT`),
     pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS processed_at TIMESTAMPTZ`),
+    pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS log TEXT NOT NULL DEFAULT ''`),
   ]).catch(() => {});
 
   const { rows } = await pool.query(`
     SELECT mq.id, mq.url, mq.university, mq.course_name, mq.created_at AS submitted_at, mq.status,
-           mq.files_found, mq.chunks_created, mq.error_msg, mq.processed_at, u.email
+           mq.files_found, mq.chunks_created, mq.error_msg, mq.processed_at, mq.log, u.email
     FROM material_queue mq
     LEFT JOIN users u ON u.id = mq.submitted_by
     ORDER BY mq.created_at DESC LIMIT 50

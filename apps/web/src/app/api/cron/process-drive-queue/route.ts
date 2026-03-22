@@ -43,9 +43,21 @@ async function ensureSchema() {
       ADD COLUMN IF NOT EXISTS chunks_created INT,
       ADD COLUMN IF NOT EXISTS course_number TEXT,
       ADD COLUMN IF NOT EXISTS professor TEXT,
-      ADD COLUMN IF NOT EXISTS semester TEXT;
+      ADD COLUMN IF NOT EXISTS semester TEXT,
+      ADD COLUMN IF NOT EXISTS log TEXT NOT NULL DEFAULT '';
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS mq_status_idx ON material_queue(status)`);
+}
+
+function ts() {
+  return new Date().toISOString().slice(11, 19); // HH:MM:SS
+}
+
+async function appendLog(id: string, line: string) {
+  await pool.query(
+    `UPDATE material_queue SET log = log || $1 WHERE id = $2`,
+    [`[${ts()}] ${line}\n`, id]
+  ).catch(() => {});
 }
 
 // ── Google Drive auth via service account ────────────────────────────────────
@@ -496,10 +508,16 @@ export async function GET(req: NextRequest) {
         return;
       }
 
+      await pool.query(`UPDATE material_queue SET log = '' WHERE id = $1`, [row.id]).catch(() => {});
+      await appendLog(row.id, `Starting: ${row.url}`);
+
       let files: Awaited<ReturnType<typeof listDriveFiles>> = [];
       try {
+        await appendLog(row.id, `Listing files in Drive folder...`);
         files = await listDriveFiles(drive, folderId);
+        await appendLog(row.id, `Found ${files.length} files`);
       } catch (err: any) {
+        await appendLog(row.id, `ERROR listing files: ${err.message}`);
         await pool.query(
           `UPDATE material_queue SET status = 'failed', error_msg = $1, processed_at = NOW() WHERE id = $2`,
           [err.message?.slice(0, 500), row.id]
@@ -513,14 +531,22 @@ export async function GET(req: NextRequest) {
 
       for (let i = 0; i < files.length; i += 5) {
         const batch = files.slice(i, i + 5);
+        await appendLog(row.id, `Processing batch ${Math.floor(i/5)+1}/${Math.ceil(files.length/5)}: ${batch.map(f => f.name).join(", ")}`);
         const batchResults = await Promise.allSettled(
           batch.map(f => processDriveFile(drive, f, queueRow))
         );
-        for (const r of batchResults) {
-          if (r.status === "fulfilled") totalChunks += r.value;
+        for (let j = 0; j < batchResults.length; j++) {
+          const r = batchResults[j];
+          if (r.status === "fulfilled") {
+            totalChunks += r.value;
+            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value} chunks`);
+          } else {
+            await appendLog(row.id, `  ✗ ${batch[j].name} → failed: ${(r.reason as any)?.message ?? "unknown error"}`);
+          }
         }
       }
 
+      await appendLog(row.id, `Done — ${files.length} files, ${totalChunks} chunks total`);
       await pool.query(
         `UPDATE material_queue SET status = 'done', processed_at = NOW(), files_found = $1, chunks_created = $2 WHERE id = $3`,
         [files.length, totalChunks, row.id]
