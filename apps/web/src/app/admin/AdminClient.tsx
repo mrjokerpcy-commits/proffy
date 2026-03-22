@@ -133,6 +133,47 @@ export default function AdminClient({
     finally { setSimLoading(false); }
   }
 
+  const AUTO_QUESTIONS = [
+    // Management / Law
+    "מה הם יסודות חוזה תקף לפי המשפט הישראלי?",
+    "הסבר את עקרון המידתיות בחוק יסוד כבוד האדם וחירותו",
+    "מהו מבחן הוודאות הקרובה בחופש הביטוי?",
+    "מה הם עקרונות יסוד של דיני חוזים?",
+    "הסבר את מבנה בתי המשפט בישראל",
+    "מהו עוולת הרשלנות ומה יסודותיה?",
+    "מה ההבדל בין אחריות חוזית לאחריות נזיקית?",
+    "הסבר את דוקטרינת תום הלב בדיני חוזים",
+    "מהי משמעות ההפרה היסודית של חוזה?",
+    "אילו תרופות עומדות לנפגע מהפרת חוזה?",
+    // Economics / Finance
+    "כיצד מחשבים ריבית אפקטיבית שנתית מריבית חודשית?",
+    "מה ההבדל בין אג'ח צמודה לאג'ח לא צמודה?",
+    "הסבר את מודל ה-NPV בהחלטות השקעה",
+    "מהי השונות והסטיית התקן בסטטיסטיקה?",
+    "כיצד מחשבים ערך נוכחי של תזרים מזומנים עתידי?",
+    "מהו מדד בטא ומה משמעותו בשוק ההון?",
+    "הסבר את עקרון הגיוון בתיק השקעות",
+    "מה ההבדל בין שוק ראשוני לשוק משני?",
+    "הסבר את מודל CAPM ומה הוא מניח",
+    "מהי אינפלציה ואילו כלים יש לבנק המרכזי להתמודד איתה?",
+    // Electrical Engineering / Technion
+    "הסבר את חוק אוהם ויישומיו במעגלים חשמליים",
+    "מהי תדירות תהודה במעגל RLC טורי?",
+    "מה ההבדל בין מגבר פתוח לולאה לבין מגבר סגור לולאה?",
+    "הסבר את הטרנספורמציית פורייה ומתי משתמשים בה",
+    "מהו אות Nyquist ומה חשיבותו בדיגיטציה?",
+    "הסבר את עקרון הסופרפוזיציה במעגלים לינאריים",
+    "מהי פונקציית העברה של מערכת ומה ניתן ללמוד ממנה?",
+    "הסבר את הבדל בין מיקרו-עיבוד למיקרו-בקר",
+    "מהם שערי לוגיקה בסיסיים ומה הפונקציה של כל אחד?",
+    "הסבר את שיטת node-voltage לפתרון מעגלים",
+  ];
+
+  function autoGenerate() {
+    const q = AUTO_QUESTIONS[Math.floor(Math.random() * AUTO_QUESTIONS.length)];
+    setSimQuestion(q);
+  }
+
   // Knowledge tab state
   type Chunk = { id: string; payload: Record<string, any> };
   const [chunks, setChunks] = useState<Chunk[]>([]);
@@ -716,6 +757,12 @@ export default function AdminClient({
                     <input type="checkbox" checked={simWithAnswer} onChange={e => setSimWithAnswer(e.target.checked)} style={{ cursor: "pointer" }} />
                     Include AI answer
                   </label>
+                  <button
+                    onClick={autoGenerate}
+                    style={{ padding: "9px 16px", borderRadius: "9px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-secondary)", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    ✦ Auto
+                  </button>
                   <button
                     onClick={runSimulation}
                     disabled={!simQuestion.trim() || simLoading}
