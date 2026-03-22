@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { randomInt } from "crypto";
 import { Pool } from "pg";
-import { sendVerificationEmail } from "@/lib/email";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
@@ -10,11 +8,6 @@ const pool = new Pool({
 });
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
-
-// Cryptographically secure 6-digit code
-function randomCode(): string {
-  return String(randomInt(100000, 1000000));
-}
 
 export async function POST(req: NextRequest) {
   // Rate limit: max 5 registrations per IP per hour
@@ -54,38 +47,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email already in use" }, { status: 409 });
   }
 
-  // Hash password and upsert unverified user
+  // Hash password and upsert verified user
   const password_hash = await bcrypt.hash(password, 12);
   await pool.query(
-    `INSERT INTO users (email, name, password_hash, email_verified)
-     VALUES ($1, $2, $3, false)
+    `INSERT INTO users (email, name, password_hash, email_verified, email_verified_at)
+     VALUES ($1, $2, $3, true, NOW())
      ON CONFLICT (email) DO UPDATE SET
        name = EXCLUDED.name,
-       password_hash = EXCLUDED.password_hash`,
+       password_hash = EXCLUDED.password_hash,
+       email_verified = true,
+       email_verified_at = NOW()`,
     [normalizedEmail, safeName, password_hash]
   );
 
-  // Invalidate old codes and create new one
-  await pool.query("UPDATE email_verifications SET used = true WHERE email = $1", [normalizedEmail]);
-  const code = randomCode();
-  await pool.query(
-    "INSERT INTO email_verifications (email, code) VALUES ($1, $2)",
-    [normalizedEmail, code]
-  );
-
-  // Try to send verification email
-  // If email is not configured or fails → auto-verify so users aren't blocked
-  try {
-    await sendVerificationEmail(normalizedEmail, code, safeName ?? undefined);
-    return NextResponse.json({ status: "verification_sent", email: normalizedEmail }, { status: 200 });
-  } catch (err) {
-    console.error("Email send failed, auto-verifying user:", err);
-    // Auto-verify so signup isn't broken when email is not yet set up
-    await pool.query(
-      "UPDATE users SET email_verified = true, email_verified_at = NOW() WHERE email = $1",
-      [normalizedEmail]
-    );
-    await pool.query("UPDATE email_verifications SET used = true WHERE email = $1", [normalizedEmail]);
-    return NextResponse.json({ status: "auto_verified", email: normalizedEmail }, { status: 200 });
-  }
+  return NextResponse.json({ status: "auto_verified", email: normalizedEmail }, { status: 200 });
 }
