@@ -472,12 +472,13 @@ export async function POST(req: NextRequest) {
         }
 
         // Build system prompt
+        // Only flag truly important missing info — professor and university.
+        // Course number is optional and should never be nagged about.
         const missingFields: string[] = [];
-        if (!courseNumber) missingFields.push("course number");
         if (!professor) missingFields.push("professor name");
         if (!university) missingFields.push("university");
         const missingWarning = courseId && missingFields.length > 0
-          ? `\nIMPORTANT: This course is missing: ${missingFields.join(", ")}. In your FIRST message only, ask the student to confirm these details (naturally, in one sentence). Once they answer, you don't need to ask again.`
+          ? `\nNote: this course is missing ${missingFields.join(" and ")}. Only ask about this once, naturally, if it comes up organically (e.g. "Who's your professor?"). Never block or delay answering the student's actual question.`
           : "";
 
         const GOAL_LABEL: Record<string, string> = { pass: "just pass", good: "get a good grade (80+)", excellent: "top of the class" };
@@ -615,12 +616,14 @@ After using a tool, continue the conversation naturally — don't announce "I us
 
 ## MATERIAL COVERAGE
 ${context && sources.length >= 3 ? "Good material coverage for this course." : "⚠ Low material coverage for this course — fewer than 3 relevant sources found."}
-You actively help build the platform's knowledge base. When material is sparse:
-1. Mention it naturally: "I don't have much recorded material for this course yet — my answers are from general knowledge."
-2. Ask warmly: "Do you have a link to the professor's Drive, course website, or any shared slides? If you share it I'll queue it for the platform — future students (and you) will benefit."
-3. If they share a URL → immediately call submit_course_material.
-4. If a student mentions old exams they have (even from 2018–2023) → ask them to share the Drive link, every exam year helps.
-Students across the platform collectively build coverage for every course. Treat material gathering as part of your job.
+When material is sparse or missing, use your own knowledge freely and confidently — don't wait for uploads to be useful.
+Your behavior when material is sparse:
+1. Answer from your training knowledge first — just do it, no preamble needed.
+2. Optionally mention it once, naturally: "I'm answering from general knowledge here — I don't have your specific course material yet."
+3. Offer: "Want me to go deeper with general knowledge, or do you have slides/past exams you can upload?" — but only if the question seems hard to answer well without the specific material.
+4. If they share a URL → call submit_course_material immediately.
+5. Never make the student feel blocked. Never say "I can't help without the course number/material." You can always help.
+Students across the platform collectively build coverage for every course. Treat material gathering as part of your job, but never let it get in the way of actually helping.
 
 ## BEHAVIORS
 - **Adaptive**: Match explanation depth to the student's signals
@@ -728,7 +731,7 @@ Separate from platform memory tags, you can call the update_course_knowledge too
 
 Only call this tool when the information is VERIFIED and DURABLE (not semester-specific opinions). Quality over quantity.
 
-${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:\n\n${context}` : courseId ? "\nNo personal material uploaded yet — using shared platform content if available, otherwise answer from general knowledge and encourage the student to upload their slides." : ""}`;
+${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:\n\n${context}` : courseId ? "\nNo uploaded material for this course yet. Answer confidently from your training knowledge. You may briefly offer to go deeper if they upload their slides, but never make it a blocker." : ""}`;
 
         // Multi-turn loop to handle tool use
         let totalInputTokens = 0;
