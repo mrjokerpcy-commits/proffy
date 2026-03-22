@@ -14,10 +14,10 @@ const GOALS = [
   { val: "excellent", icon: "🏆", label: "Top of class" },
 ];
 
-export default function NewCourseClient() {
+export default function NewCourseClient({ userUniversity = "" }: { userUniversity?: string }) {
   const router = useRouter();
   const [form, setForm] = useState({
-    name: "", university: "", professor: "",
+    name: "", university: userUniversity, professor: "",
     course_number: "", exam_date: "", user_level: "", goal: "",
   });
   const [saving, setSaving] = useState(false);
@@ -30,7 +30,7 @@ export default function NewCourseClient() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) { setError("Course name is required"); return; }
-    if (!form.university)  { setError("Please select a university"); return; }
+    if (!form.university)  { setError("Please select your university"); return; }
     setSaving(true);
     setError("");
 
@@ -102,19 +102,30 @@ export default function NewCourseClient() {
             />
           </div>
 
-          {/* University */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              University *
-            </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px" }}>
-              {UNIVERSITIES.map(u => (
-                <button key={u} type="button" onClick={() => set("university", u)} style={{ ...optBtn(form.university === u), textAlign: "center", fontWeight: 600 }}>
-                  {u}
-                </button>
-              ))}
+          {/* University — pre-filled from profile, show selector only if not set */}
+          {userUniversity ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "9px", background: "var(--bg-elevated)", border: "1px solid var(--border)" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+              <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>University:</span>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--blue)" }}>{userUniversity}</span>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)", marginLeft: "auto" }}>from your profile</span>
             </div>
-          </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                University *
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px" }}>
+                {UNIVERSITIES.map(u => (
+                  <button key={u} type="button" onClick={() => set("university", u)} style={{ ...optBtn(form.university === u), textAlign: "center", fontWeight: 600 }}>
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Professor + Course number */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>

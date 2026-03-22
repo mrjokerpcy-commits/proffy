@@ -14,14 +14,16 @@ export default async function NewCoursePage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
 
-  const { rows: courses } = await pool.query(
-    "SELECT * FROM courses WHERE user_id = $1 ORDER BY created_at DESC",
-    [session.user.id]
-  );
+  const [{ rows: courses }, { rows: userRows }] = await Promise.all([
+    pool.query("SELECT * FROM courses WHERE user_id = $1 ORDER BY created_at DESC", [session.user.id]),
+    pool.query("SELECT university FROM users WHERE id = $1", [session.user.id]),
+  ]);
+
+  const userUniversity: string = userRows[0]?.university ?? "";
 
   return (
     <AppShell courses={courses}>
-      <NewCourseClient />
+      <NewCourseClient userUniversity={userUniversity} />
     </AppShell>
   );
 }
