@@ -348,7 +348,17 @@ export async function POST(req: NextRequest) {
   if (chunks.length > 0) {
     try {
       try { await qdrant.getCollection("studyai_chunks"); }
-      catch { await qdrant.createCollection("studyai_chunks", { vectors: { size: 1536, distance: "Cosine" } }); }
+      catch {
+        await qdrant.createCollection("studyai_chunks", { vectors: { size: 1536, distance: "Cosine" } });
+        // Index payload fields for fast filtered search
+        await Promise.all([
+          qdrant.createPayloadIndex("studyai_chunks", { field_name: "university",    field_schema: "keyword" }),
+          qdrant.createPayloadIndex("studyai_chunks", { field_name: "course_number", field_schema: "keyword" }),
+          qdrant.createPayloadIndex("studyai_chunks", { field_name: "course_id",     field_schema: "keyword" }),
+          qdrant.createPayloadIndex("studyai_chunks", { field_name: "type",          field_schema: "keyword" }),
+          qdrant.createPayloadIndex("studyai_chunks", { field_name: "user_id",       field_schema: "keyword" }),
+        ]);
+      }
 
       const points: any[] = [];
       for (let i = 0; i < chunks.length; i += 20) {
@@ -362,16 +372,17 @@ export async function POST(req: NextRequest) {
             id: crypto.randomUUID(),
             vector: embRes.data[j].embedding,
             payload: {
-              text:         batch[j].text,
-              filename:     safeFilename,
-              type:         file_type_detected,
-              professor:    course.professor ?? null,
-              university:   course.university,
-              course:       course.name,
-              course_id:    courseId,
-              user_id:      session.user.id,
-              chunk_index:  i + j,
-              slide_number: batch[j].slide_number,
+              text:          batch[j].text,
+              filename:      safeFilename,
+              type:          file_type_detected,
+              professor:     course.professor ?? null,
+              university:    course.university,
+              course:        course.name,
+              course_number: course.course_number ?? null,
+              course_id:     courseId,
+              user_id:       session.user.id,
+              chunk_index:   i + j,
+              slide_number:  batch[j].slide_number,
               helpful_count: 0,
               total_shown:   0,
               helpfulness_score: 0.5,
