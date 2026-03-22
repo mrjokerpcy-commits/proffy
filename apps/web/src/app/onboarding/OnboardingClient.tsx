@@ -5,28 +5,14 @@ import { useRouter } from "next/navigation";
 
 const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"];
 const FIELDS = [
-  // Engineering & Technology
   "Computer Science", "Software Engineering", "Electrical Engineering",
   "Mechanical Engineering", "Civil Engineering", "Industrial Engineering",
-  "Aerospace Engineering", "Biomedical Engineering", "Chemical Engineering",
-  "Materials Engineering", "Environmental Engineering",
-  // Natural Sciences
-  "Mathematics", "Statistics", "Physics", "Chemistry", "Biology",
-  "Biochemistry", "Biotechnology", "Earth Sciences", "Neuroscience",
-  // Medicine & Health
+  "Biomedical Engineering", "Chemical Engineering",
+  "Mathematics", "Physics", "Chemistry", "Biology", "Biochemistry",
   "Medicine", "Dentistry", "Pharmacy", "Nursing", "Physiotherapy",
-  "Nutrition & Dietetics", "Occupational Therapy", "Public Health",
-  // Social Sciences & Humanities
   "Economics", "Business Administration", "Accounting", "Finance",
-  "Management Information Systems", "Marketing",
-  "Law", "Psychology", "Social Work", "Education",
-  "Political Science", "Sociology", "Criminology",
-  "History", "Philosophy", "Literature", "Linguistics",
-  "Communication", "Journalism", "Film & Television",
-  // Architecture & Design
-  "Architecture", "Urban Planning", "Interior Design", "Industrial Design",
-  // Other
-  "Other",
+  "Law", "Psychology", "Social Work", "Education", "Communication",
+  "Architecture", "Industrial Design", "Other",
 ];
 const CHALLENGES = [
   { icon: "😶", text: "Hard to focus and stick to a plan" },
@@ -381,9 +367,9 @@ export default function OnboardingClient({ userName }: { userName: string }) {
               {/* Step 3: Field of study */}
               {step === 3 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
                     {FIELDS.map(f => (
-                      <button key={f} onClick={() => answer("field", f)} style={{ ...optBtn(), padding: "11px 14px" }}>{f}</button>
+                      <button key={f} onClick={() => answer("field", f)} style={{ ...optBtn(), padding: "9px 10px", fontSize: "0.8rem" }}>{f}</button>
                     ))}
                   </div>
                   <button onClick={skip} style={{ ...optBtn(), padding: "11px 18px", fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>Skip for now</button>
