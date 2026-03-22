@@ -86,8 +86,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   const imageLimit = userPlan === "free" ? 2 : userPlan === "pro" ? 10 : 30;
 
   const canTypeWhileStreaming = userPlan === "pro" || userPlan === "max";
-  // Show btw styling when: streaming (any message becomes btw injection) OR explicit /btw prefix
-  const isBtw = (streaming && canTypeWhileStreaming) || input.trimStart().startsWith("/btw");
+  // /btw is an explicit command prefix (like Claude's interface)
+  const isBtw = input.trimStart().startsWith("/btw");
   const resetDate = getResetDate();
 
   useEffect(() => {
@@ -107,11 +107,9 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     if (!text.trim()) return;
     sendRef.current = null; // clear after use to avoid double-fires
 
-    // Pro/Max: any message while streaming — inject as btw context (no prefix needed)
-    if (streaming && canTypeWhileStreaming) {
-      const context = text.trimStart().startsWith("/btw")
-        ? text.trimStart().slice(4).trim()
-        : text.trim();
+    // /btw command while streaming — inject context at next paragraph break
+    if (streaming && canTypeWhileStreaming && text.trimStart().startsWith("/btw")) {
+      const context = text.trimStart().slice(4).trim();
       if (context) {
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: text.trim() }]);
         btwBreakRef.current = context;
@@ -121,7 +119,10 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
       return;
     }
 
-    if (streaming) {
+    // Non-btw message while streaming: abort and restart
+    if (streaming && canTypeWhileStreaming) {
+      abortRef.current?.abort();
+    } else if (streaming) {
       return; // free users: block
     }
 
@@ -637,8 +638,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
             </span>
             <span style={{ fontSize: "11px", color: "var(--text-muted)", flex: 1 }}>
               {canTypeWhileStreaming
-                ? "Type while the agent is answering to inject context mid-stream without interrupting"
-                : <>Type while the agent answers to inject context · <a href="/pricing" style={{ color: "var(--purple)", textDecoration: "none", fontWeight: 600 }}>Pro feature →</a></>
+                ? <><code style={{ background: "rgba(167,139,250,0.12)", padding: "1px 5px", borderRadius: "4px", fontSize: "10px", color: "var(--purple)" }}>/btw</code>{" your context"} — inject mid-stream without interrupting</>
+                : <><code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 5px", borderRadius: "4px", fontSize: "10px" }}>/btw</code>{" — inject context mid-stream · "}<a href="/pricing" style={{ color: "var(--purple)", textDecoration: "none", fontWeight: 600 }}>Pro feature →</a></>
               }
             </span>
             <button onClick={() => setBtwDismissed(true)} style={{ background: "none", border: "none", color: "var(--text-disabled)", cursor: "pointer", padding: 0, lineHeight: 1, fontSize: "12px" }}>✕</button>

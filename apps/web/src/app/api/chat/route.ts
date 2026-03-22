@@ -1223,38 +1223,36 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
           const cardLimit = plan === "max" ? 50 : plan === "pro" ? 20 : 10;
           if (pairs.length > 0) {
             try {
-              // Ensure unique constraint exists so upsert works
-              await pool.query(`
-                ALTER TABLE flashcards ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
-                CREATE UNIQUE INDEX IF NOT EXISTS flashcards_user_course_front_idx
-                  ON flashcards (user_id, course_id, md5(front));
-              `).catch(() => {});
+              await pool.query(`ALTER TABLE flashcards ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`).catch(() => {});
 
-              // Count existing cards for this course
-              const { rows: countRows } = await pool.query(
-                `SELECT COUNT(*) AS cnt FROM flashcards WHERE user_id = $1 AND course_id = $2`,
+              // Count existing cards (excluding ones we'll update)
+              const fronts = pairs.map(p => p.front);
+              const { rows: existingRows } = await pool.query(
+                `SELECT id, front FROM flashcards WHERE user_id = $1 AND course_id = $2`,
                 [userId, courseId]
               );
-              const existingCount = parseInt(countRows[0]?.cnt ?? "0", 10);
-              const availableSlots = Math.max(0, cardLimit - existingCount);
+              const existingFronts = new Set(existingRows.map((r: any) => r.front));
+              const newCards = pairs.filter(p => !existingFronts.has(p.front));
+              const updateCards = pairs.filter(p => existingFronts.has(p.front));
+              const currentTotal = existingRows.length;
+              const slotsLeft = Math.max(0, cardLimit - currentTotal);
+              const cardsToAdd = newCards.slice(0, slotsLeft);
 
-              // Cards that already exist will upsert (free slot), new ones need available slots
-              const toSave = pairs.slice(0, pairs.length); // try all — upserts don't consume new slots
               let saved = 0;
-              let newSlotUsed = 0;
-              for (const { front, back } of toSave) {
-                // Check if this front already exists (upsert = no new slot needed)
-                const { rows: existing } = await pool.query(
-                  `SELECT id FROM flashcards WHERE user_id = $1 AND course_id = $2 AND md5(front) = md5($3)`,
-                  [userId, courseId, front]
+              // Update existing cards
+              for (const { front, back } of updateCards) {
+                await pool.query(
+                  `UPDATE flashcards SET back = $1, next_review_at = NOW() + ($2 || ' hours')::interval, updated_at = NOW()
+                   WHERE user_id = $3 AND course_id = $4 AND front = $5`,
+                  [back, delayHours, userId, courseId, front]
                 );
-                if (existing.length === 0 && newSlotUsed >= availableSlots) continue; // deck full
-                if (existing.length === 0) newSlotUsed++;
+                saved++;
+              }
+              // Insert new cards (within slot limit)
+              for (const { front, back } of cardsToAdd) {
                 await pool.query(
                   `INSERT INTO flashcards (user_id, course_id, front, back, next_review_at, updated_at)
-                   VALUES ($1, $2, $3, $4, NOW() + ($5 || ' hours')::interval, NOW())
-                   ON CONFLICT (user_id, course_id, md5(front))
-                   DO UPDATE SET back = EXCLUDED.back, next_review_at = EXCLUDED.next_review_at, updated_at = NOW()`,
+                   VALUES ($1, $2, $3, $4, NOW() + ($5 || ' hours')::interval, NOW())`,
                   [userId, courseId, front, back, delayHours]
                 );
                 saved++;
