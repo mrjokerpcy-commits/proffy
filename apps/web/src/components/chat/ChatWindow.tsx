@@ -441,16 +441,23 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
 
       {/* ── Usage bar + /btw tip ── */}
       <div style={{ flexShrink: 0, padding: "6px 16px 0", display: "flex", flexDirection: "column", gap: "4px" }}>
-        {/* /btw tip — Pro/Max only, after first AI response */}
-        {canTypeWhileStreaming && hasFirstResponse && !btwDismissed && !isBtw && (
+        {/* /btw tip — shown to all, locked for free */}
+        {hasFirstResponse && !btwDismissed && !isBtw && (
           <div style={{
             display: "flex", alignItems: "center", gap: "6px",
             padding: "5px 10px", borderRadius: "8px",
-            background: "rgba(79,142,247,0.06)", border: "1px solid rgba(79,142,247,0.15)",
+            background: canTypeWhileStreaming ? "rgba(79,142,247,0.06)" : "rgba(167,139,250,0.05)",
+            border: `1px solid ${canTypeWhileStreaming ? "rgba(79,142,247,0.15)" : "rgba(167,139,250,0.18)"}`,
           }}>
-            <span style={{ fontSize: "11px", color: "var(--blue)", fontWeight: 600 }}>💡</span>
+            <span style={{ fontSize: "11px", fontWeight: 600, color: canTypeWhileStreaming ? "var(--blue)" : "var(--purple)" }}>
+              {canTypeWhileStreaming ? "💡" : "🔒"}
+            </span>
             <span style={{ fontSize: "11px", color: "var(--text-muted)", flex: 1 }}>
-              Type <code style={{ background: "rgba(79,142,247,0.12)", padding: "1px 5px", borderRadius: "4px", fontSize: "10px", color: "var(--blue)" }}>/btw</code> to inject context without asking a question
+              <code style={{ background: "rgba(79,142,247,0.12)", padding: "1px 5px", borderRadius: "4px", fontSize: "10px", color: "var(--blue)" }}>/btw</code>
+              {canTypeWhileStreaming
+                ? " — inject context mid-stream without interrupting the answer"
+                : <>{" — inject context without asking a question · "}<a href="/pricing" style={{ color: "var(--purple)", textDecoration: "none", fontWeight: 600 }}>Pro feature →</a></>
+              }
             </span>
             <button onClick={() => setBtwDismissed(true)} style={{ background: "none", border: "none", color: "var(--text-disabled)", cursor: "pointer", padding: 0, lineHeight: 1, fontSize: "12px" }}>✕</button>
           </div>
