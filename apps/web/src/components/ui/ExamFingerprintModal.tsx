@@ -53,11 +53,15 @@ export default function ExamFingerprintModal() {
     setPatterns([]); setChunkCount(0); setError("");
   }
 
+  const MAX_FILES = 5;
   const addFiles = useCallback((newFiles: FileList | File[]) => {
-    const valid = Array.from(newFiles).filter(f =>
-      f.type === "application/pdf" || f.name.endsWith(".pdf")
-    );
-    setFiles(prev => [...prev, ...valid].slice(0, 5));
+    setFiles(prev => {
+      if (prev.length >= MAX_FILES) return prev;
+      const valid = Array.from(newFiles).filter(f =>
+        f.type === "application/pdf" || f.name.endsWith(".pdf")
+      );
+      return [...prev, ...valid].slice(0, MAX_FILES);
+    });
   }, []);
 
   async function upload() {
@@ -242,14 +246,15 @@ export default function ExamFingerprintModal() {
                         <motion.div key="upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                           {/* Drop zone */}
                           <div
-                            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                            onDragOver={e => { e.preventDefault(); if (files.length < MAX_FILES) setDragging(true); }}
                             onDragLeave={() => setDragging(false)}
                             onDrop={e => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
-                            onClick={() => fileRef.current?.click()}
+                            onClick={() => files.length < MAX_FILES && fileRef.current?.click()}
                             style={{
                               border: `2px dashed ${dragging ? "#f87171" : files.length ? "rgba(248,113,113,0.5)" : "var(--border)"}`,
                               borderRadius: "1rem", padding: "2rem 1.5rem", textAlign: "center",
-                              cursor: "pointer", background: dragging ? "rgba(248,113,113,0.04)" : "transparent",
+                              cursor: files.length >= MAX_FILES ? "default" : "pointer",
+                              background: dragging ? "rgba(248,113,113,0.04)" : "transparent",
                               transition: "all 0.2s",
                             }}
                           >
@@ -267,7 +272,9 @@ export default function ExamFingerprintModal() {
                                       style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 0 }}>×</button>
                                   </div>
                                 ))}
-                                <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px" }}>Click to add more (max 5 exams)</p>
+                                <p style={{ fontSize: "11px", color: files.length >= MAX_FILES ? "var(--red)" : "var(--text-muted)", marginTop: "8px" }}>
+                                  {files.length >= MAX_FILES ? "Maximum 5 exams reached" : `${files.length}/5 — click to add more`}
+                                </p>
                               </div>
                             ) : (
                               <>
