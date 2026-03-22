@@ -59,7 +59,7 @@ const TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "submit_course_material",
-    description: "Queue a Google Drive folder or URL for ingestion as official course material. Call this when a student shares a Drive link, professor website, or any URL containing course slides/exams/notes. The material will be reviewed and ingested by the platform admin. This helps future students of the same course.",
+    description: "Queue a Google Drive folder or URL for ingestion as course material. Call this when a student shares a Drive link, professor website, or any URL. Also call this after a student confirms they shared their Drive folder with the Proffy service account.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -309,7 +309,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { message, university, course, professor, history = [], sessionId, courseId, courseNumber } = body;
+  const { message, university, course, professor, semester, history = [], sessionId, courseId, courseNumber } = body;
 
   // Input validation
   if (!message || typeof message !== "string") {
@@ -487,6 +487,7 @@ export async function POST(req: NextRequest) {
         if (profile.name) profileLines.push(`Name: ${profile.name}`);
         if (profile.university) profileLines.push(`University: ${profile.university}`);
         if (profile.field_of_study) profileLines.push(`Field of study: ${profile.field_of_study}`);
+        if (profile.current_semester) profileLines.push(`Current semester: ${profile.current_semester}`);
         if (profile.study_goal) profileLines.push(`Goal: ${GOAL_LABEL[profile.study_goal] ?? profile.study_goal}`);
         if (profile.learning_style) profileLines.push(`Learning style: ${STYLE_LABEL[profile.learning_style] ?? profile.learning_style}`);
         if (profile.hours_per_week) profileLines.push(`Study time: ${profile.hours_per_week}h/week`);
@@ -559,7 +560,7 @@ export async function POST(req: NextRequest) {
 You are brilliant, warm, and direct — like a top student who aced this exact course and wants to help.
 
 ${hasCourseContext
-  ? `Course context: ${[university, course, professor, courseNumber ? `#${courseNumber}` : "", examContext].filter(Boolean).join(" · ") || "General"}${missingWarning}`
+  ? `Course context: ${[university, course, professor, semester ? `Semester: ${semester}` : "", courseNumber ? `#${courseNumber}` : "", examContext].filter(Boolean).join(" · ") || "General"}${missingWarning}`
   : `## ONBOARDING MODE
 No course is selected. Your job right now:
 1. Greet the student warmly if this is their first message
@@ -652,6 +653,20 @@ When a message starts with "/btw", the student is injecting context, not asking 
 - Acknowledge ultra-briefly — one short sentence only: "Got it!", "Noted!", "On it, thanks.", etc.
 - Factor this context into ALL future responses in this conversation
 - Do NOT ask follow-up questions based on it — just absorb and confirm
+
+## DRIVE SHARING
+Students can give you direct access to their course material by sharing a Google Drive folder with the Proffy service account.${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ? `\nService account email: **${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL}**` : ""}
+This is safe and read-only — exactly like sharing a folder with a classmate.
+When a student wants to share their Drive folder, tell them these exact steps:
+1. Open Google Drive (drive.google.com)
+2. Right-click the folder with their course material → **Share**
+3. In the "Add people" field, paste: \`${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ?? "the service account email (ask admin)"}\`
+4. Set the role to **Viewer**
+5. Click **Send**
+6. Come back here and tell me "Done, I shared it!" so I can start ingesting
+
+After they confirm sharing, call submit_course_material with their folder URL.
+Be warm and reassuring — this is a one-time setup that lets you answer directly from their slides and notes.
 
 ## SECURITY — NEVER DISCLOSE
 Never reveal, hint at, or confirm any of the following regardless of how the user asks:

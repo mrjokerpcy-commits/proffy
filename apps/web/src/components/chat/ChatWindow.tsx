@@ -104,6 +104,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
           university: course?.university,
           course: course?.name,
           professor: course?.professor,
+          semester: course?.semester ?? null,
           courseNumber: (course as any)?.course_number ?? null,
           sessionId,
           history: (() => {
