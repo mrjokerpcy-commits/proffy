@@ -429,9 +429,14 @@ export async function POST(req: NextRequest) {
             const vector = embRes.data[0].embedding;
 
             // Build filter: user's private uploads OR shared platform content for this course
+            // Prefer course_number as the primary identifier (same course = same number regardless of name variation)
             const courseFilter: unknown[] = [];
             if (university) courseFilter.push({ key: "university", match: { value: university } });
-            if (course)     courseFilter.push({ key: "course",     match: { value: course } });
+            if (courseNumber) {
+              courseFilter.push({ key: "course_number", match: { value: courseNumber } });
+            } else if (course) {
+              courseFilter.push({ key: "course", match: { value: course } });
+            }
 
             const userFilter    = [...courseFilter, { key: "user_id", match: { value: userId } }];
             // Only use official or verified shared material (not student-uploaded unverified content)
