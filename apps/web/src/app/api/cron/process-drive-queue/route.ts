@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { google } from "googleapis";
 import Anthropic from "@anthropic-ai/sdk";
 import { QdrantClient } from "@qdrant/js-client-rest";
@@ -321,8 +322,15 @@ async function ensureQdrantCollection() {
   ]);
 }
 
+// ── Deterministic UUID from fileId + chunkIndex (enables idempotent upserts) ─
+function chunkId(fileId: string, chunkIndex: number): string {
+  const hash = createHash("sha1").update(`${fileId}:${chunkIndex}`).digest("hex");
+  // Format as UUID v4-compatible string
+  return `${hash.slice(0,8)}-${hash.slice(8,12)}-4${hash.slice(13,16)}-${hash.slice(16,20)}-${hash.slice(20,32)}`;
+}
+
 // ── Embed + upsert chunks to Qdrant ─────────────────────────────────────────
-async function embedAndUpsert(chunks: Chunk[], payload: Record<string, unknown>) {
+async function embedAndUpsert(chunks: Chunk[], payload: Record<string, unknown>, fileId: string) {
   let count = 0;
   for (let i = 0; i < chunks.length; i += 20) {
     const batch = chunks.slice(i, i + 20);
@@ -331,7 +339,7 @@ async function embedAndUpsert(chunks: Chunk[], payload: Record<string, unknown>)
       input: batch.map(c => c.text),
     });
     const points = batch.map((c, j) => ({
-      id: crypto.randomUUID(),
+      id: chunkId(fileId, i + j),
       vector: embRes.data[j].embedding,
       payload: {
         ...payload,
@@ -419,7 +427,7 @@ async function processDriveFile(
     semester:      queueRow.semester ?? null,
     is_shared:     true,
     trust_level:   "verified",
-  });
+  }, file.id);
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
