@@ -218,9 +218,10 @@ export async function POST(req: NextRequest) {
 
   // Enforce per-plan file count limits per course
   const { rows: planRows } = await pool.query(
-    `SELECT subscription_plan FROM users WHERE id = $1`, [session.user.id]
+    `SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1`,
+    [session.user.id]
   );
-  const userPlan: string = planRows[0]?.subscription_plan ?? "free";
+  const userPlan: string = planRows[0]?.plan ?? "free";
   const FILE_LIMITS: Record<string, number> = { free: 5, pro: 30, max: Infinity };
   const fileLimit = FILE_LIMITS[userPlan] ?? 5;
   if (fileLimit !== Infinity) {
