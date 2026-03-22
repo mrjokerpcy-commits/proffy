@@ -119,16 +119,12 @@ export default function AdminClient({
 
   async function runProcessNow() {
     setProcessing(true);
-    await fetch("/api/cron/process-drive-queue", { method: "GET" }).catch(() => {});
-    // Refresh queue after triggering
+    await fetch("/api/admin/process-drive", { method: "POST" }).catch(() => {});
+    // Refresh queue status after giving it a few seconds to start
     setTimeout(async () => {
-      const r = await fetch("/api/admin/queue-status").catch(() => null);
-      if (r?.ok) {
-        const d = await r.json().catch(() => ({}));
-        if (d.queue) setQueueItems(d.queue);
-      }
+      await refreshQueue();
       setProcessing(false);
-    }, 3000);
+    }, 4000);
   }
 
   async function submitDrive() {
