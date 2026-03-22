@@ -142,9 +142,9 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
           {thinking ? (
             <ThinkingBlock text={message.thinkingText ?? DEFAULT_THINKING} />
           ) : isUser ? (
-            <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{message.content}</p>
+            <p dir="auto" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{message.content}</p>
           ) : (
-            <div className="prose-chat">
+            <div className="prose-chat" dir="auto">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex, rehypeHighlight]}

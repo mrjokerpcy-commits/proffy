@@ -83,10 +83,36 @@ export default function AdminClient({
   users: User[];
   queue: QueueItem[];
 }) {
-  const [tab, setTab] = useState<"overview" | "users" | "usage" | "queue" | "knowledge">("overview");
+  const [tab, setTab] = useState<"overview" | "users" | "usage" | "queue" | "knowledge" | "simulate">("overview");
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"joined" | "msgs" | "cost" | "plan">("joined");
+
+  // Simulate tab state
+  const [simQuestion, setSimQuestion] = useState("");
+  const [simUniversity, setSimUniversity] = useState("");
+  const [simLoading, setSimLoading] = useState(false);
+  const [simResult, setSimResult] = useState<{ chunks: any[]; answer?: string } | null>(null);
+  const [simError, setSimError] = useState("");
+  const [simWithAnswer, setSimWithAnswer] = useState(true);
+
+  async function runSimulation() {
+    if (!simQuestion.trim()) return;
+    setSimLoading(true);
+    setSimError("");
+    setSimResult(null);
+    try {
+      const r = await fetch("/api/admin/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: simQuestion, university: simUniversity || undefined, withAnswer: simWithAnswer }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setSimError(d.error ?? "Failed"); }
+      else setSimResult(d);
+    } catch { setSimError("Request failed"); }
+    finally { setSimLoading(false); }
+  }
 
   // Knowledge tab state
   type Chunk = { id: string; payload: Record<string, any> };
@@ -243,7 +269,7 @@ export default function AdminClient({
             <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Proffy platform dashboard</p>
           </div>
           <div style={{ display: "flex", gap: "6px", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "10px", padding: "4px" }}>
-            {(["overview", "users", "usage", "queue", "knowledge"] as const).map(t => (
+            {(["overview", "users", "usage", "queue", "knowledge", "simulate"] as const).map(t => (
               <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
                 {t === "queue" && queue.filter(q => q.status === "pending").length > 0 && (
@@ -593,6 +619,98 @@ export default function AdminClient({
               </tbody>
             </table>
             </div>
+          </div>
+        )}
+
+        {/* ── SIMULATE ── */}
+        {tab === "simulate" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+
+            {/* Input panel */}
+            <div style={{ ...cardStyle, borderColor: "rgba(167,139,250,0.3)" }}>
+              <h3 style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "14px", color: "var(--purple)" }}>RAG + AI Simulation</h3>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "1rem" }}>
+                Test the full pipeline: embed a question → search Qdrant → (optionally) get a Claude answer. Use this to verify retrieval quality before real students hit it.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <textarea
+                  dir="auto"
+                  value={simQuestion}
+                  onChange={e => setSimQuestion(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && e.metaKey && runSimulation()}
+                  placeholder="Ask a question as if you were a student… e.g. מה הם יסודות חוזה תקף?"
+                  rows={3}
+                  style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "14px", resize: "vertical", fontFamily: "inherit", outline: "none" }}
+                />
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                  <input
+                    value={simUniversity}
+                    onChange={e => setSimUniversity(e.target.value)}
+                    placeholder="Filter by university (optional, e.g. TAU)"
+                    style={{ flex: 1, minWidth: "180px", padding: "9px 12px", borderRadius: "9px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                  />
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
+                    <input type="checkbox" checked={simWithAnswer} onChange={e => setSimWithAnswer(e.target.checked)} style={{ cursor: "pointer" }} />
+                    Include AI answer
+                  </label>
+                  <button
+                    onClick={runSimulation}
+                    disabled={!simQuestion.trim() || simLoading}
+                    style={{ padding: "9px 22px", borderRadius: "9px", border: "none", background: "var(--purple)", color: "#fff", fontSize: "13px", fontWeight: 700, cursor: simQuestion.trim() ? "pointer" : "not-allowed", opacity: (!simQuestion.trim() || simLoading) ? 0.6 : 1 }}
+                  >
+                    {simLoading ? "Running…" : "▶ Run"}
+                  </button>
+                </div>
+                {simError && <div style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", color: "#f87171", fontSize: "13px" }}>{simError}</div>}
+              </div>
+            </div>
+
+            {/* Results */}
+            {simResult && (
+              <>
+                {/* Chunks retrieved */}
+                <div style={cardStyle}>
+                  <h3 style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "14px" }}>
+                    Retrieved chunks
+                    <span style={{ marginLeft: "8px", padding: "2px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, background: simResult.chunks.length > 0 ? "rgba(52,211,153,0.15)" : "rgba(248,113,113,0.12)", color: simResult.chunks.length > 0 ? "var(--green)" : "#f87171" }}>
+                      {simResult.chunks.length} found
+                    </span>
+                  </h3>
+                  {simResult.chunks.length === 0 ? (
+                    <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>No chunks matched. Check that material is indexed and university filter is correct.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {simResult.chunks.map((c, i) => (
+                        <div key={c.id} style={{ padding: "12px 14px", borderRadius: "10px", background: "var(--bg-elevated)", border: "1px solid var(--border)" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
+                            <span style={{ fontFamily: "monospace", fontSize: "12px", color: "var(--blue)", fontWeight: 700 }}>#{i+1}</span>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: c.score >= 0.7 ? "var(--green)" : c.score >= 0.5 ? "var(--amber)" : "#f87171" }}>{(c.score * 100).toFixed(1)}%</span>
+                            <span style={{ fontSize: "11px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "260px" }}>{c.filename}</span>
+                            <span style={{ fontSize: "11px", color: "var(--blue)", marginLeft: "auto" }}>{c.university}</span>
+                            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{c.course}</span>
+                            <span style={{ fontSize: "11px", padding: "1px 6px", borderRadius: "4px", background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>{c.type}</span>
+                          </div>
+                          <p dir="auto" style={{ fontSize: "13px", color: "var(--text-secondary)", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                            {c.text?.slice(0, 400)}{c.text?.length > 400 ? "…" : ""}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* AI Answer */}
+                {simResult.answer !== undefined && (
+                  <div style={{ ...cardStyle, borderColor: "rgba(79,142,247,0.25)" }}>
+                    <h3 style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "14px", color: "var(--blue)" }}>AI Answer (Sonnet 4.6)</h3>
+                    <div dir="auto" style={{ fontSize: "14px", color: "var(--text-primary)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                      {simResult.answer}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
           </div>
         )}
 

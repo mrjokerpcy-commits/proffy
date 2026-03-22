@@ -131,6 +131,7 @@ async function executeTool(
   coursesCreated: number,
   university?: string,
   course?: string,
+  courseId?: string | null,
 ): Promise<{ result: string; event?: object }> {
   if (name === "lookup_course") {
     const query    = typeof input.query  === "string" ? input.query.trim()  : "";
@@ -1078,7 +1079,7 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
 
             for (const block of toolUseBlocks) {
               send({ type: "thinking", text: `Running: ${block.name.replace(/_/g, " ")}…` });
-              const { result, event } = await executeTool(block.name, block.input as Record<string, unknown>, userId, plan, coursesCreated, university, course);
+              const { result, event } = await executeTool(block.name, block.input as Record<string, unknown>, userId, plan, coursesCreated, university, course, courseId);
               toolResults.push({ type: "tool_result", tool_use_id: block.id, content: result });
               if (event) send(event);
               // If agent just created a course, track its ID so flashcards/notes in this response save correctly
