@@ -50,6 +50,7 @@ const nextConfig = {
     ];
   },
   poweredByHeader: false,
+  output: "standalone",
 };
 
 module.exports = nextConfig;
