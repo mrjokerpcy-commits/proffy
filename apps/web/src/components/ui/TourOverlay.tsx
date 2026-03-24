@@ -63,7 +63,10 @@ const SIDEBAR_STEPS = new Set(["sidebar-courses", "sidebar-flashcards", "sidebar
 function getRect(target: string): DOMRect | null {
   const el = document.querySelector(`[data-tour="${target}"]`);
   if (!el) return null;
-  return el.getBoundingClientRect();
+  const rect = el.getBoundingClientRect();
+  // Element is hidden (sidebar closed or animating) — treat as not found
+  if (rect.width === 0 || rect.height === 0) return null;
+  return rect;
 }
 
 function Arrow({ side }: { side: Step["side"] }) {
@@ -178,15 +181,29 @@ export default function TourOverlay() {
   }, []);
 
   // Get target rect whenever step or active changes
-  // For sidebar steps on mobile, open the sidebar first and wait for animation
+  // For sidebar steps, open the sidebar first and retry until element is visible
   useLayoutEffect(() => {
     if (!active) return;
     const isSidebarStep = SIDEBAR_STEPS.has(current.target);
     if (isSidebarStep) window.dispatchEvent(new CustomEvent("proffy:open-sidebar"));
-    // On mobile, sidebar slide-in animation takes ~200ms — wait longer before measuring
     const isMobile = window.innerWidth < 768;
-    const delay = isSidebarStep ? (isMobile ? 400 : 300) : 60;
-    const t = setTimeout(() => setRect(getRect(current.target)), delay);
+    const initialDelay = isSidebarStep ? (isMobile ? 400 : 300) : 60;
+
+    let retryCount = 0;
+    let t: ReturnType<typeof setTimeout>;
+
+    function tryMeasure() {
+      const r = getRect(current.target);
+      if (r) {
+        setRect(r);
+      } else if (retryCount < 10) {
+        // Element not visible yet — retry every 100ms (up to 1s total)
+        retryCount++;
+        t = setTimeout(tryMeasure, 100);
+      }
+    }
+
+    t = setTimeout(tryMeasure, initialDelay);
     return () => clearTimeout(t);
   }, [active, step, current?.target]);
 
