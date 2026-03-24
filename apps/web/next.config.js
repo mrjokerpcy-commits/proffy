@@ -5,7 +5,6 @@ const securityHeaders = [
   { key: "X-XSS-Protection",          value: "1; mode=block" },
   { key: "Referrer-Policy",           value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy",        value: "camera=(), microphone=(), geolocation=(), payment=()" },
-  { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
   // Tell crawlers/bots not to index private app pages
   { key: "X-Robots-Tag",              value: "noindex, nofollow", },
   {
@@ -22,7 +21,6 @@ const securityHeaders = [
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-      "upgrade-insecure-requests",
     ].join("; "),
   },
 ];
@@ -33,7 +31,6 @@ const publicHeaders = [
   { key: "X-Frame-Options",           value: "DENY" },
   { key: "X-XSS-Protection",          value: "1; mode=block" },
   { key: "Referrer-Policy",           value: "strict-origin-when-cross-origin" },
-  { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
   { key: "X-Robots-Tag",              value: "index, follow" },
 ];
 
