@@ -212,6 +212,7 @@ export default function TourOverlay() {
   function finish() {
     setActive(false);
     localStorage.setItem(TOUR_KEY, "1");
+    window.dispatchEvent(new CustomEvent("proffy:tour-end"));
   }
 
   if (!active) return null;

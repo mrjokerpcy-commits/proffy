@@ -36,19 +36,26 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  const [tourActive, setTourActive] = useState(false);
+
   // Tour can request sidebar open (e.g. on mobile before showing sidebar steps)
   useEffect(() => {
-    function onOpenSidebar() { setSidebarOpen(true); }
+    function onOpenSidebar() { setSidebarOpen(true); setTourActive(true); }
+    function onTourEnd() { setTourActive(false); }
     window.addEventListener("proffy:open-sidebar", onOpenSidebar);
-    return () => window.removeEventListener("proffy:open-sidebar", onOpenSidebar);
+    window.addEventListener("proffy:tour-end", onTourEnd);
+    return () => {
+      window.removeEventListener("proffy:open-sidebar", onOpenSidebar);
+      window.removeEventListener("proffy:tour-end", onTourEnd);
+    };
   }, []);
   const [openPanel, setOpenPanel] = useState<"flashcards" | "notes" | null>(null);
 
   return (
     <div style={{ display: "flex", height: "100dvh", background: "var(--bg-base)", color: "var(--text-primary)", overflow: "hidden", position: "relative" }}>
 
-      {/* ── Mobile overlay when sidebar open ── */}
-      {sidebarOpen && isMobile && (
+      {/* ── Mobile overlay when sidebar open (hidden during tour so it doesn't cover widgets) ── */}
+      {sidebarOpen && isMobile && !tourActive && (
         <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 15, background: "rgba(0,0,0,0.5)" }} />
       )}
 
