@@ -41,6 +41,11 @@ export default function CursorGlow() {
       dragging.current = false;
     }
 
+    function onScroll() {
+      // Keep glow in sync when scrollbar is dragged (pointermove stops during scrollbar capture)
+      pos.current = { ...cur.current };
+    }
+
     function loop() {
       // Faster lerp when dragging to avoid stuck feeling
       const lerpFactor = dragging.current ? 1 : 0.2;
@@ -54,6 +59,7 @@ export default function CursorGlow() {
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
     window.addEventListener("pointerup", onPointerUp, { passive: true });
     window.addEventListener("pointercancel", onPointerUp, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     rafRef.current = requestAnimationFrame(loop);
 
     return () => {
@@ -61,6 +67,7 @@ export default function CursorGlow() {
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(rafRef.current);
     };
   }, []);
