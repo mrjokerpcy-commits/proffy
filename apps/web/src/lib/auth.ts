@@ -11,7 +11,7 @@ const pool = new Pool({
 });
 
 
-const isProd = process.env.NODE_ENV === "production";
+const isProd = process.env.NODE_ENV === "production" && (process.env.NEXTAUTH_URL ?? "").startsWith("https://");
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET ?? "dev-secret-change-in-prod",
