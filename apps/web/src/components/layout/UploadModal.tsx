@@ -107,7 +107,7 @@ export default function UploadModal() {
             if (!["pdf", "txt", "jpg", "jpeg", "png", "webp"].includes(ext)) continue;
             const mime = ext === "pdf" ? "application/pdf" : ext === "txt" ? "text/plain" : `image/${ext}`;
             const name = path.split("/").pop() ?? path;
-            extracted.push(new File([data], name, { type: mime }));
+            extracted.push(new File([data.buffer as ArrayBuffer], name, { type: mime }));
           }
         }
       } finally {
