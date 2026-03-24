@@ -656,12 +656,14 @@ export async function GET(req: NextRequest) {
       const newlyDoneIds: string[] = [];
       const queueRow = { university: row.university ?? "Unknown", course_name: row.course_name ?? "General", course_number: row.course_number, professor: row.professor, semester: row.semester };
 
-      for (let i = 0; i < filesToProcess.length; i += 5) {
-        const batch = filesToProcess.slice(i, i + 5);
-        await appendLog(row.id, `Batch ${Math.floor(i/5)+1}/${Math.ceil(filesToProcess.length/5)}: ${batch.map(f => f.name).join(", ")}`);
+      for (let i = 0; i < filesToProcess.length; i += 2) {
+        const batch = filesToProcess.slice(i, i + 2);
+        await appendLog(row.id, `Batch ${Math.floor(i/2)+1}/${Math.ceil(filesToProcess.length/2)}: ${batch.map(f => f.name).join(", ")}`);
         const batchResults = await Promise.allSettled(
           batch.map(f => processDriveFile(drive, f, queueRow))
         );
+        // Throttle to avoid Haiku rate limit (50K tokens/min)
+        await new Promise(r => setTimeout(r, 2000));
         for (let j = 0; j < batchResults.length; j++) {
           const r = batchResults[j];
           if (r.status === "fulfilled") {
