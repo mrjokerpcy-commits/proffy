@@ -10,9 +10,6 @@ const pool = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
-if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("NEXTAUTH_SECRET is not set. This is required in production.");
-}
 
 const isProd = process.env.NODE_ENV === "production";
 
