@@ -39,11 +39,12 @@ export default function CursorGlow() {
 
     function onPointerUp() {
       dragging.current = false;
+      el!.style.opacity = "1";
     }
 
     function onScroll() {
-      // Keep glow in sync when scrollbar is dragged (pointermove stops during scrollbar capture)
-      pos.current = { ...cur.current };
+      // Hide glow during scrollbar drag (pointermove stops firing when scrollbar captures pointer)
+      if (dragging.current) el!.style.opacity = "0";
     }
 
     function loop() {
