@@ -13,7 +13,7 @@ const pool = new Pool({
 });
 
 
-export default async function DashboardPage({ searchParams }: { searchParams: { semester?: string } }) {
+export default async function DashboardPage({ searchParams }: { searchParams: { semester?: string; new?: string; tour?: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
 
@@ -31,10 +31,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     pool.query("SELECT onboarding_done, email_verified FROM users WHERE id = $1", [uid]).catch(() => ({ rows: [{ onboarding_done: true, email_verified: true }] })),
   ]);
 
+  const isNewChat = !!searchParams.new;
+
   // Get or create a general chat session per semester (so each semester has its own memory)
   let generalSessionId: string | undefined;
   let generalMessages: { id: string; role: string; content: string }[] = [];
   try {
+    if (isNewChat) {
+      // New chat — create a fresh session, don't load old messages
+      const { rows: newSession } = await pool.query(
+        `INSERT INTO chat_sessions (user_id, title) VALUES ($1, $2) RETURNING id`,
+        [uid, `general_${safeSemester}`]
+      );
+      generalSessionId = newSession[0].id;
+    } else {
     const { rows: sessionRows } = await pool.query(
       `SELECT id FROM chat_sessions
        WHERE user_id = $1 AND course_id IS NULL AND title = $2
@@ -57,6 +67,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       );
       generalMessages = msgs;
     }
+    } // end else (not new chat)
   } catch { /* non-fatal — chat still works without session */ }
 
   if (!userRes.rows[0]?.email_verified) redirect("/verify-email");

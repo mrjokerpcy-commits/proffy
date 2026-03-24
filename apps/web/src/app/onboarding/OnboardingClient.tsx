@@ -238,6 +238,8 @@ export default function OnboardingClient({ userName }: { userName: string }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...answers, onboarded: true }),
     }).catch(() => {});
+    // Set flag so TourOverlay shows the tour for this new user
+    if (typeof localStorage !== "undefined") localStorage.setItem("proffy_tour_pending", "1");
     router.push("/dashboard");
   }
 

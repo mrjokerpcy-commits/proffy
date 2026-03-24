@@ -143,10 +143,16 @@ export default function TourOverlay() {
     setRect(getRect(current.target));
   }, [active, current]);
 
-  // Auto-show on first visit — skip for existing users who already have courses
+  // Auto-show on first visit or after onboarding
   useEffect(() => {
     if (typeof localStorage === "undefined") return;
     if (localStorage.getItem(TOUR_KEY)) return;
+    // Onboarding sets this flag — show tour immediately without checking courses
+    if (localStorage.getItem("proffy_tour_pending")) {
+      localStorage.removeItem("proffy_tour_pending");
+      const t = setTimeout(() => setActive(true), 800);
+      return () => clearTimeout(t);
+    }
     fetch("/api/courses")
       .then(r => r.json())
       .then((data: { courses?: unknown[] }) => {
@@ -159,7 +165,6 @@ export default function TourOverlay() {
         }
       })
       .catch(() => {
-        // If check fails, show tour anyway
         const t = setTimeout(() => setActive(true), 800);
         return () => clearTimeout(t);
       });
@@ -178,7 +183,9 @@ export default function TourOverlay() {
     if (!active) return;
     const isSidebarStep = SIDEBAR_STEPS.has(current.target);
     if (isSidebarStep) window.dispatchEvent(new CustomEvent("proffy:open-sidebar"));
-    const delay = isSidebarStep ? 300 : 60;
+    // On mobile, sidebar slide-in animation takes ~200ms — wait longer before measuring
+    const isMobile = window.innerWidth < 768;
+    const delay = isSidebarStep ? (isMobile ? 400 : 300) : 60;
     const t = setTimeout(() => setRect(getRect(current.target)), delay);
     return () => clearTimeout(t);
   }, [active, step, current?.target]);
