@@ -143,7 +143,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     if (streaming && canTypeWhileStreaming && text.trimStart().startsWith("/btw")) {
       const context = text.trimStart().slice(4).trim();
       if (context) {
-        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: text.trim() }]);
+        setMessages(prev => [...prev, { id: Math.random().toString(36).slice(2) + Date.now().toString(36), role: "user", content: text.trim() }]);
         btwBreakRef.current = context;
         setInput("");
         if (textareaRef.current) textareaRef.current.style.height = "auto";
@@ -158,8 +158,8 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
       return; // free users: block
     }
 
-    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text.trim() };
-    const assistantId = crypto.randomUUID();
+    const userMsg: ChatMessage = { id: Math.random().toString(36).slice(2) + Date.now().toString(36), role: "user", content: text.trim() };
+    const assistantId = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const assistantMsg: ChatMessage = { id: assistantId, role: "assistant", content: "", streaming: true };
 
     setMessages(prev => [...prev, userMsg, assistantMsg]);
@@ -334,7 +334,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   }, [messages, course, sessionId, streaming]);
 
   const resumeWithBtw = useCallback(async (partial: string, btwCtx: string, historyMessages: ChatMessage[]) => {
-    const assistantId = crypto.randomUUID();
+    const assistantId = Math.random().toString(36).slice(2) + Date.now().toString(36);
     setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "", streaming: true }]);
     setStreaming(true);
     abortRef.current = new AbortController();
