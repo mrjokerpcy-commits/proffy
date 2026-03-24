@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "build": "echo 'nothing to build'",
+    "dev": "echo 'nothing to dev'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",

@@ -39,7 +39,7 @@ router.post("/", async (req: Request, res: Response) => {
 
   try {
     // 1. Embed the query
-    const embeddingResponse = await openai.embeddings.create({
+    const embeddingResponse = await getOpenAI().embeddings.create({
       model: "text-embedding-3-small",
       input: message,
     });

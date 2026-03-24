@@ -35,7 +35,7 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
     }
 
     const result = await response.json();
-    res.json({ success: true, ...result });
+    res.json({ success: true, ...(result as Record<string, unknown>) });
   } catch (err) {
     console.error("Upload error:", err);
     res.status(500).json({ error: "Failed to process file" });

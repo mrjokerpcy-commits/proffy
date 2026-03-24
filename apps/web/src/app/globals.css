@@ -40,11 +40,9 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Hide default cursor globally — JS CursorGlow replaces it */
-html, body, * { cursor: none !important; }
-/* Restore for iframes / fallback */
-@media (pointer: coarse) {
-  html, body, * { cursor: auto !important; }
+/* Hide default cursor on non-touch devices — JS CursorGlow replaces it */
+@media (pointer: fine) {
+  html, body, * { cursor: none !important; }
 }
 
 html { height: 100%; scroll-behavior: smooth; }
