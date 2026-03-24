@@ -463,13 +463,13 @@ async function processDriveFile(
   drive: ReturnType<typeof google.drive>,
   file: { id: string; name: string; mimeType: string; folderPath: string[] },
   queueRow: { university: string; course_name: string; course_number?: string; professor?: string; semester?: string }
-): Promise<{ chunks: number; course: string }> {
+): Promise<{ chunks: number; course: string; courseNumber: string | null }> {
   const fullPath = [...file.folderPath, file.name].join(" / ");
   const fileKind = ALLOWED_MIME_DRIVE[file.mimeType];
-  if (!fileKind) return { chunks: 0, course: queueRow.course_name }; // unsupported type, skip
+  if (!fileKind) return { chunks: 0, course: queueRow.course_name, courseNumber: queueRow.course_number ?? null }; // unsupported type, skip
 
   const { buffer, exportedMime } = await downloadDriveFile(drive, file.id, file.mimeType);
-  if (buffer.length > 25 * 1024 * 1024) return { chunks: 0, course: queueRow.course_name }; // skip files > 25MB
+  if (buffer.length > 25 * 1024 * 1024) return { chunks: 0, course: queueRow.course_name, courseNumber: queueRow.course_number ?? null }; // skip files > 25MB
 
   // Determine effective kind after export
   // Google Slides → exported as PDF; Google Docs → exported as text/plain
@@ -503,7 +503,7 @@ async function processDriveFile(
   }
 
   const chunks = qualityFilter(rawChunks);
-  if (chunks.length === 0) return { chunks: 0, course: queueRow.course_name };
+  if (chunks.length === 0) return { chunks: 0, course: queueRow.course_name, courseNumber: queueRow.course_number ?? null };
 
   const sampleText = chunks.slice(0, 4).map(c => c.text).join(" ");
 
@@ -542,7 +542,7 @@ async function processDriveFile(
     is_shared:     true,
     trust_level:   "verified",
   }, file.id);
-  return { chunks: count, course: effectiveCourseName };
+  return { chunks: count, course: effectiveCourseName, courseNumber: effectiveCourseNumber };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
@@ -646,30 +646,42 @@ export async function GET(req: NextRequest) {
       // Resume from where we left off — skip already-processed file IDs
       const processedIds = new Set((row.processed_file_ids ?? "").split(",").filter(Boolean));
       const remaining = files.filter(f => !processedIds.has(f.id));
+      // Shuffle for better course coverage across the whole folder
+      for (let i = remaining.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+      }
       await appendLog(row.id, `${processedIds.size} already done, ${remaining.length} remaining`);
 
-      // Process up to 40 files per cron run to stay within 5-min timeout
-      const FILE_BATCH_SIZE = 40;
+      // Process up to 100 files per cron run
+      const FILE_BATCH_SIZE = 100;
       const filesToProcess = remaining.slice(0, FILE_BATCH_SIZE);
 
       let totalChunks = 0;
       const newlyDoneIds: string[] = [];
       const queueRow = { university: row.university ?? "Unknown", course_name: row.course_name ?? "General", course_number: row.course_number, professor: row.professor, semester: row.semester };
 
-      for (let i = 0; i < filesToProcess.length; i += 2) {
-        const batch = filesToProcess.slice(i, i + 2);
-        await appendLog(row.id, `Batch ${Math.floor(i/2)+1}/${Math.ceil(filesToProcess.length/2)}: ${batch.map(f => f.name).join(", ")}`);
+      const CONCURRENCY = 4;
+      for (let i = 0; i < filesToProcess.length; i += CONCURRENCY) {
+        const batch = filesToProcess.slice(i, i + CONCURRENCY);
+        await appendLog(row.id, `Batch ${Math.floor(i/CONCURRENCY)+1}/${Math.ceil(filesToProcess.length/CONCURRENCY)}: ${batch.map(f => f.name).join(", ")}`);
         const batchResults = await Promise.allSettled(
           batch.map(f => processDriveFile(drive, f, queueRow))
         );
-        // Throttle to avoid Haiku rate limit (50K tokens/min)
-        await new Promise(r => setTimeout(r, 2000));
+        // Throttle: 4 files * ~3K tokens each = ~12K tokens. 50K limit/min → safe at 3s gap
+        await new Promise(r => setTimeout(r, 3000));
         for (let j = 0; j < batchResults.length; j++) {
           const r = batchResults[j];
           if (r.status === "fulfilled") {
             totalChunks += r.value.chunks;
-            newlyDoneIds.push(batch[j].id);
-            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value.chunks} chunks${r.value.course ? ` [${r.value.course}]` : ""}`);
+            // If file had content but no course number identified — leave in queue to retry
+            const hasContent = r.value.chunks > 0;
+            const hasCourseNumber = !!r.value.courseNumber;
+            if (!hasContent || hasCourseNumber) {
+              newlyDoneIds.push(batch[j].id);
+            }
+            const retryNote = hasContent && !hasCourseNumber ? " (no course # — will retry)" : "";
+            await appendLog(row.id, `  ✓ ${batch[j].name} → ${r.value.chunks} chunks${r.value.course ? ` [${r.value.course}]` : ""}${retryNote}`);
           } else {
             const errMsg: string = (r.reason as any)?.message ?? "unknown error";
             // Transient errors (credit, rate limit, network) — do NOT mark as done so they're retried
