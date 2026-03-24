@@ -4,7 +4,7 @@ import { Pool } from "pg";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  ssl: false,
 });
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Hash password and upsert verified user
-  const password_hash = await bcrypt.hash(password, 12);
+  const password_hash = await bcrypt.hash(password, 10);
   await pool.query(
     `INSERT INTO users (email, name, password_hash, email_verified, email_verified_at)
      VALUES ($1, $2, $3, true, NOW())

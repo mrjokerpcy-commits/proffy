@@ -6,7 +6,7 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 
 const pool  = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  ssl: false,
 });
 const qdrant = new QdrantClient({ url: process.env.QDRANT_URL || "http://localhost:6333", ...(process.env.QDRANT_API_KEY ? { apiKey: process.env.QDRANT_API_KEY } : {}) });
 

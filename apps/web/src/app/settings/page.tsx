@@ -7,7 +7,7 @@ import SettingsClient from "./SettingsClient";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  ssl: false,
 });
 
 export default async function SettingsPage() {
