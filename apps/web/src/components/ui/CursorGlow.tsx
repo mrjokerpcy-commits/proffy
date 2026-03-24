@@ -23,6 +23,7 @@ export default function CursorGlow() {
 
     function onPointerMove(e: PointerEvent) {
       pos.current = { x: e.clientX, y: e.clientY };
+      el!.style.opacity = "1";
 
       // Hover expand on interactive elements
       const target = document.elementFromPoint(e.clientX, e.clientY);
@@ -39,12 +40,11 @@ export default function CursorGlow() {
 
     function onPointerUp() {
       dragging.current = false;
-      el!.style.opacity = "1";
     }
 
     function onScroll() {
-      // Hide glow during scrollbar drag (pointermove stops firing when scrollbar captures pointer)
-      if (dragging.current) el!.style.opacity = "0";
+      // Hide glow on any scroll — native scrollbar doesn't fire pointerdown
+      el!.style.opacity = "0";
     }
 
     function loop() {
