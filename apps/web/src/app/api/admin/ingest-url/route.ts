@@ -69,12 +69,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { url, text: pastedText, university = "Technion", label = "reference" } = await req.json().catch(() => ({}));
-  if (!url && !pastedText) return NextResponse.json({ error: "url or text required" }, { status: 400 });
+  const contentType = req.headers.get("content-type") ?? "";
+  let url = "", pastedText = "", university = "Technion", label = "reference";
+  let fileBuffer: Buffer | null = null;
+
+  if (contentType.includes("multipart/form-data")) {
+    const fd = await req.formData();
+    const file = fd.get("file") as File | null;
+    university = (fd.get("university") as string) || "Technion";
+    label      = (fd.get("label") as string) || "reference";
+    if (file) fileBuffer = Buffer.from(await file.arrayBuffer());
+  } else {
+    const body = await req.json().catch(() => ({}));
+    url        = body.url ?? "";
+    pastedText = body.text ?? "";
+    university = body.university ?? "Technion";
+    label      = body.label ?? "reference";
+  }
+
+  if (!url && !pastedText && !fileBuffer) return NextResponse.json({ error: "url, text, or file required" }, { status: 400 });
 
   await ensureSchema().catch(() => {});
 
-  const urlHash = createHash("sha256").update(url ?? pastedText.slice(0, 100)).digest("hex").slice(0, 16);
+  const urlHash = createHash("sha256").update(url || pastedText.slice(0, 100) || label).digest("hex").slice(0, 16);
   let courseCount = 0;
   let chunkCount  = 0;
   const allTextChunks: string[] = [];
@@ -129,6 +146,47 @@ ${slice}`,
         console.error(`Text slice ${offset} error:`, err.message);
       }
       if (offset + CHUNK_SIZE < pastedText.length) await new Promise(r => setTimeout(r, 3000));
+    }
+  } else if (fileBuffer) {
+    // ── File mode: process uploaded PDF buffer ────────────────────────────────
+    const SLICE = 4_000_000;
+    for (let offset = 0; offset < fileBuffer.length; offset += SLICE) {
+      const slice  = fileBuffer.subarray(offset, offset + SLICE);
+      const base64 = slice.toString("base64");
+      try {
+        const res = await anthropic.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 8192,
+          messages: [{ role: "user", content: [
+            { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } } as any,
+            { type: "text", text: `Extract all text from this document verbatim.\nIf this document contains course listings output them at the end:\n<courses>\n[{"number":"104136","name":"Calculus 2M","name_he":"מתמטיקה 2ח","faculty":"הנדסת חשמל ומחשבים","mandatory":true}]\n</courses>\nCourse numbers are exactly 6 digits. mandatory=true if marked חובה. Include EVERY course found.` },
+          ]}],
+        });
+        const full = res.content[0].type === "text" ? res.content[0].text : "";
+        const coursesMatch = full.match(/<courses>([\s\S]*?)<\/courses>/);
+        if (coursesMatch) {
+          try {
+            const courses = JSON.parse(coursesMatch[1].trim());
+            for (const c of courses) {
+              if (c.number && c.name && /^\d{5,8}$/.test(String(c.number))) {
+                await pool.query(
+                  `INSERT INTO technion_courses (course_number, name, name_hebrew, faculty, is_mandatory)
+                   VALUES ($1, $2, $3, $4, $5)
+                   ON CONFLICT (course_number) DO UPDATE
+                     SET name = EXCLUDED.name, name_hebrew = EXCLUDED.name_hebrew,
+                         faculty = EXCLUDED.faculty, is_mandatory = EXCLUDED.is_mandatory, updated_at = NOW()`,
+                  [String(c.number), String(c.name).slice(0, 200), c.name_he ? String(c.name_he).slice(0, 200) : null, c.faculty ? String(c.faculty).slice(0, 100) : null, c.mandatory === true]
+                );
+                courseCount++;
+              }
+            }
+          } catch {}
+        }
+        allTextChunks.push(...smartChunk(full.replace(/<courses>[\s\S]*?<\/courses>/, "").trim()));
+      } catch (err: any) {
+        console.error(`File slice ${offset} error:`, err.message);
+      }
+      if (offset + SLICE < fileBuffer.length) await new Promise(r => setTimeout(r, 5000));
     }
   } else {
     // ── URL mode: fetch PDF ───────────────────────────────────────────────────

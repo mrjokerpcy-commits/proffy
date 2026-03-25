@@ -136,7 +136,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
   }
 
   const send = useCallback(async (text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() && !pendingImage) return;
     sendRef.current = null; // clear after use to avoid double-fires
 
     // /btw command while streaming — inject context at next paragraph break
@@ -331,7 +331,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
     } finally {
       if (!btwTriggered) setStreaming(false);
     }
-  }, [messages, course, sessionId, streaming]);
+  }, [messages, course, sessionId, streaming, pendingImage]);
 
   const resumeWithBtw = useCallback(async (partial: string, btwCtx: string, historyMessages: ChatMessage[]) => {
     const assistantId = Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -789,15 +789,15 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
           ) : (
             <button
               onClick={() => send(input)}
-              disabled={!input.trim()}
+              disabled={!input.trim() && !pendingImage}
               style={{
                 flexShrink: 0, width: "32px", height: "32px",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 borderRadius: "9px",
                 background: isBtw ? "var(--purple)" : "var(--blue)",
-                cursor: input.trim() ? "pointer" : "default",
-                boxShadow: input.trim() ? `0 2px 10px ${isBtw ? "rgba(167,139,250,0.4)" : "rgba(79,142,247,0.4)"}` : "none",
-                opacity: input.trim() ? 1 : 0.3, transition: "opacity 0.15s, box-shadow 0.15s",
+                cursor: (input.trim() || pendingImage) ? "pointer" : "default",
+                boxShadow: (input.trim() || pendingImage) ? `0 2px 10px ${isBtw ? "rgba(167,139,250,0.4)" : "rgba(79,142,247,0.4)"}` : "none",
+                opacity: (input.trim() || pendingImage) ? 1 : 0.3, transition: "opacity 0.15s, box-shadow 0.15s",
                 border: "none",
               }}
             >
