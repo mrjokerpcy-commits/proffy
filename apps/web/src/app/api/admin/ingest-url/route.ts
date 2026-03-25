@@ -77,8 +77,18 @@ export async function POST(req: NextRequest) {
   // Fetch the PDF
   let buffer: Buffer;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(90_000) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(90_000),
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; ProffyBot/1.0)",
+        "Accept": "application/pdf,*/*",
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    const contentType = res.headers.get("content-type") ?? "";
+    if (!contentType.includes("pdf") && !contentType.includes("octet-stream") && !contentType.includes("application")) {
+      throw new Error(`Unexpected content-type: ${contentType} — is this a direct PDF link?`);
+    }
     buffer = Buffer.from(await res.arrayBuffer());
   } catch (err: any) {
     return NextResponse.json({ error: `Fetch failed: ${err.message}` }, { status: 400 });

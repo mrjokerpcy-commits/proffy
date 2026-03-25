@@ -217,6 +217,7 @@ export default function AdminClient({
   const [ingestUniversity, setIngestUniversity] = useState("Technion");
   const [ingestLabel, setIngestLabel] = useState("Technion Course Catalog 2025-26");
   const [ingestStatus, setIngestStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
+  const [ingestError, setIngestError] = useState("");
   const [ingestResult, setIngestResult] = useState<{ chunks: number; courses: number } | null>(null);
   const [ingestCourseCount, setIngestCourseCount] = useState<number | null>(null);
 
@@ -224,6 +225,7 @@ export default function AdminClient({
     if (!ingestUrl.trim()) return;
     setIngestStatus("loading");
     setIngestResult(null);
+    setIngestError("");
     try {
       const r = await fetch("/api/admin/ingest-url", {
         method: "POST",
@@ -235,9 +237,9 @@ export default function AdminClient({
       setIngestResult(d);
       setIngestCourseCount(d.courses);
       setIngestStatus("ok");
-    } catch {
+    } catch (e: any) {
+      setIngestError(e.message ?? "Unknown error");
       setIngestStatus("err");
-      setTimeout(() => setIngestStatus("idle"), 4000);
     }
   }
 
@@ -703,6 +705,11 @@ export default function AdminClient({
                 {ingestResult && (
                   <div style={{ fontSize: "12px", color: "#34d399", padding: "8px 12px", borderRadius: "8px", background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)" }}>
                     Saved {ingestResult.courses} courses to lookup table + {ingestResult.chunks} knowledge chunks
+                  </div>
+                )}
+                {ingestStatus === "err" && ingestError && (
+                  <div style={{ fontSize: "12px", color: "#f87171", padding: "8px 12px", borderRadius: "8px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.2)" }}>
+                    {ingestError}
                   </div>
                 )}
               </div>
