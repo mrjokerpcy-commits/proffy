@@ -812,5 +812,19 @@ export async function GET(req: NextRequest) {
   const succeeded = results.filter(r => r.status === "fulfilled").length;
   const failed    = results.filter(r => r.status === "rejected").length;
 
+  // Self-schedule: if any queue items are still pending, trigger next run immediately
+  const { rows: stillPending } = await pool.query(
+    `SELECT COUNT(*) as c FROM material_queue WHERE status = 'pending'`
+  ).catch(() => ({ rows: [{ c: "0" }] }));
+
+  if (parseInt(stillPending[0]?.c ?? "0", 10) > 0) {
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const cronSecret = process.env.CRON_SECRET;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (cronSecret) headers["Authorization"] = `Bearer ${cronSecret}`;
+    // Fire and forget — don't await, just kick off the next run in background
+    fetch(`${baseUrl}/api/cron/process-drive-queue`, { headers }).catch(() => {});
+  }
+
   return NextResponse.json({ processed: pending.length, succeeded, failed });
 }
