@@ -214,6 +214,8 @@ export default function AdminClient({
 
   // Ingest URL form
   const [ingestUrl, setIngestUrl] = useState("");
+  const [ingestText, setIngestText] = useState("");
+  const [ingestMode, setIngestMode] = useState<"url" | "text">("url");
   const [ingestUniversity, setIngestUniversity] = useState("Technion");
   const [ingestLabel, setIngestLabel] = useState("Technion Course Catalog 2025-26");
   const [ingestStatus, setIngestStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
@@ -230,7 +232,9 @@ export default function AdminClient({
       const r = await fetch("/api/admin/ingest-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: ingestUrl.trim(), university: ingestUniversity, label: ingestLabel }),
+        body: JSON.stringify(ingestMode === "text"
+          ? { text: ingestText.trim(), university: ingestUniversity, label: ingestLabel }
+          : { url: ingestUrl.trim(), university: ingestUniversity, label: ingestLabel }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "Failed");
@@ -672,11 +676,27 @@ export default function AdminClient({
                 Paste any public PDF URL (e.g. course catalog). Text is indexed as global knowledge and course numbers are saved for fast lookup.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <input
-                  value={ingestUrl} onChange={e => setIngestUrl(e.target.value)}
-                  placeholder="https://ugportal.technion.ac.il/.../catalog2025-26.pdf"
-                  style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
-                />
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {(["url", "text"] as const).map(m => (
+                    <button key={m} onClick={() => setIngestMode(m)} style={{ padding: "5px 14px", borderRadius: "6px", border: "1px solid var(--border)", cursor: "pointer", fontSize: "12px", fontWeight: 600, background: ingestMode === m ? "rgba(167,139,250,0.15)" : "transparent", color: ingestMode === m ? "var(--purple)" : "var(--text-muted)" }}>
+                      {m === "url" ? "URL" : "Paste text"}
+                    </button>
+                  ))}
+                </div>
+                {ingestMode === "url" ? (
+                  <input
+                    value={ingestUrl} onChange={e => setIngestUrl(e.target.value)}
+                    placeholder="https://ugportal.technion.ac.il/.../catalog2025-26.pdf"
+                    style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                  />
+                ) : (
+                  <textarea
+                    value={ingestText} onChange={e => setIngestText(e.target.value)}
+                    placeholder="Open the PDF, select all (Ctrl+A), copy (Ctrl+C), paste here..."
+                    rows={8}
+                    style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "12px", outline: "none", resize: "vertical", fontFamily: "monospace" }}
+                  />
+                )}
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input
                     value={ingestUniversity} onChange={e => setIngestUniversity(e.target.value)}
@@ -690,10 +710,10 @@ export default function AdminClient({
                   />
                   <button
                     onClick={runIngestUrl}
-                    disabled={!ingestUrl.trim() || ingestStatus === "loading"}
+                    disabled={!(ingestMode === "text" ? ingestText.trim() : ingestUrl.trim()) || ingestStatus === "loading"}
                     style={{
                       padding: "9px 20px", borderRadius: "8px", border: "none",
-                      cursor: ingestUrl.trim() && ingestStatus !== "loading" ? "pointer" : "not-allowed",
+                      cursor: (ingestMode === "text" ? ingestText.trim() : ingestUrl.trim()) && ingestStatus !== "loading" ? "pointer" : "not-allowed",
                       background: ingestStatus === "ok" ? "rgba(52,211,153,0.2)" : ingestStatus === "err" ? "rgba(248,113,113,0.2)" : "rgba(167,139,250,0.2)",
                       color: ingestStatus === "ok" ? "#34d399" : ingestStatus === "err" ? "#f87171" : "var(--purple)",
                       fontSize: "13px", fontWeight: 700, flexShrink: 0,
