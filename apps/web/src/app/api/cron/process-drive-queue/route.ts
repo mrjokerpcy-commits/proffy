@@ -48,6 +48,21 @@ async function ensureSchema() {
       ADD COLUMN IF NOT EXISTS processed_file_ids TEXT NOT NULL DEFAULT '';
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS mq_status_idx ON material_queue(status)`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS technion_courses (
+      course_number TEXT PRIMARY KEY,
+      name          TEXT NOT NULL,
+      name_hebrew   TEXT,
+      faculty       TEXT,
+      is_mandatory  BOOLEAN NOT NULL DEFAULT false,
+      lecturer      TEXT,
+      semester      TEXT,
+      exam_date     TEXT,
+      credits       TEXT,
+      updated_at    TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await pool.query(`ALTER TABLE technion_courses ADD COLUMN IF NOT EXISTS is_mandatory BOOLEAN NOT NULL DEFAULT false`).catch(() => {});
 }
 
 function ts() {
@@ -188,6 +203,24 @@ async function identifyCourse(
   // Cache hit — this folder already resolved from a previous file's content
   if (coursePathCache.has(pathStr)) return coursePathCache.get(pathStr)!;
 
+  // DB lookup: if any path segment or filename contains a 6-digit course number, check technion_courses
+  const allText = [...folderPath, filename].join(" ");
+  const numMatch = allText.match(/\b(\d{6})\b/);
+  if (numMatch) {
+    try {
+      const { rows } = await pool.query(
+        "SELECT name, name_hebrew FROM technion_courses WHERE course_number = $1",
+        [numMatch[1]]
+      );
+      if (rows[0]) {
+        const name = rows[0].name_hebrew || rows[0].name;
+        const tag: CourseTag = { course: `${numMatch[1]} - ${name}`, courseNumber: numMatch[1] };
+        coursePathCache.set(pathStr, tag);
+        return tag;
+      }
+    } catch {}
+  }
+
   // Single-folder path with no content ambiguity — use it directly (no AI needed)
   if (meaningfulPath.length === 1 && sampleText.length === 0) {
     const tag: CourseTag = { course: meaningfulPath[0], courseNumber: null };
@@ -265,11 +298,32 @@ async function downloadDriveFile(drive: ReturnType<typeof google.drive>, fileId:
 // ── Shared: auto-detect doc type from filename ───────────────────────────────
 function detectDocType(filename: string): string | null {
   const n = filename.toLowerCase();
-  if (n.includes("exam") || n.includes("מבחן") || n.includes("moed") || n.includes("midterm") || n.includes("final")) return "exam";
-  if (n.includes("lecture") || n.includes("הרצאה") || n.includes("slides") || n.includes("שקופיות")) return "slides";
-  if (n.includes("summary") || n.includes("סיכום")) return "notes";
-  if (n.includes("practice") || n.includes("תרגול") || n.includes("tirgul") || n.includes("hw") || n.includes("homework")) return "notes";
-  if (n.includes("textbook") || n.includes("book") || n.includes("ספר")) return "textbook";
+  // Exams — Hebrew: מועד (sitting), מבחן/בחינה (test), פתרון בחינה (exam solution)
+  // Folder names: מבחנים, בחינות, exams
+  if (
+    n.includes("exam") || n.includes("test") || n.includes("midterm") || n.includes("final") ||
+    n.includes("מבחן") || n.includes("בחינה") || n.includes("מועד") || n.includes("מבחנים") || n.includes("בחינות") ||
+    n.includes("moed") || n.includes("quiz") ||
+    // season + year patterns in exam folders e.g. "חורף 2015", "spring04", "winter14"
+    /חורף\s*\d{4}/.test(n) || /קיץ\s*\d{4}/.test(n) || /אביב\s*\d{4}/.test(n) ||
+    /spring\d{2}/.test(n) || /winter\d{2}/.test(n) || /summer\d{2}/.test(n)
+  ) return "exam";
+  // Slides / lectures
+  if (
+    n.includes("lecture") || n.includes("slides") || n.includes("lec") ||
+    n.includes("הרצאה") || n.includes("הרצאות") || n.includes("שקופיות") || n.includes("מצגת") ||
+    n.includes("class") || /^lec\d/.test(n) || /^class\d/.test(n)
+  ) return "slides";
+  // Textbooks
+  if (n.includes("textbook") || n.includes("book") || n.includes("ספר") || n.includes("חוברת")) return "textbook";
+  // Notes / summaries / tutorials / homework
+  if (
+    n.includes("summary") || n.includes("סיכום") || n.includes("תקציר") || n.includes("מסכם") ||
+    n.includes("practice") || n.includes("תרגול") || n.includes("tirgul") || n.includes("תרגולים") ||
+    n.includes("hw") || n.includes("homework") || n.includes("תרגיל") || n.includes("גיליון") ||
+    n.includes("tutorial") || n.includes("rec") || n.includes("recitation") ||
+    n.includes("מכין") || n.includes("notes") || n.includes("cheat")
+  ) return "notes";
   return null;
 }
 
@@ -512,8 +566,9 @@ async function processDriveFile(
     file.folderPath, file.name, sampleText, queueRow.course_name
   );
 
-  // Doc type: filename-based detection first (free), AI fallback only when ambiguous
-  const docType = detectDocType(file.name) ?? await (async () => {
+  // Doc type: check filename + folder path first (free), AI fallback only when ambiguous
+  const fullPathForType = [...file.folderPath, file.name].join("/");
+  const docType = detectDocType(fullPathForType) ?? await (async () => {
     try {
       const res = await anthropic.messages.create({
         model: "claude-haiku-4-5-20251001",
@@ -525,7 +580,10 @@ async function processDriveFile(
     } catch { return "notes"; }
   })();
 
-  const effectiveCourseNumber = detectedCourseNumber ?? queueRow.course_number ?? null;
+  const effectiveCourseNumber = detectedCourseNumber
+    ?? queueRow.course_number
+    ?? effectiveCourseName.match(/\b(\d{5,8})\b/)?.[1]
+    ?? null;
   const safeFilename = file.name.replace(/[^a-zA-Z0-9._\-\u0590-\u05FF ]/g, "_").slice(0, 200);
 
   const count = await embedAndUpsert(chunks, {
@@ -646,30 +704,60 @@ export async function GET(req: NextRequest) {
       // Resume from where we left off — skip already-processed file IDs
       const processedIds = new Set((row.processed_file_ids ?? "").split(",").filter(Boolean));
       const remaining = files.filter(f => !processedIds.has(f.id));
-      // Shuffle for better course coverage across the whole folder
-      for (let i = remaining.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+
+      // Priority courses: manual overrides + auto-loaded חובה courses from catalog for this faculty
+      const manualPriority: string[] = (row.priority_courses ?? "").split(",").filter(Boolean);
+      let autoPriority: string[] = [];
+      if (row.course_name) {
+        try {
+          const { rows: mandatoryRows } = await pool.query(
+            `SELECT course_number FROM technion_courses WHERE is_mandatory = true AND faculty ILIKE $1`,
+            [`%${row.course_name}%`]
+          );
+          autoPriority = mandatoryRows.map((r: any) => r.course_number);
+        } catch {}
       }
-      await appendLog(row.id, `${processedIds.size} already done, ${remaining.length} remaining`);
+      const priorityCourses = [...new Set([...manualPriority, ...autoPriority])];
+      if (priorityCourses.length > 0) {
+        await appendLog(row.id, `Priority: ${priorityCourses.length} חובה courses (${autoPriority.length} from catalog, ${manualPriority.length} manual)`);
+      }
+      function isPriority(f: { name: string; folderPath: string[] }): boolean {
+        if (priorityCourses.length === 0) return false;
+        const text = [...f.folderPath, f.name].join(" ");
+        return priorityCourses.some(num => text.includes(num));
+      }
+      const priorityFiles = remaining.filter(isPriority);
+      const otherFiles    = remaining.filter(f => !isPriority(f));
+      // Shuffle each group separately for coverage within the group
+      for (let i = priorityFiles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [priorityFiles[i], priorityFiles[j]] = [priorityFiles[j], priorityFiles[i]];
+      }
+      for (let i = otherFiles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [otherFiles[i], otherFiles[j]] = [otherFiles[j], otherFiles[i]];
+      }
+      const sorted = [...priorityFiles, ...otherFiles];
+      const priorityNote = priorityFiles.length > 0 ? ` (${priorityFiles.length} priority files first)` : "";
+      await appendLog(row.id, `${processedIds.size} already done, ${sorted.length} remaining${priorityNote}`);
 
       // Process up to 100 files per cron run
       const FILE_BATCH_SIZE = 100;
-      const filesToProcess = remaining.slice(0, FILE_BATCH_SIZE);
+      const filesToProcess = sorted.slice(0, FILE_BATCH_SIZE);
 
       let totalChunks = 0;
       const newlyDoneIds: string[] = [];
       const queueRow = { university: row.university ?? "Unknown", course_name: row.course_name ?? "General", course_number: row.course_number, professor: row.professor, semester: row.semester };
 
-      const CONCURRENCY = 4;
+      const CONCURRENCY = 2;
       for (let i = 0; i < filesToProcess.length; i += CONCURRENCY) {
         const batch = filesToProcess.slice(i, i + CONCURRENCY);
         await appendLog(row.id, `Batch ${Math.floor(i/CONCURRENCY)+1}/${Math.ceil(filesToProcess.length/CONCURRENCY)}: ${batch.map(f => f.name).join(", ")}`);
         const batchResults = await Promise.allSettled(
           batch.map(f => processDriveFile(drive, f, queueRow))
         );
-        // Throttle: 4 files * ~3K tokens each = ~12K tokens. 50K limit/min → safe at 3s gap
-        await new Promise(r => setTimeout(r, 3000));
+        // Throttle: 2 files * ~10K tokens each = ~20K tokens. 50K limit/min → safe at 8s gap
+        await new Promise(r => setTimeout(r, 8000));
         for (let j = 0; j < batchResults.length; j++) {
           const r = batchResults[j];
           if (r.status === "fulfilled") {

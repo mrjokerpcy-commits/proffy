@@ -52,11 +52,26 @@ export const dynamic     = "force-dynamic";
 // ── Auto-detect document type from filename ─────────────────────────────────
 function detectDocType(filename: string): string | null {
   const n = filename.toLowerCase();
-  if (n.includes("exam") || n.includes("מבחן") || n.includes("moed") || n.includes("midterm") || n.includes("final")) return "exam";
-  if (n.includes("lecture") || n.includes("הרצאה") || n.includes("slides") || n.includes("שקופיות")) return "slides";
-  if (n.includes("summary") || n.includes("סיכום")) return "notes";
-  if (n.includes("practice") || n.includes("תרגול") || n.includes("tirgul") || n.includes("hw") || n.includes("homework")) return "notes";
-  if (n.includes("textbook") || n.includes("book") || n.includes("ספר")) return "textbook";
+  if (
+    n.includes("exam") || n.includes("test") || n.includes("midterm") || n.includes("final") ||
+    n.includes("מבחן") || n.includes("בחינה") || n.includes("מועד") || n.includes("מבחנים") || n.includes("בחינות") ||
+    n.includes("moed") || n.includes("quiz") ||
+    /חורף\s*\d{4}/.test(n) || /קיץ\s*\d{4}/.test(n) || /אביב\s*\d{4}/.test(n) ||
+    /spring\d{2}/.test(n) || /winter\d{2}/.test(n) || /summer\d{2}/.test(n)
+  ) return "exam";
+  if (
+    n.includes("lecture") || n.includes("slides") || n.includes("lec") ||
+    n.includes("הרצאה") || n.includes("הרצאות") || n.includes("שקופיות") || n.includes("מצגת") ||
+    n.includes("class") || /^lec\d/.test(n) || /^class\d/.test(n)
+  ) return "slides";
+  if (n.includes("textbook") || n.includes("book") || n.includes("ספר") || n.includes("חוברת")) return "textbook";
+  if (
+    n.includes("summary") || n.includes("סיכום") || n.includes("תקציר") || n.includes("מסכם") ||
+    n.includes("practice") || n.includes("תרגול") || n.includes("tirgul") || n.includes("תרגולים") ||
+    n.includes("hw") || n.includes("homework") || n.includes("תרגיל") || n.includes("גיליון") ||
+    n.includes("tutorial") || n.includes("rec") || n.includes("recitation") ||
+    n.includes("מכין") || n.includes("notes") || n.includes("cheat")
+  ) return "notes";
   return null;
 }
 

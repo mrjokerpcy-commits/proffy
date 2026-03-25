@@ -16,28 +16,34 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { url, university, faculty, note } = body;
+  const { url, university, faculty, note, priority_courses } = body;
 
   if (!url || typeof url !== "string") {
     return NextResponse.json({ error: "url required" }, { status: 400 });
   }
 
-  // Ensure status column exists (added by cron migration)
-  await pool.query(
-    `ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`
-  ).catch(() => {});
+  // Normalise priority_courses: strip spaces, deduplicate, keep only 5-8 digit numbers
+  const priorityList = typeof priority_courses === "string"
+    ? [...new Set(priority_courses.split(/[\s,;]+/).map((s: string) => s.trim()).filter((s: string) => /^\d{5,8}$/.test(s)))]
+    : [];
+  const priorityStr = priorityList.join(",");
+
+  // Ensure columns exist
+  await pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`).catch(() => {});
+  await pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS priority_courses TEXT NOT NULL DEFAULT ''`).catch(() => {});
 
   try {
     await pool.query(
       `INSERT INTO material_queue
-         (university, course_name, url, url_type, submitted_by, note)
-       VALUES ($1, $2, $3, 'drive_folder', $4, $5)`,
+         (university, course_name, url, url_type, submitted_by, note, priority_courses)
+       VALUES ($1, $2, $3, 'drive_folder', $4, $5, $6)`,
       [
         university ?? "TAU",
         faculty ?? null,
         url.trim(),
         session.user.id,
         note ?? null,
+        priorityStr,
       ]
     );
   } catch (err: any) {

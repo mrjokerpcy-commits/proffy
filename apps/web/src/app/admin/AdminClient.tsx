@@ -212,11 +212,49 @@ export default function AdminClient({
 
   useEffect(() => { if (tab === "knowledge") loadChunks(null); }, [tab]);
 
+  // Ingest URL form
+  const [ingestUrl, setIngestUrl] = useState("");
+  const [ingestUniversity, setIngestUniversity] = useState("Technion");
+  const [ingestLabel, setIngestLabel] = useState("Technion Course Catalog 2025-26");
+  const [ingestStatus, setIngestStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
+  const [ingestResult, setIngestResult] = useState<{ chunks: number; courses: number } | null>(null);
+  const [ingestCourseCount, setIngestCourseCount] = useState<number | null>(null);
+
+  async function runIngestUrl() {
+    if (!ingestUrl.trim()) return;
+    setIngestStatus("loading");
+    setIngestResult(null);
+    try {
+      const r = await fetch("/api/admin/ingest-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: ingestUrl.trim(), university: ingestUniversity, label: ingestLabel }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? "Failed");
+      setIngestResult(d);
+      setIngestCourseCount(d.courses);
+      setIngestStatus("ok");
+    } catch {
+      setIngestStatus("err");
+      setTimeout(() => setIngestStatus("idle"), 4000);
+    }
+  }
+
+  async function loadIngestCourseCount() {
+    try {
+      const r = await fetch("/api/admin/ingest-url");
+      const d = await r.json();
+      setIngestCourseCount(d.courses ?? 0);
+    } catch {}
+  }
+
   // Drive queue form
   const [driveUrl, setDriveUrl] = useState("");
   const [driveUniversity, setDriveUniversity] = useState("TAU");
   const [driveFaculty, setDriveFaculty] = useState("");
   const [driveNote, setDriveNote] = useState("");
+  const [drivePriority, setDrivePriority] = useState("");
   const [driveStatus, setDriveStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [queueItems, setQueueItems] = useState<QueueItem[]>(queue);
 
@@ -236,7 +274,7 @@ export default function AdminClient({
   }
 
   // Fetch fresh queue data when tab switches to queue
-  useEffect(() => { if (tab === "queue") refreshQueue(); }, [tab]);
+  useEffect(() => { if (tab === "queue") { refreshQueue(); loadIngestCourseCount(); } }, [tab]);
 
   // Auto-refresh every 5s while items are processing
   useEffect(() => {
@@ -264,7 +302,7 @@ export default function AdminClient({
       const r = await fetch("/api/admin/queue-drive", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: driveUrl.trim(), university: driveUniversity, faculty: driveFaculty || null, note: driveNote || null }),
+        body: JSON.stringify({ url: driveUrl.trim(), university: driveUniversity, faculty: driveFaculty || null, note: driveNote || null, priority_courses: drivePriority || null }),
       });
       if (!r.ok) throw new Error();
       setDriveStatus("ok");
@@ -591,6 +629,11 @@ export default function AdminClient({
                     style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
                   />
                 </div>
+                <input
+                  value={drivePriority} onChange={e => setDrivePriority(e.target.value)}
+                  placeholder="Priority courses (חובה) — e.g. 104031, 104032, 044105"
+                  style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                />
                 <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                   <input
                     value={driveNote} onChange={e => setDriveNote(e.target.value)}
@@ -610,6 +653,58 @@ export default function AdminClient({
                     {driveStatus === "loading" ? "Adding…" : driveStatus === "ok" ? "Added!" : driveStatus === "err" ? "Error" : "Add to Queue"}
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Ingest Reference URL form */}
+            <div style={{ ...cardStyle, borderColor: "rgba(167,139,250,0.3)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+                <h3 style={{ fontWeight: 700, fontSize: "14px", color: "var(--purple)", margin: 0 }}>Ingest Reference Document (URL)</h3>
+                {ingestCourseCount !== null && (
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                    {ingestCourseCount} courses in DB
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "12px" }}>
+                Paste any public PDF URL (e.g. course catalog). Text is indexed as global knowledge and course numbers are saved for fast lookup.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <input
+                  value={ingestUrl} onChange={e => setIngestUrl(e.target.value)}
+                  placeholder="https://ugportal.technion.ac.il/.../catalog2025-26.pdf"
+                  style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                />
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    value={ingestUniversity} onChange={e => setIngestUniversity(e.target.value)}
+                    placeholder="University"
+                    style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                  />
+                  <input
+                    value={ingestLabel} onChange={e => setIngestLabel(e.target.value)}
+                    placeholder="Label (e.g. Course Catalog 2025)"
+                    style={{ flex: 2, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                  />
+                  <button
+                    onClick={runIngestUrl}
+                    disabled={!ingestUrl.trim() || ingestStatus === "loading"}
+                    style={{
+                      padding: "9px 20px", borderRadius: "8px", border: "none",
+                      cursor: ingestUrl.trim() && ingestStatus !== "loading" ? "pointer" : "not-allowed",
+                      background: ingestStatus === "ok" ? "rgba(52,211,153,0.2)" : ingestStatus === "err" ? "rgba(248,113,113,0.2)" : "rgba(167,139,250,0.2)",
+                      color: ingestStatus === "ok" ? "#34d399" : ingestStatus === "err" ? "#f87171" : "var(--purple)",
+                      fontSize: "13px", fontWeight: 700, flexShrink: 0,
+                    }}
+                  >
+                    {ingestStatus === "loading" ? "Ingesting…" : ingestStatus === "ok" ? "Done!" : ingestStatus === "err" ? "Error" : "Ingest"}
+                  </button>
+                </div>
+                {ingestResult && (
+                  <div style={{ fontSize: "12px", color: "#34d399", padding: "8px 12px", borderRadius: "8px", background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)" }}>
+                    Saved {ingestResult.courses} courses to lookup table + {ingestResult.chunks} knowledge chunks
+                  </div>
+                )}
               </div>
             </div>
 
