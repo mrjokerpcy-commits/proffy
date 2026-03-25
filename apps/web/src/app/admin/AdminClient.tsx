@@ -215,7 +215,8 @@ export default function AdminClient({
   // Ingest URL form
   const [ingestUrl, setIngestUrl] = useState("");
   const [ingestText, setIngestText] = useState("");
-  const [ingestMode, setIngestMode] = useState<"url" | "text">("url");
+  const [ingestFile, setIngestFile] = useState<File | null>(null);
+  const [ingestMode, setIngestMode] = useState<"url" | "text" | "file">("url");
   const [ingestUniversity, setIngestUniversity] = useState("Technion");
   const [ingestLabel, setIngestLabel] = useState("Technion Course Catalog 2025-26");
   const [ingestStatus, setIngestStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
@@ -224,18 +225,28 @@ export default function AdminClient({
   const [ingestCourseCount, setIngestCourseCount] = useState<number | null>(null);
 
   async function runIngestUrl() {
-    if (!ingestUrl.trim()) return;
+    const hasInput = ingestMode === "file" ? !!ingestFile : ingestMode === "text" ? !!ingestText.trim() : !!ingestUrl.trim();
+    if (!hasInput) return;
     setIngestStatus("loading");
     setIngestResult(null);
     setIngestError("");
     try {
-      const r = await fetch("/api/admin/ingest-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(ingestMode === "text"
-          ? { text: ingestText.trim(), university: ingestUniversity, label: ingestLabel }
-          : { url: ingestUrl.trim(), university: ingestUniversity, label: ingestLabel }),
-      });
+      let r: Response;
+      if (ingestMode === "file" && ingestFile) {
+        const fd = new FormData();
+        fd.append("file", ingestFile);
+        fd.append("university", ingestUniversity);
+        fd.append("label", ingestLabel);
+        r = await fetch("/api/admin/ingest-url", { method: "POST", body: fd });
+      } else {
+        r = await fetch("/api/admin/ingest-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(ingestMode === "text"
+            ? { text: ingestText.trim(), university: ingestUniversity, label: ingestLabel }
+            : { url: ingestUrl.trim(), university: ingestUniversity, label: ingestLabel }),
+        });
+      }
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "Failed");
       setIngestResult(d);
@@ -677,25 +688,39 @@ export default function AdminClient({
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div style={{ display: "flex", gap: "6px" }}>
-                  {(["url", "text"] as const).map(m => (
+                  {(["url", "text", "file"] as const).map(m => (
                     <button key={m} onClick={() => setIngestMode(m)} style={{ padding: "5px 14px", borderRadius: "6px", border: "1px solid var(--border)", cursor: "pointer", fontSize: "12px", fontWeight: 600, background: ingestMode === m ? "rgba(167,139,250,0.15)" : "transparent", color: ingestMode === m ? "var(--purple)" : "var(--text-muted)" }}>
-                      {m === "url" ? "URL" : "Paste text"}
+                      {m === "url" ? "URL" : m === "text" ? "Paste text" : "PDF file"}
                     </button>
                   ))}
                 </div>
-                {ingestMode === "url" ? (
+                {ingestMode === "url" && (
                   <input
                     value={ingestUrl} onChange={e => setIngestUrl(e.target.value)}
                     placeholder="https://ugportal.technion.ac.il/.../catalog2025-26.pdf"
                     style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
                   />
-                ) : (
+                )}
+                {ingestMode === "text" && (
                   <textarea
                     value={ingestText} onChange={e => setIngestText(e.target.value)}
                     placeholder="Open the PDF, select all (Ctrl+A), copy (Ctrl+C), paste here..."
                     rows={8}
                     style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "12px", outline: "none", resize: "vertical", fontFamily: "monospace" }}
                   />
+                )}
+                {ingestMode === "file" && (
+                  <label
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type === "application/pdf") setIngestFile(f); }}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px", padding: "24px", borderRadius: "10px", border: `2px dashed ${ingestFile ? "var(--purple)" : "var(--border)"}`, background: ingestFile ? "rgba(167,139,250,0.06)" : "var(--bg-elevated)", cursor: "pointer", textAlign: "center" }}
+                  >
+                    <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={e => setIngestFile(e.target.files?.[0] ?? null)} />
+                    {ingestFile
+                      ? <><div style={{ fontSize: "13px", fontWeight: 700, color: "var(--purple)" }}>{ingestFile.name}</div><div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{(ingestFile.size / 1024 / 1024).toFixed(1)} MB — click to change</div></>
+                      : <><div style={{ fontSize: "13px", color: "var(--text-muted)" }}>Drop PDF here or click to select</div><div style={{ fontSize: "11px", color: "var(--text-muted)" }}>Max 25 MB</div></>
+                    }
+                  </label>
                 )}
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input
@@ -710,10 +735,10 @@ export default function AdminClient({
                   />
                   <button
                     onClick={runIngestUrl}
-                    disabled={!(ingestMode === "text" ? ingestText.trim() : ingestUrl.trim()) || ingestStatus === "loading"}
+                    disabled={!(ingestMode === "file" ? ingestFile : ingestMode === "text" ? ingestText.trim() : ingestUrl.trim()) || ingestStatus === "loading"}
                     style={{
                       padding: "9px 20px", borderRadius: "8px", border: "none",
-                      cursor: (ingestMode === "text" ? ingestText.trim() : ingestUrl.trim()) && ingestStatus !== "loading" ? "pointer" : "not-allowed",
+                      cursor: (ingestMode === "file" ? ingestFile : ingestMode === "text" ? ingestText.trim() : ingestUrl.trim()) && ingestStatus !== "loading" ? "pointer" : "not-allowed",
                       background: ingestStatus === "ok" ? "rgba(52,211,153,0.2)" : ingestStatus === "err" ? "rgba(248,113,113,0.2)" : "rgba(167,139,250,0.2)",
                       color: ingestStatus === "ok" ? "#34d399" : ingestStatus === "err" ? "#f87171" : "var(--purple)",
                       fontSize: "13px", fontWeight: 700, flexShrink: 0,
