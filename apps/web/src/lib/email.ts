@@ -61,7 +61,7 @@ function verificationEmailHtml(code: string, name?: string): string {
         <!-- Footer -->
         <tr><td align="center" style="padding-top:28px;">
           <p style="margin:0;font-size:12px;color:#3f3f46;">
-            © 2025 Proffy · Built for Israeli university students
+            © 2025 Proffy · Built for every student
           </p>
         </td></tr>
 
@@ -107,7 +107,7 @@ function welcomeEmailHtml(name?: string): string {
             ${firstName ? `Hey ${firstName}, you're in! 🎓` : "You're in! 🎓"}
           </h1>
           <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#a0a0c0;">
-            Proffy is your AI study companion built for Israeli university students. I know your courses, your professor's exam style, and what's most likely to show up on your test.
+            Proffy is your AI study companion built for every student. I know your courses, your professor's exam style, and what's most likely to show up on your test.
           </p>
 
           <!-- Features -->
@@ -142,7 +142,7 @@ function welcomeEmailHtml(name?: string): string {
         <!-- Footer -->
         <tr><td align="center" style="padding-top:28px;">
           <p style="margin:0;font-size:12px;color:#3f3f56;">
-            © 2025 Proffy · Built for Israeli university students
+            © 2025 Proffy · Built for every student
           </p>
         </td></tr>
 

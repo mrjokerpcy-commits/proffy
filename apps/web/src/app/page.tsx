@@ -519,7 +519,7 @@ export default async function HomePage() {
           justifyContent: "center", maxWidth: "72rem", margin: "0 auto",
         }}>
           {[
-            { label: "6 Israeli universities", sub: "TAU · Technion · HUJI · BGU · Bar Ilan · Ariel", color: "#4f8ef7",
+            { label: "6 universities", sub: "TAU · Technion · HUJI · BGU · Bar Ilan · Ariel", color: "#4f8ef7",
               icon: (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                   <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
@@ -533,7 +533,7 @@ export default async function HomePage() {
                 </svg>
               )
             },
-            { label: "Built for Israeli exams", sub: "Moed A, Moed B, Moed C patterns", color: "#34d399",
+            { label: "Exam ready", sub: "Moed A, Moed B, Moed C patterns", color: "#34d399",
               icon: (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                   <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
@@ -722,7 +722,7 @@ export default async function HomePage() {
             <span className="gradient-text-blue">A tutor that knows your course.</span>
           </h2>
           <p style={{ fontSize: "1.15rem", maxWidth: "36rem", margin: "0 auto", color: "var(--text-secondary)", lineHeight: 1.65 }}>
-            Built specifically for Israeli university students.
+            Built for every student, everywhere.
           </p>
         </div>
 
@@ -915,7 +915,7 @@ export default async function HomePage() {
         </div>
 
         <p style={{ textAlign: "center", fontSize: "0.875rem", marginTop: "2rem", color: "var(--text-muted)" }}>
-          All plans include Hebrew + English · Secure · Runs on Israeli infrastructure
+          All plans include Hebrew + English · Secure · Cancel any time
         </p>
         </div>
       </section>
@@ -963,7 +963,7 @@ export default async function HomePage() {
             </svg>
             <span className="font-semibold text-sm" style={{ color: "var(--text-secondary)" }}>Proffy</span>
           </div>
-          <p className="text-sm text-center">© 2025 Proffy · Built for Israeli students · All universities</p>
+          <p className="text-sm text-center">© 2025 Proffy · Built for every student</p>
           <div className="flex gap-5 text-sm">
             <a href="#" className="transition hover:opacity-80">Privacy</a>
             <a href="#" className="transition hover:opacity-80">Terms</a>

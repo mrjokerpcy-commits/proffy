@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   const course = courseRows[0];
 
   // Generate flashcards with Claude
-  const prompt = `You are Proffy, an expert tutor for Israeli universities.
+  const prompt = `You are Proffy, an expert tutor for every student.
 Generate 10 high-quality spaced-repetition flashcards for: ${course.name}${safeTopic ? ` — focusing on: ${safeTopic}` : ""}.
 University: ${course.university}. Professor: ${course.professor ?? "unknown"}.
 

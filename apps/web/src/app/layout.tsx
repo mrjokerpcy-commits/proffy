@@ -43,7 +43,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Proffy – AI Study Tools for Israeli Students",
+  title: "Proffy – AI Study Tools for Every Student",
   description: "AI-powered prep for university courses, psychometric, bagrut, and yael exams.",
   icons: {
     icon: [

@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     .map((c, i) => `[Source ${i + 1}: ${c.filename} · ${c.course} · ${c.university}]\n${c.text}`)
     .join("\n\n---\n\n");
 
-  const systemPrompt = `You are Proffy, an AI study companion for Israeli university students.
+  const systemPrompt = `You are Proffy, an AI study companion for every student.
 Answer the following question based on the course material provided below.
 If the material is in Hebrew, answer in Hebrew. If in English, answer in English.
 Be precise, informative, and student-focused. Use LaTeX for math ($...$).
