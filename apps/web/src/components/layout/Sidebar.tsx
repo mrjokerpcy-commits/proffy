@@ -88,7 +88,7 @@ function SidebarLogo() {
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
       <defs>
         <linearGradient id="sb-logo-g" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#6366f1"/><stop offset="1" stopColor="#a78bfa"/>
+          <stop style={{ stopColor: "var(--blue)" }}/><stop offset="1" style={{ stopColor: "var(--purple)" }}/>
         </linearGradient>
       </defs>
       <rect width="32" height="32" rx="9" fill="url(#sb-logo-g)"/>
@@ -185,8 +185,10 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       <div style={{ padding: "0.875rem 1rem", display: "flex", alignItems: "center", gap: "0.625rem", flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
         <SidebarLogo />
         <span style={{ fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.01em", color: "var(--text-primary)", flex: 1, display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          Proffy
-          <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--accent)", background: "rgba(99,102,241,0.13)", border: "1px solid rgba(99,102,241,0.28)", borderRadius: "4px", padding: "1px 5px", lineHeight: 1.5 }}>
+          {subdomain !== "root" && subdomain in SUBDOMAIN_SITES
+            ? SUBDOMAIN_SITES[subdomain as keyof typeof SUBDOMAIN_SITES].label
+            : "Proffy"}
+          <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--blue)", background: "var(--blue-dim)", border: "1px solid var(--blue-glow)", borderRadius: "4px", padding: "1px 5px", lineHeight: 1.5 }}>
             {PROFFY_VERSION}
           </span>
         </span>

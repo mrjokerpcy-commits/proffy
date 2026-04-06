@@ -57,7 +57,7 @@ function AmbientBg() {
           width: "600px", height: "600px",
           borderRadius: "50%",
           top: "-180px", left: "50%", transform: "translateX(-50%)",
-          background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 65%)",
+          background: "radial-gradient(circle, var(--blue-dim) 0%, transparent 65%)",
         }}
       />
       <motion.div
@@ -69,7 +69,7 @@ function AmbientBg() {
           width: "400px", height: "400px",
           borderRadius: "50%",
           bottom: "0px", right: "10%",
-          background: "radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 65%)",
+          background: "radial-gradient(circle, var(--blue-glow) 0%, transparent 65%)",
         }}
       />
       <motion.div
@@ -81,7 +81,7 @@ function AmbientBg() {
           width: "320px", height: "320px",
           borderRadius: "50%",
           bottom: "10%", left: "5%",
-          background: "radial-gradient(circle, rgba(34,211,238,0.07) 0%, transparent 65%)",
+          background: "radial-gradient(circle, var(--purple-glow, var(--blue-dim)) 0%, transparent 65%)",
         }}
       />
     </>
@@ -210,7 +210,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
               aria-hidden="true"
               style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
-                backgroundImage: "linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px)",
+                backgroundImage: "linear-gradient(var(--blue-dim) 1px, transparent 1px), linear-gradient(90deg, var(--blue-dim) 1px, transparent 1px)",
                 backgroundSize: "60px 60px",
                 maskImage: "radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%)",
               }}
@@ -232,8 +232,8 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
               {/* Early Access badge */}
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: "7px",
-                background: "rgba(99,102,241,0.1)",
-                border: "1px solid rgba(99,102,241,0.2)",
+                background: "var(--blue-dim)",
+                border: "1px solid var(--blue-glow)",
                 borderRadius: "99px", padding: "5px 16px",
                 marginBottom: "24px",
               }}>
@@ -266,7 +266,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                 <span style={{
                   fontSize: "clamp(54px, 10vw, 78px)",
                   fontWeight: 900, letterSpacing: "-0.04em",
-                  background: "linear-gradient(135deg, #fff 0%, #a5b4fc 45%, #c084fc 100%)",
+                  background: "linear-gradient(135deg, #fff 0%, var(--blue-hover) 45%, var(--purple) 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                   backgroundClip: "text", lineHeight: 1, flexShrink: 0,
                   paddingBottom: "0.18em",
