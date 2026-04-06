@@ -292,10 +292,10 @@ export default function HubPage() {
       </AnimatePresence>
 
       {/* ── Nav ── */}
-      <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"62px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
+      <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"80px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
         <div style={{ display:"flex", alignItems:"center" }}>
-          <Image src="/logo-header-dark.png" alt="Proffy" width={360} height={110} className="hub-logo-dark" style={{ objectFit:"contain", height:"88px", width:"auto" }} draggable={false} priority />
-          <Image src="/logo-header.png" alt="Proffy" width={360} height={110} className="hub-logo-light" style={{ objectFit:"contain", height:"88px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header-dark.png" alt="Proffy" width={400} height={130} className="hub-logo-dark" style={{ objectFit:"contain", height:"110px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header.png" alt="Proffy" width={400} height={130} className="hub-logo-light" style={{ objectFit:"contain", height:"110px", width:"auto" }} draggable={false} priority />
         </div>
         <div className="hub-nav-toggles">
           {mounted && <ThemeToggle />}
@@ -309,7 +309,7 @@ export default function HubPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{ position:"relative", zIndex:1, padding:"120px max(32px,4vw) 80px", overflow:"hidden" }}>
+      <section style={{ position:"relative", zIndex:1, padding:"136px max(32px,4vw) 80px", overflow:"hidden" }}>
 
         <div className="hub-hero-grid">
           {/* Text side */}
