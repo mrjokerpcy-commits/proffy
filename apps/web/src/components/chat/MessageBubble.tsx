@@ -24,19 +24,40 @@ function ProffyAvatar({ index, thinking = false }: { index: number; thinking?: b
   return (
     <div className={thinking ? "thinking-avatar" : undefined}
       style={{ width: "30px", height: "30px", flexShrink: 0, borderRadius: "9px", overflow: "hidden",
-        boxShadow: thinking ? undefined : "0 2px 10px rgba(79,142,247,0.3)" }}>
+        boxShadow: thinking ? undefined : "0 2px 10px rgba(99,102,241,0.35)" }}>
       <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#4f8ef7"/><stop offset="1" stopColor="#a78bfa"/>
+            <stop stopColor="#4f46e5"/><stop offset="1" stopColor="#9333ea"/>
           </linearGradient>
         </defs>
+        {/* Background */}
         <rect width="32" height="32" rx="9" fill={`url(#${id})`}/>
-        <rect x="4.5" y="9" width="23" height="5.5" rx="2.5" fill="white"/>
-        <path d="M 9 20 A 7 5.5 0 0 0 23 20 Z" fill="white" fillOpacity="0.8"/>
-        <line x1="16" y1="14.5" x2="16" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.5"/>
-        <line x1="27.5" y1="11.75" x2="27.5" y2="21.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.6"/>
-        <circle cx="27.5" cy="23" r="1.7" fill="white" fillOpacity="0.6"/>
+        {/* Cap board */}
+        <rect x="7" y="6" width="18" height="3" rx="1" fill="white" fillOpacity="0.95"/>
+        {/* Cap crown */}
+        <rect x="13" y="4" width="6" height="3" rx="1" fill="white" fillOpacity="0.95"/>
+        {/* Tassel */}
+        <line x1="25" y1="7.5" x2="27" y2="13" stroke="#fbbf24" strokeWidth="1.2" strokeLinecap="round"/>
+        <circle cx="27" cy="14" r="1.4" fill="#fbbf24"/>
+        {/* Head */}
+        <circle cx="16" cy="15" r="6" fill="#ffd9a0"/>
+        {/* Glasses left */}
+        <circle cx="13.5" cy="14.5" r="2" fill="none" stroke="rgba(30,30,60,0.8)" strokeWidth="0.9"/>
+        {/* Glasses right */}
+        <circle cx="18.5" cy="14.5" r="2" fill="none" stroke="rgba(30,30,60,0.8)" strokeWidth="0.9"/>
+        {/* Bridge */}
+        <line x1="15.5" y1="14.5" x2="16.5" y2="14.5" stroke="rgba(30,30,60,0.8)" strokeWidth="0.9"/>
+        {/* Eyes */}
+        <circle cx="13.5" cy="14.5" r="1" fill="#1a1a2e"/>
+        <circle cx="18.5" cy="14.5" r="1" fill="#1a1a2e"/>
+        <circle cx="13.9" cy="14.1" r="0.4" fill="white"/>
+        <circle cx="18.9" cy="14.1" r="0.4" fill="white"/>
+        {/* Robe body */}
+        <path d="M 5 32 L 5 23 Q 10 20 16 20 Q 22 20 27 23 L 27 32 Z" fill="white" fillOpacity="0.15"/>
+        {/* Folded arms */}
+        <path d="M 6 26 C 10 24, 22 24, 26 26 C 22 28, 10 28, 6 28 Z" fill="white" fillOpacity="0.28"/>
+        <path d="M 27 28 C 22 26, 10 27, 5 29 C 10 31, 22 31, 27 30 Z" fill="white" fillOpacity="0.18"/>
       </svg>
     </div>
   );

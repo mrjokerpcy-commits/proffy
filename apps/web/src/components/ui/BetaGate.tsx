@@ -116,29 +116,63 @@ function StatChips() {
   );
 }
 
-// ─── Duck mascot ─────────────────────────────────────────────────────────────
-function DuckMascot() {
+// ─── Professor mascot ────────────────────────────────────────────────────────
+function ProfessorMascot() {
   return (
     <motion.svg
       width="64" height="64" viewBox="0 0 72 72"
       fill="none" xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
-      animate={{ y: [0, -5, 0] }}
-      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+      animate={{ y: [0, -4, 0] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
     >
-      <polygon points="36,8 55,16 36,24 17,16" fill="#1e1b4b" />
-      <rect x="22" y="14" width="28" height="5" rx="1.5" fill="#312e81" />
-      <line x1="55" y1="16" x2="58" y2="26" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="58" cy="28" r="2.5" fill="#f59e0b" />
-      <ellipse cx="36" cy="50" rx="17" ry="15" fill="#fcd34d" />
-      <circle cx="36" cy="31" r="12" fill="#fcd34d" />
-      <circle cx="40" cy="29" r="3" fill="white" />
-      <circle cx="41" cy="29.5" r="1.8" fill="#111827" />
-      <circle cx="41.8" cy="28.5" r="0.7" fill="white" />
-      <path d="M44 33 L52 32 L44 36 Z" fill="#f97316" />
-      <ellipse cx="24" cy="50" rx="9" ry="6" fill="#fbbf24" transform="rotate(-18 24 50)" />
-      <path d="M29 63 L25 68 M29 63 L33 68" stroke="#f97316" strokeWidth="2" strokeLinecap="round" />
-      <path d="M43 63 L39 68 M43 63 L47 68" stroke="#f97316" strokeWidth="2" strokeLinecap="round" />
+      {/* Cap crown */}
+      <rect x="29" y="7" width="14" height="7" rx="2" fill="#1e1b4b" />
+      {/* Cap board */}
+      <rect x="18" y="13" width="36" height="5" rx="1.5" fill="#1e1b4b" />
+      {/* Tassel string */}
+      <line x1="54" y1="15.5" x2="58" y2="26" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Tassel bob */}
+      <circle cx="58" cy="28" r="2.8" fill="#f59e0b" />
+
+      {/* Head */}
+      <circle cx="36" cy="31" r="13" fill="#ffd9a0" />
+
+      {/* Glasses — left lens */}
+      <circle cx="30" cy="30" r="4.5" fill="rgba(180,220,255,0.12)" stroke="#374151" strokeWidth="1.7" />
+      {/* Glasses — right lens */}
+      <circle cx="42" cy="30" r="4.5" fill="rgba(180,220,255,0.12)" stroke="#374151" strokeWidth="1.7" />
+      {/* Bridge */}
+      <line x1="34.5" y1="30" x2="37.5" y2="30" stroke="#374151" strokeWidth="1.6" />
+      {/* Left temple */}
+      <line x1="25.5" y1="28.5" x2="22" y2="30" stroke="#374151" strokeWidth="1.4" />
+      {/* Right temple */}
+      <line x1="46.5" y1="28.5" x2="50" y2="30" stroke="#374151" strokeWidth="1.4" />
+
+      {/* Eyes */}
+      <circle cx="30" cy="30" r="2.2" fill="#1a1a2e" />
+      <circle cx="42" cy="30" r="2.2" fill="#1a1a2e" />
+      <circle cx="30.9" cy="29.1" r="0.8" fill="white" />
+      <circle cx="42.9" cy="29.1" r="0.8" fill="white" />
+
+      {/* Smile */}
+      <path d="M 32.5 36 Q 36 39.5 39.5 36" fill="none" stroke="#b07845" strokeWidth="1.4" strokeLinecap="round" />
+
+      {/* Neck */}
+      <rect x="33" y="43" width="6" height="5" rx="1.5" fill="#ffd9a0" />
+      {/* Robe body */}
+      <path d="M 14 72 L 13 50 Q 23 43 36 43 Q 49 43 59 50 L 58 72 Z" fill="#1e1b4b" />
+      {/* Lapels */}
+      <path d="M 27 48 L 36 57 L 45 48" fill="none" stroke="#312e81" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Folded arms — right arm (bottom layer) */}
+      <path d="M 57 59 C 46 55, 26 55, 15 58 C 26 61, 46 62, 57 63 Z" fill="#27247a" />
+      {/* Folded arms — left arm (top layer) */}
+      <path d="M 15 55 C 28 52, 46 51, 57 54 C 46 58, 28 58, 15 60 Z" fill="#38359a" />
+      {/* Right elbow */}
+      <ellipse cx="57" cy="60.5" rx="3.5" ry="5.5" fill="#27247a" />
+      {/* Left elbow */}
+      <ellipse cx="15" cy="57" rx="3.5" ry="5.5" fill="#38359a" />
     </motion.svg>
   );
 }
@@ -278,10 +312,11 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                   background: "linear-gradient(135deg, #fff 0%, #a5b4fc 45%, #c084fc 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                   backgroundClip: "text", lineHeight: 1, flexShrink: 0,
+                  paddingBottom: "0.18em",
                 }}>
                   Proffy.
                 </span>
-                <DuckMascot />
+                <ProfessorMascot />
               </div>
 
               {/* Tagline */}
