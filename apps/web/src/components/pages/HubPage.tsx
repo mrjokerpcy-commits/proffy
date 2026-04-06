@@ -25,7 +25,7 @@ function ConstellationBg() {
     }));
     const draw = () => {
       const light = document.documentElement.classList.contains("light");
-      const rgb = light ? "79,70,229" : "99,102,241";
+      const rgb = light ? "22,163,74" : "34,197,94";
       ctx.clearRect(0, 0, W, H);
       if (!reduced) for (const p of pts) {
         p.x += p.vx; p.y += p.vy;
@@ -127,7 +127,7 @@ const T = {
 
 // ─── Products ─────────────────────────────────────────────────────────────────
 const PRODUCTS = (lang: "en"|"he") => [
-  { key:"bagrut",  color:"#8b5cf6", border:"rgba(139,92,246,0.22)", glow:"rgba(139,92,246,0.12)",
+  { key:"bagrut",  color:"#22c55e", border:"rgba(139,92,246,0.22)", glow:"rgba(139,92,246,0.12)",
     label:"Proffy Bagrut",  sub:lang==="he"?"בגרות":"Bagrut",   live:false, href:"https://bagrut.proffy.study",
     desc:lang==="he"?"נבנה לבני 16-18. נושאים כקלפים, רצפים, ו-AI שמדבר בשפה שלך.":"Built for 16-18. Subjects as cards, streaks, AI that speaks your language." },
   { key:"yael",   color:"#f59e0b", border:"rgba(245,158,11,0.22)",  glow:"rgba(245,158,11,0.11)",
@@ -136,17 +136,17 @@ const PRODUCTS = (lang: "en"|"he") => [
   { key:"psycho", color:"#d4a017", border:"rgba(212,160,23,0.22)",  glow:"rgba(212,160,23,0.11)",
     label:"Proffy Psycho",  sub:lang==="he"?"פסיכומטרי":"Psychometric", live:false, href:"https://psycho.proffy.study",
     desc:lang==="he"?"הכנה רצינית לפסיכומטרי. תרגילים מובנים בכל קטגוריה.":"Serious psychometric prep. Structured drills. Built to score." },
-  { key:"app",    color:"#6366f1", border:"rgba(99,102,241,0.24)",   glow:"rgba(99,102,241,0.13)",
-    label:"Proffy App",     sub:lang==="he"?"אוניברסיטה":"University", live:true,  href:"https://app.proffy.study",
+  { key:"app",    color:"#16a34a", border:"rgba(22,163,74,0.24)",   glow:"rgba(22,163,74,0.13)",
+    label:"Proffy App",     sub:lang==="he"?"אוניברסיטה":"University", live:true,  href:"https://uni.proffy.study",
     desc:lang==="he"?"העלה שקפים, שאל הכל, עבור את הבחינה. ה-AI שמכיר את הקורס שלך.":"Upload slides, ask anything, ace the exam. AI that knows your course." },
 ];
 
 // ─── Badge ────────────────────────────────────────────────────────────────────
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display:"inline-flex", alignItems:"center", gap:"7px", background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.2)", borderRadius:"99px", padding:"5px 16px", marginBottom:"20px" }}>
-      <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#6366f1", boxShadow:"0 0 8px #6366f1", flexShrink:0, animation:"fc-pulse 2s ease-in-out infinite" }} />
-      <span style={{ fontSize:"11px", fontWeight:700, letterSpacing:"0.12em", color:"#6366f1", textTransform:"uppercase" }}>{children}</span>
+    <div style={{ display:"inline-flex", alignItems:"center", gap:"7px", background:"rgba(22,163,74,0.1)", border:"1px solid rgba(22,163,74,0.2)", borderRadius:"99px", padding:"5px 16px", marginBottom:"20px" }}>
+      <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#16a34a", boxShadow:"0 0 8px #16a34a", flexShrink:0, animation:"fc-pulse 2s ease-in-out infinite" }} />
+      <span style={{ fontSize:"11px", fontWeight:700, letterSpacing:"0.12em", color:"#16a34a", textTransform:"uppercase" }}>{children}</span>
     </div>
   );
 }
@@ -154,17 +154,17 @@ function Badge({ children }: { children: React.ReactNode }) {
 // ─── Step icons ───────────────────────────────────────────────────────────────
 function StepIcon({ icon }: { icon: string }) {
   if (icon === "upload") return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
     </svg>
   );
   if (icon === "chat") return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
   );
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12"/>
     </svg>
   );
@@ -189,7 +189,7 @@ export default function HubPage() {
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"62px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-          <div style={{ width:"32px", height:"32px", borderRadius:"9px", overflow:"hidden", background:"linear-gradient(135deg,#6366f1,#a78bfa)", flexShrink:0 }}>
+          <div style={{ width:"32px", height:"32px", borderRadius:"9px", overflow:"hidden", background:"linear-gradient(135deg,#16a34a,#4ade80)", flexShrink:0 }}>
             <Image src="/mascot/avatar.png" alt="Proffy" width={32} height={32} style={{ objectFit:"cover", width:"100%", height:"100%" }} draggable={false} priority />
           </div>
           <span style={{ fontWeight:800, fontSize:"17px", letterSpacing:"-0.02em" }}>Proffy</span>
@@ -197,7 +197,7 @@ export default function HubPage() {
         <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
           {mounted && <ThemeToggle />}
           {mounted && <LangToggle />}
-          <a href="https://app.proffy.study" style={{ padding:"8px 18px", borderRadius:"10px", fontSize:"13px", fontWeight:600, background:"linear-gradient(135deg,#6366f1,#8b5cf6)", color:"white", textDecoration:"none", boxShadow:"0 2px 12px rgba(99,102,241,0.28)", transition:"opacity 0.12s,transform 0.12s", whiteSpace:"nowrap" }}
+          <a href="https://uni.proffy.study" style={{ padding:"8px 18px", borderRadius:"10px", fontSize:"13px", fontWeight:600, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", textDecoration:"none", boxShadow:"0 2px 12px rgba(22,163,74,0.28)", transition:"opacity 0.12s,transform 0.12s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>{e.currentTarget.style.opacity="0.85";e.currentTarget.style.transform="translateY(-1px)"}}
             onMouseLeave={e=>{e.currentTarget.style.opacity="1";e.currentTarget.style.transform=""}}>
             {t.getAccess}
@@ -253,7 +253,7 @@ export default function HubPage() {
           {/* Owl side */}
           <motion.div initial={{opacity:0,x:32}} animate={{opacity:1,x:0}} transition={{duration:0.7,delay:0.1}}>
             <motion.div animate={{y:[0,-12,0]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}}>
-              <Image src="/mascot/hero.png" alt="Proffy mascot" width={420} height={420} style={{ objectFit:"contain", display:"block" }} draggable={false} priority />
+              <Image src="/mascot/hero.png" alt="Proffy mascot" width={540} height={540} style={{ objectFit:"contain", display:"block" }} draggable={false} priority />
             </motion.div>
           </motion.div>
         </div>
@@ -267,7 +267,7 @@ export default function HubPage() {
             : ["Course-aware AI","Source-cited answers","Hebrew & English","Bagrut, Yael, Psycho & University","Available 24/7"]
           ).map(f => (
             <div key={f} style={{ display:"flex", alignItems:"center", gap:"8px", background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"99px", padding:"9px 18px", boxShadow:"var(--card-shadow)" }}>
-              <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               <span style={{ fontSize:"13px", fontWeight:500, color:"var(--text-secondary)", whiteSpace:"nowrap" }}>{f}</span>
             </div>
           ))}
@@ -285,8 +285,8 @@ export default function HubPage() {
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"16px" }}>
             {["Study smarter","Save time","Source-cited answers","24/7 available"].map((item, i) => (
               <div key={i} style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"16px", padding:"20px", boxShadow:"var(--card-shadow)" }}>
-                <div style={{ width:"32px", height:"32px", borderRadius:"8px", background:"rgba(99,102,241,0.12)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:"10px" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <div style={{ width:"32px", height:"32px", borderRadius:"8px", background:"rgba(22,163,74,0.12)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:"10px" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <p style={{ fontSize:"13px", fontWeight:600, color:"var(--text-primary)" }}>{item}</p>
               </div>
@@ -305,7 +305,7 @@ export default function HubPage() {
                 : '"We built the tool we wished we had when we were students."'}
             </p>
             <div style={{ display:"flex", alignItems:"center", gap:"12px", marginTop:"24px" }}>
-              <div style={{ width:"40px", height:"40px", borderRadius:"50%", background:"linear-gradient(135deg,#6366f1,#a78bfa)", flexShrink:0, overflow:"hidden" }}>
+              <div style={{ width:"40px", height:"40px", borderRadius:"50%", background:"linear-gradient(135deg,#16a34a,#4ade80)", flexShrink:0, overflow:"hidden" }}>
                 <Image src="/mascot/avatar.png" alt="Proffy" width={40} height={40} style={{ objectFit:"cover", width:"100%", height:"100%" }} draggable={false} />
               </div>
               <div>
@@ -334,9 +334,9 @@ export default function HubPage() {
           {t.howSteps.map((step, i) => (
             <motion.div key={i} initial={{opacity:0,y:24}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.5,delay:i*0.1}}
               style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"20px", padding:"36px 32px", position:"relative", overflow:"hidden", boxShadow:"var(--card-shadow)" }}>
-              <div style={{ position:"absolute", top:0, insetInlineStart:"50%", transform:"translateX(-50%)", width:"200px", height:"200px", borderRadius:"50%", background:"radial-gradient(circle,rgba(99,102,241,0.07) 0%,transparent 70%)", pointerEvents:"none" }} />
+              <div style={{ position:"absolute", top:0, insetInlineStart:"50%", transform:"translateX(-50%)", width:"200px", height:"200px", borderRadius:"50%", background:"radial-gradient(circle,rgba(22,163,74,0.07) 0%,transparent 70%)", pointerEvents:"none" }} />
               <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"20px" }}>
-                <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:"38px", height:"38px", borderRadius:"10px", background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.2)", fontSize:"14px", fontWeight:800, color:"#6366f1" }}>{i+1}</div>
+                <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:"38px", height:"38px", borderRadius:"10px", background:"rgba(22,163,74,0.1)", border:"1px solid rgba(22,163,74,0.2)", fontSize:"14px", fontWeight:800, color:"#16a34a" }}>{i+1}</div>
                 <div style={{ width:"40px", height:"40px", display:"flex", alignItems:"center", justifyContent:"center" }}>
                   <StepIcon icon={step.icon} />
                 </div>
@@ -382,7 +382,7 @@ export default function HubPage() {
       {/* ── Meet Proffy ── */}
       <Section style={{ padding:"80px max(32px,4vw)" }}>
         <div style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"24px", padding:"clamp(36px,5vw,64px)", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"64px", alignItems:"center", overflow:"hidden", position:"relative", boxShadow:"var(--card-shadow)" }}>
-          <div style={{ position:"absolute", top:"-20%", insetInlineEnd:"-5%", width:"400px", height:"400px", borderRadius:"50%", background:"radial-gradient(circle,rgba(99,102,241,0.07) 0%,transparent 65%)", pointerEvents:"none" }} />
+          <div style={{ position:"absolute", top:"-20%", insetInlineEnd:"-5%", width:"400px", height:"400px", borderRadius:"50%", background:"radial-gradient(circle,rgba(22,163,74,0.07) 0%,transparent 65%)", pointerEvents:"none" }} />
           <div style={{ position:"relative" }}>
             <Badge>{t.meetBadge}</Badge>
             <h2 style={{ fontSize:"clamp(26px,2.8vw,40px)", fontWeight:900, letterSpacing:"-0.03em", lineHeight:1.2, marginBottom:"18px" }}>{t.meetTitle}</h2>
@@ -390,22 +390,22 @@ export default function HubPage() {
             <ul style={{ listStyle:"none", display:"flex", flexDirection:"column", gap:"10px" }}>
               {t.meetPoints.map((pt,i) => (
                 <li key={i} style={{ display:"flex", alignItems:"flex-start", gap:"10px", fontSize:"14px", color:"var(--text-secondary)" }}>
-                  <span style={{ width:"20px", height:"20px", borderRadius:"50%", background:"rgba(99,102,241,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:"1px" }}>
-                    <svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <span style={{ width:"20px", height:"20px", borderRadius:"50%", background:"rgba(22,163,74,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:"1px" }}>
+                    <svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </span>
                   {pt}
                 </li>
               ))}
             </ul>
-            <a href="https://app.proffy.study" style={{ display:"inline-flex", alignItems:"center", gap:"6px", marginTop:"28px", padding:"12px 28px", borderRadius:"12px", fontSize:"14px", fontWeight:700, background:"linear-gradient(135deg,#6366f1,#8b5cf6)", color:"white", textDecoration:"none", boxShadow:"0 4px 20px rgba(99,102,241,0.28)", transition:"transform 0.12s" }}
+            <a href="https://uni.proffy.study" style={{ display:"inline-flex", alignItems:"center", gap:"6px", marginTop:"28px", padding:"12px 28px", borderRadius:"12px", fontSize:"14px", fontWeight:700, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", textDecoration:"none", boxShadow:"0 4px 20px rgba(22,163,74,0.28)", transition:"transform 0.12s" }}
               onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
               onMouseLeave={e=>e.currentTarget.style.transform=""}>
               {t.cta}
             </a>
           </div>
-          <div style={{ display:"flex", justifyContent:"center", alignItems:"center" }}>
+          <div style={{ display:"flex", justifyContent:"center", alignItems:"flex-end" }}>
             <motion.div animate={{y:[0,-10,0]}} transition={{duration:3.5,repeat:Infinity,ease:"easeInOut"}}>
-              <Image src="/mascot/wave.png" alt="Proffy" width={300} height={300} style={{ objectFit:"contain" }} draggable={false} />
+              <Image src="/mascot/wave.png" alt="Proffy" width={460} height={460} style={{ objectFit:"contain", objectPosition:"bottom" }} draggable={false} />
             </motion.div>
           </div>
         </div>
@@ -414,12 +414,12 @@ export default function HubPage() {
       {/* ── CTA Banner ── */}
       <Section style={{ padding:"80px max(32px,4vw) 100px" }}>
         <motion.div initial={{opacity:0,y:24}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.6}}
-          style={{ background:"linear-gradient(135deg,#6366f1,#8b5cf6 60%,#a855f7 100%)", borderRadius:"24px", padding:"clamp(48px,6vw,80px) clamp(32px,5vw,72px)", textAlign:"center", position:"relative", overflow:"hidden" }}>
+          style={{ background:"linear-gradient(135deg,#16a34a,#22c55e 60%,#4ade80 100%)", borderRadius:"24px", padding:"clamp(48px,6vw,80px) clamp(32px,5vw,72px)", textAlign:"center", position:"relative", overflow:"hidden" }}>
           <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(circle at 30% 50%,rgba(255,255,255,0.07) 0%,transparent 60%), radial-gradient(circle at 75% 30%,rgba(255,255,255,0.05) 0%,transparent 50%)", pointerEvents:"none" }} />
           <div style={{ position:"relative" }}>
             <h2 style={{ fontSize:"clamp(26px,3.5vw,52px)", fontWeight:900, letterSpacing:"-0.03em", color:"white", marginBottom:"14px" }}>{t.ctaTitle}</h2>
             <p style={{ fontSize:"17px", color:"rgba(255,255,255,0.75)", marginBottom:"36px" }}>{t.ctaSub}</p>
-            <a href="https://app.proffy.study" style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"15px 42px", borderRadius:"14px", fontSize:"16px", fontWeight:700, background:"white", color:"#4f46e5", textDecoration:"none", boxShadow:"0 8px 32px rgba(0,0,0,0.2)", transition:"transform 0.12s,box-shadow 0.12s" }}
+            <a href="https://uni.proffy.study" style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"15px 42px", borderRadius:"14px", fontSize:"16px", fontWeight:700, background:"white", color:"#15803d", textDecoration:"none", boxShadow:"0 8px 32px rgba(0,0,0,0.2)", transition:"transform 0.12s,box-shadow 0.12s" }}
               onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(0,0,0,0.28)"}}
               onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 8px 32px rgba(0,0,0,0.2)"}}>
               {t.ctaBtn}
@@ -431,7 +431,7 @@ export default function HubPage() {
       {/* ── Footer ── */}
       <footer style={{ position:"relative", zIndex:1, borderTop:"1px solid var(--border)", padding:"22px max(32px,4vw)", display:"flex", flexWrap:"wrap", alignItems:"center", justifyContent:"space-between", gap:"12px", fontSize:"13px", color:"var(--text-disabled)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-          <div style={{ width:"22px", height:"22px", borderRadius:"5px", overflow:"hidden", background:"linear-gradient(135deg,#6366f1,#a78bfa)" }}>
+          <div style={{ width:"22px", height:"22px", borderRadius:"5px", overflow:"hidden", background:"linear-gradient(135deg,#16a34a,#4ade80)" }}>
             <Image src="/mascot/avatar.png" alt="Proffy" width={22} height={22} style={{ objectFit:"cover", width:"100%", height:"100%" }} draggable={false} />
           </div>
           <span>{t.footer}</span>
