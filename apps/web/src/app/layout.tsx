@@ -46,9 +46,12 @@ export const metadata: Metadata = {
   title: "Proffy Beta – Your AI Study Assistant",
   description: "AI-powered study assistant for Israeli university students",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
   },
 };
 
