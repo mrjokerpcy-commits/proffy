@@ -30,10 +30,13 @@ function getTimeGreeting(): string {
   return "Hey";
 }
 
-function makeGreeting(hasCourses: boolean, courseName?: string): ChatMessage {
+function makeGreeting(hasCourses: boolean, courseName?: string, userPlan?: string): ChatMessage {
   const tod = getTimeGreeting();
+  const isPaid = userPlan === "pro" || userPlan === "max";
   const content = courseName
     ? `${tod}! Ready to study **${courseName}**? Ask me anything. I can explain concepts, quiz you, build a study plan, or help you prep for the exam.`
+    : isPaid
+    ? `${tod}! Ask me anything — course help, coding, writing, math, career questions, or just a quick chat. What's on your mind?`
     : hasCourses
     ? `${tod}! Which course do you want to work on today? Pick one from the sidebar, or just tell me what you're studying.`
     : `${tod}! I'm Proffy, your AI study companion.\n\nTell me what you're studying. Share the course name, your university, and your professor if you know them, and I'll set everything up right away.`;
@@ -49,7 +52,7 @@ function getResetDate(): string {
 
 export default function ChatWindow({ course, sessionId, initialMessages = [], hasCourses = false, userPlan = "free", initialUsedTokens = 0, tokenLimit }: Props) {
   const router = useRouter();
-  const greeting = makeGreeting(hasCourses, course?.name);
+  const greeting = makeGreeting(hasCourses, course?.name, userPlan);
   const [messages, setMessages] = useState<ChatMessage[]>(
     initialMessages.length > 0 ? initialMessages : [greeting]
   );
@@ -694,7 +697,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
               }} />
             </div>
             <span style={{ fontSize: "10px", color: usedTokens / tokenLimit > 0.9 ? "#f87171" : "#fbbf24", whiteSpace: "nowrap", flexShrink: 0 }}>
-              {Math.round(usedTokens / tokenLimit * 100)}% used · Resets {resetDate}
+              {(usedTokens / 1000).toFixed(0)}K / {(tokenLimit / 1000).toFixed(0)}K tokens · Resets {resetDate}
             </span>
           </div>
         ) : null}

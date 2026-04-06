@@ -91,7 +91,37 @@ export default function AdminClient({
   users: User[];
   queue: QueueItem[];
 }) {
-  const [tab, setTab] = useState<"overview" | "users" | "usage" | "queue" | "knowledge" | "simulate">("overview");
+  const [tab, setTab] = useState<"overview" | "users" | "usage" | "queue" | "knowledge" | "simulate" | "notes">("overview");
+  const [purgeCode, setPurgeCode] = useState("");
+  const [purging, setPurging] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<string | null>(null);
+
+  async function handlePurge(mode: "shared" | "all") {
+    if (!purgeCode.trim()) { setPurgeResult("Enter your purge confirmation code first."); return; }
+    setPurging(true);
+    setPurgeResult(null);
+    try {
+      const res = await fetch(`/api/admin/purge-material${mode === "all" ? "?mode=all" : ""}`, {
+        method: "DELETE",
+        headers: {
+          "x-admin-secret": (document.querySelector("meta[name=admin-secret]") as HTMLMetaElement)?.content ?? "",
+          "x-purge-code": purgeCode.trim(),
+        },
+      });
+      const data = await res.json();
+      setPurgeResult(res.ok ? `Done: ${JSON.stringify(data)}` : `Error: ${data.error}`);
+    } catch (e: any) {
+      setPurgeResult(`Error: ${e.message}`);
+    } finally {
+      setPurging(false);
+      setPurgeCode("");
+    }
+  }
+
+  const [adminNotes, setAdminNotes] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("admin_notes") ?? "";
+  });
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"joined" | "msgs" | "cost" | "plan">("joined");
@@ -391,7 +421,7 @@ export default function AdminClient({
             <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Proffy platform dashboard</p>
           </div>
           <div style={{ display: "flex", gap: "6px", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "10px", padding: "4px" }}>
-            {(["overview", "users", "usage", "queue", "knowledge", "simulate"] as const).map(t => (
+            {(["overview", "users", "usage", "queue", "knowledge", "simulate", "notes"] as const).map(t => (
               <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
                 {t === "queue" && queue.filter(q => q.status === "pending").length > 0 && (
@@ -982,6 +1012,43 @@ export default function AdminClient({
         {tab === "knowledge" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
+            {/* Danger zone — purge material */}
+            <div style={{ padding: "16px 20px", borderRadius: "12px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)" }}>
+              <div style={{ fontWeight: 700, fontSize: "13px", color: "#f87171", marginBottom: "4px" }}>Danger Zone — Purge Material</div>
+              <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "12px" }}>
+                Shared mode: deletes all platform-ingested content (is_shared=true) + clears queue. Private user uploads untouched.<br />
+                Nuclear mode: wipes entire Qdrant collection and all queue rows.
+              </div>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                <input
+                  type="password"
+                  value={purgeCode}
+                  onChange={e => { setPurgeCode(e.target.value); setPurgeResult(null); }}
+                  placeholder="Purge confirmation code"
+                  style={{ flex: 1, minWidth: "200px", padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(248,113,113,0.3)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px" }}
+                />
+                <button
+                  onClick={() => handlePurge("shared")}
+                  disabled={purging || !purgeCode.trim()}
+                  style={{ padding: "8px 16px", borderRadius: "8px", border: "none", background: "rgba(248,113,113,0.15)", color: "#f87171", fontSize: "13px", fontWeight: 700, cursor: "pointer", opacity: purging ? 0.5 : 1 }}
+                >
+                  {purging ? "Purging…" : "Purge Shared"}
+                </button>
+                <button
+                  onClick={() => { if (window.confirm("NUCLEAR: wipe ALL content including private uploads. Sure?")) handlePurge("all"); }}
+                  disabled={purging || !purgeCode.trim()}
+                  style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(248,113,113,0.5)", background: "transparent", color: "#f87171", fontSize: "13px", fontWeight: 700, cursor: "pointer", opacity: purging ? 0.5 : 1 }}
+                >
+                  Nuclear Wipe
+                </button>
+              </div>
+              {purgeResult && (
+                <div style={{ marginTop: "10px", fontSize: "12px", color: purgeResult.startsWith("Done") ? "var(--green)" : "#f87171", fontFamily: "monospace", wordBreak: "break-all" }}>
+                  {purgeResult}
+                </div>
+              )}
+            </div>
+
             {/* Filters + stats row */}
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
               <input
@@ -1103,6 +1170,38 @@ export default function AdminClient({
               )}
             </div>
 
+          </div>
+        )}
+
+        {/* ── NOTES ── */}
+        {tab === "notes" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={cardStyle}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: "15px" }}>Next updates / scratch pad</div>
+                  <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>Saved locally in this browser</div>
+                </div>
+                <button
+                  onClick={() => { localStorage.setItem("admin_notes", adminNotes); }}
+                  style={{ padding: "7px 18px", borderRadius: "8px", border: "none", background: "var(--blue)", color: "#fff", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}
+                >
+                  Save
+                </button>
+              </div>
+              <textarea
+                value={adminNotes}
+                onChange={e => setAdminNotes(e.target.value)}
+                onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); localStorage.setItem("admin_notes", adminNotes); } }}
+                placeholder={"- [ ] feature idea\n- [ ] bug to fix\n- [ ] next release notes"}
+                style={{
+                  width: "100%", minHeight: "500px", padding: "1rem", borderRadius: "10px",
+                  border: "1px solid var(--border)", background: "var(--bg-elevated)",
+                  color: "var(--text-primary)", fontSize: "14px", lineHeight: 1.7,
+                  fontFamily: "monospace", resize: "vertical", boxSizing: "border-box",
+                }}
+              />
+            </div>
           </div>
         )}
 

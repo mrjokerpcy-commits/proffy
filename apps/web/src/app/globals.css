@@ -4,31 +4,31 @@
 
 /* ─── Design tokens — Dark mode (default) ──────────────────────────────────── */
 :root {
-  /* ── Background layers ── */
-  --bg-base:       #07071a;
-  --bg-surface:    #0e0e26;
-  --bg-elevated:   #16163a;
-  --bg-hover:      #1e1e48;
-  --bg-card:       rgba(255,255,255,0.032);
+  /* ── Background layers — rich midnight, not flat black ── */
+  --bg-base:       #0b0b1e;
+  --bg-surface:    #10102a;
+  --bg-elevated:   #181836;
+  --bg-hover:      #202048;
+  --bg-card:       rgba(255,255,255,0.04);
 
-  /* ── Borders ── */
-  --border:        rgba(255,255,255,0.08);
-  --border-light:  rgba(255,255,255,0.15);
-  --border-focus:  rgba(99,102,241,0.6);
+  /* ── Borders — subtly visible ── */
+  --border:        rgba(120,120,255,0.1);
+  --border-light:  rgba(150,150,255,0.18);
+  --border-focus:  rgba(99,102,241,0.65);
 
   /* ── Text hierarchy ── */
-  --text-primary:   #eeeeff;
-  --text-secondary: #9898c0;
-  --text-muted:     #5e5e88;
-  --text-disabled:  #383858;
+  --text-primary:   #f0f0ff;
+  --text-secondary: #9090c8;
+  --text-muted:     #5858a0;
+  --text-disabled:  #333360;
 
-  /* ── Brand — electric indigo / violet ── */
+  /* ── Brand — vivid indigo → violet ── */
   --blue:          #6366f1;
   --blue-hover:    #818cf8;
-  --blue-dim:      rgba(99,102,241,0.12);
-  --blue-glow:     rgba(99,102,241,0.28);
-  --purple:        #a78bfa;
-  --purple-glow:   rgba(167,139,250,0.2);
+  --blue-dim:      rgba(99,102,241,0.14);
+  --blue-glow:     rgba(99,102,241,0.35);
+  --purple:        #c084fc;
+  --purple-glow:   rgba(192,132,252,0.22);
 
   /* ── Accent spectrum ── */
   --accent-cyan:   #22d3ee;
@@ -387,15 +387,15 @@ html, body { overflow-x: hidden; }
 
 /* ─── Button base ───────────────────────────────────────────────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, var(--blue) 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a855f7 100%);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.3) inset, 0 0 20px rgba(99,102,241,0.15);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.35) inset, 0 0 28px rgba(99,102,241,0.2);
   transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
 }
-.btn-primary:hover { opacity: 0.92; box-shadow: 0 4px 24px var(--blue-glow), 0 0 0 1px rgba(99,102,241,0.4) inset; }
+.btn-primary:hover { opacity: 0.93; box-shadow: 0 4px 30px rgba(99,102,241,0.45), 0 0 0 1px rgba(139,92,246,0.5) inset; }
 .btn-primary:active { transform: scale(0.98); }
-.btn-primary:disabled { opacity: 0.32; pointer-events: none; }
+.btn-primary:disabled { opacity: 0.3; pointer-events: none; }
 
 .btn-ghost {
   color: var(--text-secondary);

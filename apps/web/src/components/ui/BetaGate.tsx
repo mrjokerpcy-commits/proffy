@@ -5,10 +5,10 @@ import { BETA_UNLOCK_KEY } from "@/lib/constants";
 
 // ─── Typewriter ───────────────────────────────────────────────────────────────
 const PHRASES = [
-  "ACADEMIC INTELLIGENCE.",
-  "AI STUDY COMPANION.",
-  "PRIVATE BETA.",
-  "YOUR EDGE IN ACADEMIA.",
+  "STUDY SMARTER EVERY SESSION.",
+  "YOUR AI FOR EVERY COURSE.",
+  "UPLOAD. ASK. ACE THE EXAM.",
+  "BUILT FOR ISRAELI STUDENTS.",
 ];
 
 function useTypewriter() {
@@ -25,14 +25,14 @@ function useTypewriter() {
     }
     if (!deleting) {
       if (text.length < phrase.length) {
-        const t = setTimeout(() => setText(phrase.slice(0, text.length + 1)), 65);
+        const t = setTimeout(() => setText(phrase.slice(0, text.length + 1)), 60);
         return () => clearTimeout(t);
       }
-      const t = setTimeout(() => setDeleting(true), 2200);
+      const t = setTimeout(() => setDeleting(true), 2400);
       return () => clearTimeout(t);
     }
     if (text.length > 0) {
-      const t = setTimeout(() => setText(text.slice(0, -1)), 35);
+      const t = setTimeout(() => setText(text.slice(0, -1)), 30);
       return () => clearTimeout(t);
     }
     setDeleting(false);
@@ -43,108 +43,103 @@ function useTypewriter() {
   return text;
 }
 
-// ─── Starfield canvas ────────────────────────────────────────────────────────
-function StarField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize, { passive: true });
-
-    const stars = Array.from({ length: 90 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.2 + 0.2,
-      baseAlpha: Math.random() * 0.5 + 0.1,
-      phase: Math.random() * Math.PI * 2,
-      speed: Math.random() * 0.25 + 0.05,
-    }));
-
-    let raf: number;
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const t = Date.now() / 1000;
-      for (const s of stars) {
-        const alpha = s.baseAlpha * (0.6 + 0.4 * Math.sin(t * s.speed + s.phase));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-        ctx.fill();
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
+// ─── Ambient orbs background ─────────────────────────────────────────────────
+function AmbientBg() {
   return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.5 }}
-    />
+    <>
+      <motion.div
+        aria-hidden="true"
+        animate={{ scale: [1, 1.12, 1], opacity: [0.5, 0.8, 0.5] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          position: "absolute", pointerEvents: "none",
+          width: "600px", height: "600px",
+          borderRadius: "50%",
+          top: "-180px", left: "50%", transform: "translateX(-50%)",
+          background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 65%)",
+        }}
+      />
+      <motion.div
+        aria-hidden="true"
+        animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.55, 0.3] }}
+        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        style={{
+          position: "absolute", pointerEvents: "none",
+          width: "400px", height: "400px",
+          borderRadius: "50%",
+          bottom: "0px", right: "10%",
+          background: "radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 65%)",
+        }}
+      />
+      <motion.div
+        aria-hidden="true"
+        animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+        style={{
+          position: "absolute", pointerEvents: "none",
+          width: "320px", height: "320px",
+          borderRadius: "50%",
+          bottom: "10%", left: "5%",
+          background: "radial-gradient(circle, rgba(34,211,238,0.07) 0%, transparent 65%)",
+        }}
+      />
+    </>
+  );
+}
+
+// ─── Floating stat chips ─────────────────────────────────────────────────────
+function StatChips() {
+  const stats = [
+    { label: "Avg exam score boost", value: "+18%" },
+    { label: "Hours saved per week", value: "4.5h" },
+    { label: "Courses indexed", value: "800+" },
+  ];
+  return (
+    <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
+      {stats.map((s) => (
+        <div
+          key={s.label}
+          style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid var(--border)",
+            borderRadius: "99px",
+            padding: "5px 14px",
+            fontSize: "12px",
+          }}
+        >
+          <span style={{ fontWeight: 800, color: "var(--blue)" }}>{s.value}</span>
+          <span style={{ color: "var(--text-muted)" }}>{s.label}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
 // ─── Duck mascot ─────────────────────────────────────────────────────────────
 function DuckMascot() {
   return (
-    <svg
-      width="68"
-      height="68"
-      viewBox="0 0 72 72"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+    <motion.svg
+      width="64" height="64" viewBox="0 0 72 72"
+      fill="none" xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
+      animate={{ y: [0, -5, 0] }}
+      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
     >
-      {/* Cap board */}
-      <polygon points="36,8 55,16 36,24 17,16" fill="#111827" />
-      {/* Cap top */}
-      <rect x="22" y="14" width="28" height="5" rx="1.5" fill="#1f2937" />
-      {/* Tassel line */}
+      <polygon points="36,8 55,16 36,24 17,16" fill="#1e1b4b" />
+      <rect x="22" y="14" width="28" height="5" rx="1.5" fill="#312e81" />
       <line x1="55" y1="16" x2="58" y2="26" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
-      {/* Tassel ball */}
       <circle cx="58" cy="28" r="2.5" fill="#f59e0b" />
-      {/* Body */}
       <ellipse cx="36" cy="50" rx="17" ry="15" fill="#fcd34d" />
-      {/* Head */}
       <circle cx="36" cy="31" r="12" fill="#fcd34d" />
-      {/* Eye white */}
       <circle cx="40" cy="29" r="3" fill="white" />
-      {/* Eye pupil */}
       <circle cx="41" cy="29.5" r="1.8" fill="#111827" />
-      {/* Eye shine */}
       <circle cx="41.8" cy="28.5" r="0.7" fill="white" />
-      {/* Beak */}
       <path d="M44 33 L52 32 L44 36 Z" fill="#f97316" />
-      {/* Wing */}
-      <ellipse
-        cx="24"
-        cy="50"
-        rx="9"
-        ry="6"
-        fill="#fbbf24"
-        transform="rotate(-18 24 50)"
-      />
-      {/* Feet */}
+      <ellipse cx="24" cy="50" rx="9" ry="6" fill="#fbbf24" transform="rotate(-18 24 50)" />
       <path d="M29 63 L25 68 M29 63 L33 68" stroke="#f97316" strokeWidth="2" strokeLinecap="round" />
       <path d="M43 63 L39 68 M43 63 L47 68" stroke="#f97316" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    </motion.svg>
   );
 }
 
@@ -181,14 +176,14 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
           setTimeout(() => setStatus("unlocked"), 700);
         } else {
           setUnlocking(false);
-          setError(res.status === 429 ? data.error : "Invalid access code.");
+          setError(res.status === 429 ? data.error : "That code didn't work.");
           setShaking(true);
           setTimeout(() => setShaking(false), 550);
           inputRef.current?.select();
         }
       } catch {
         setUnlocking(false);
-        setError("Something went wrong. Please try again.");
+        setError("Connection error. Try again.");
       }
     },
     [code, unlocking]
@@ -199,7 +194,6 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* Render children hidden behind gate so layout hydrates */}
       <div aria-hidden="true" style={{ visibility: "hidden", position: "absolute", inset: 0, pointerEvents: "none" }}>
         {children}
       </div>
@@ -209,221 +203,137 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
           <motion.div
             key="gate"
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.55, ease: [0.4, 0, 0.2, 1] } }}
+            exit={{ opacity: 0, y: -16, transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] } }}
             style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 9998,
+              position: "fixed", inset: 0, zIndex: 9998,
               background: "var(--bg-base)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
               overflow: "hidden",
             }}
           >
-            <StarField />
+            <AmbientBg />
 
-            {/* Ambient glow */}
+            {/* Grid pattern overlay */}
             <div
               aria-hidden="true"
               style={{
-                position: "absolute",
-                top: "10%",
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: "700px",
-                height: "400px",
-                background:
-                  "radial-gradient(ellipse at center, rgba(79,142,247,0.07) 0%, transparent 68%)",
-                pointerEvents: "none",
-              }}
-            />
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                bottom: "5%",
-                right: "20%",
-                width: "400px",
-                height: "300px",
-                background:
-                  "radial-gradient(ellipse at center, rgba(167,139,250,0.05) 0%, transparent 68%)",
-                pointerEvents: "none",
+                position: "absolute", inset: 0, pointerEvents: "none",
+                backgroundImage: "linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px)",
+                backgroundSize: "60px 60px",
+                maskImage: "radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%)",
               }}
             />
 
             {/* Content */}
             <motion.div
-              initial={{ opacity: 0, y: 28 }}
+              initial={{ opacity: 0, y: 32 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               style={{
-                position: "relative",
-                zIndex: 1,
+                position: "relative", zIndex: 1,
                 textAlign: "center",
-                maxWidth: "500px",
-                width: "100%",
+                maxWidth: "520px", width: "100%",
                 padding: "0 28px",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: "0",
               }}
             >
-              {/* Private Beta badge */}
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  background: "rgba(79,142,247,0.1)",
-                  border: "1px solid rgba(79,142,247,0.22)",
-                  borderRadius: "99px",
-                  padding: "5px 16px",
-                  marginBottom: "26px",
-                }}
-              >
-                <span
-                  style={{
-                    display: "inline-block",
-                    width: "6px",
-                    height: "6px",
-                    borderRadius: "50%",
-                    background: "var(--blue)",
-                    boxShadow: "0 0 8px var(--blue)",
-                    animation: "fc-pulse 2.4s ease-in-out infinite",
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    color: "var(--blue)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Private Beta
+              {/* Early Access badge */}
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: "7px",
+                background: "rgba(99,102,241,0.1)",
+                border: "1px solid rgba(99,102,241,0.2)",
+                borderRadius: "99px", padding: "5px 16px",
+                marginBottom: "24px",
+              }}>
+                <span style={{
+                  width: "6px", height: "6px", borderRadius: "50%",
+                  background: "var(--blue)", flexShrink: 0,
+                  boxShadow: "0 0 10px var(--blue)",
+                  animation: "fc-pulse 2s ease-in-out infinite",
+                }} />
+                <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em", color: "var(--blue)", textTransform: "uppercase" }}>
+                  Early Access
                 </span>
               </div>
 
               {/* Typewriter */}
-              <div
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  letterSpacing: "0.22em",
-                  color: "var(--text-muted)",
-                  marginBottom: "18px",
-                  height: "16px",
-                  textTransform: "uppercase",
-                  userSelect: "none",
-                }}
-              >
+              <div style={{
+                fontSize: "11px", fontWeight: 700, letterSpacing: "0.22em",
+                color: "var(--text-muted)", marginBottom: "20px",
+                height: "16px", textTransform: "uppercase", userSelect: "none",
+              }}>
                 {typewriter}
                 <span className="cursor-blink" style={{ borderRight: "2px solid var(--text-muted)", marginLeft: "2px" }} />
               </div>
 
               {/* Brand + Duck */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "14px",
-                  marginBottom: "18px",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "clamp(52px, 10vw, 76px)",
-                    fontWeight: 900,
-                    letterSpacing: "-0.04em",
-                    background:
-                      "linear-gradient(135deg, #fff 0%, var(--blue-hover) 50%, var(--purple) 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    lineHeight: 1,
-                    flexShrink: 0,
-                  }}
-                >
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                gap: "16px", marginBottom: "20px",
+              }}>
+                <span style={{
+                  fontSize: "clamp(54px, 10vw, 78px)",
+                  fontWeight: 900, letterSpacing: "-0.04em",
+                  background: "linear-gradient(135deg, #fff 0%, #a5b4fc 45%, #c084fc 100%)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                  backgroundClip: "text", lineHeight: 1, flexShrink: 0,
+                }}>
                   Proffy.
                 </span>
                 <DuckMascot />
               </div>
 
               {/* Tagline */}
-              <p
-                style={{
-                  fontSize: "16px",
-                  color: "var(--text-secondary)",
-                  lineHeight: 1.65,
-                  maxWidth: "380px",
-                  margin: "0 auto 8px",
-                }}
-              >
-                An academic decision engine. Converting skills, classes, and interests into actionable intelligence.
+              <p style={{
+                fontSize: "17px", color: "var(--text-secondary)",
+                lineHeight: 1.6, maxWidth: "400px",
+                margin: "0 auto 8px",
+                fontWeight: 400,
+              }}>
+                Your AI study partner that knows your courses, your professor, and what actually shows up on the exam.
               </p>
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "var(--text-muted)",
-                  marginBottom: "36px",
-                }}
-              >
-                Access is invite-only while we finalize the experience.
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "32px" }}>
+                Currently invite-only. Enter your access code to continue.
               </p>
+
+              {/* Stat chips */}
+              <div style={{ marginBottom: "32px" }}>
+                <StatChips />
+              </div>
 
               {/* Code form */}
               <motion.form
                 onSubmit={handleSubmit}
-                animate={
-                  shaking
-                    ? { x: [-10, 10, -7, 7, -4, 4, 0], transition: { duration: 0.5 } }
-                    : { x: 0 }
-                }
-                style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+                animate={shaking ? { x: [-10, 10, -7, 7, -4, 4, 0], transition: { duration: 0.5 } } : { x: 0 }}
+                style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}
               >
                 <input
                   ref={inputRef}
                   type="text"
                   value={code}
-                  onChange={(e) => {
-                    setCode(e.target.value);
-                    setError("");
-                  }}
-                  placeholder="Enter your access code"
+                  onChange={(e) => { setCode(e.target.value); setError(""); }}
+                  placeholder="Access code"
                   maxLength={32}
                   autoComplete="off"
                   spellCheck={false}
+                  className="input-ring"
                   style={{
-                    width: "100%",
-                    padding: "14px 20px",
+                    width: "100%", padding: "14px 20px",
                     borderRadius: "14px",
                     background: "var(--bg-elevated)",
-                    border: `1px solid ${error ? "rgba(248,113,113,0.6)" : "var(--border)"}`,
                     color: "var(--text-primary)",
-                    fontSize: "15px",
-                    fontWeight: 500,
-                    letterSpacing: "0.08em",
-                    textAlign: "center",
-                    outline: "none",
-                    transition: "border-color 0.15s, box-shadow 0.15s",
+                    fontSize: "15px", fontWeight: 500,
+                    letterSpacing: "0.08em", textAlign: "center",
+                    border: `1px solid ${error ? "rgba(248,113,113,0.5)" : "var(--border)"}`,
                   }}
-                  className="input-ring"
                 />
 
                 <AnimatePresence>
                   {error && (
                     <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      style={{
-                        fontSize: "12.5px",
-                        color: "var(--red)",
-                        textAlign: "center",
-                        margin: "0",
-                      }}
+                      initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                      style={{ fontSize: "12.5px", color: "var(--red)", textAlign: "center", margin: 0 }}
                     >
                       {error}
                     </motion.p>
@@ -436,99 +346,34 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                     disabled={!code.trim() || unlocking}
                     className="btn-primary"
                     style={{
-                      flex: 1,
-                      padding: "14px",
-                      borderRadius: "14px",
-                      fontSize: "15px",
-                      fontWeight: 600,
-                      border: "none",
+                      flex: 1, padding: "14px", borderRadius: "14px",
+                      fontSize: "15px", fontWeight: 600, border: "none",
                       cursor: code.trim() && !unlocking ? "pointer" : "default",
                     }}
                   >
-                    {unlocking ? "Unlocking…" : "Enter"}
+                    {unlocking ? "Verifying…" : "Enter"}
                   </button>
                   <a
                     href="mailto:hello@proffy.study"
                     className="btn-ghost"
                     style={{
-                      flex: 1,
-                      padding: "14px",
-                      borderRadius: "14px",
-                      fontSize: "15px",
-                      fontWeight: 500,
+                      flex: 1, padding: "14px", borderRadius: "14px",
+                      fontSize: "15px", fontWeight: 500,
                       textDecoration: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: "flex", alignItems: "center", justifyContent: "center",
                     }}
                   >
                     Request Access
                   </a>
                 </div>
               </motion.form>
-
-              {/* "new!" pill badge — proffy.ai style */}
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                style={{
-                  marginTop: "32px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0",
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "99px",
-                  padding: "7px 7px 7px 7px",
-                  cursor: "pointer",
-                }}
-              >
-                <span
-                  style={{
-                    background: "#f59e0b",
-                    color: "#fff",
-                    fontSize: "10px",
-                    fontWeight: 800,
-                    letterSpacing: "0.05em",
-                    borderRadius: "99px",
-                    padding: "3px 10px",
-                    marginRight: "10px",
-                    textTransform: "lowercase",
-                  }}
-                >
-                  new!
-                </span>
-                <span style={{ fontSize: "12.5px", color: "var(--text-secondary)", paddingRight: "8px" }}>
-                  Take the quiz, get{" "}
-                  <span
-                    style={{
-                      background: "linear-gradient(90deg, #f59e0b, #f97316)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                      fontWeight: 600,
-                    }}
-                  >
-                    personalized
-                  </span>{" "}
-                  insights!
-                </span>
-              </motion.div>
             </motion.div>
 
             {/* Footer */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: "24px",
-                left: 0,
-                right: 0,
-                textAlign: "center",
-                fontSize: "12px",
-                color: "var(--text-disabled)",
-              }}
-            >
+            <div style={{
+              position: "absolute", bottom: "24px", left: 0, right: 0,
+              textAlign: "center", fontSize: "12px", color: "var(--text-disabled)",
+            }}>
               © {new Date().getFullYear()} Proffy · proffy.study
             </div>
           </motion.div>
