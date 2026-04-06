@@ -129,22 +129,52 @@ const T = {
     footer:`© ${new Date().getFullYear()} Proffy · נבנה לסטודנטים ישראלים`,
     contact:"צור קשר", privacy:"פרטיות", terms:"תנאים",
   },
+  ar: {
+    badge:"شبكة Proffy", getAccess:"احصل على الوصول",
+    h1a:"منصة واحدة.", h1b:"لكل طالب إسرائيلي.",
+    sub:"من الثانوية حتى الجامعة، ذكاء اصطناعي يفهم مادتك وأستاذك وامتحانك.",
+    cta:"ابدأ مع Proffy App",
+    missionBadge:"مهمتنا",
+    missionTitle:"ذكاء أكاديمي لكل طالب إسرائيلي.",
+    missionBody:".Proffy وُجد ليمنح كل طالب الميزة التي يستحقها. نجمع مادة دراستك وسياق الأستاذ وتفكير الذكاء الاصطناعي، لتدرس بذكاء أكبر وتستعد بسرعة أكبر وتدخل كل امتحان بثقة",
+    whoBadge:"من نحن",
+    whoTitle:"بُني من طلاب، لطلاب.",
+    whoBody:".سئمنا من التخمين بما سيخرج في الامتحان وأي أستاذ نختار وكيف ننظّم وقت دراستنا. فبنينا الأداة التي كنّا نتمنى امتلاكها. كل ميزة في Proffy موجودة لأن طالباً حقيقياً احتاجها",
+    howBadge:"كيف يعمل",
+    howTitle:"ثلاث خطوات للثقة في الامتحان.",
+    howSteps:[
+      { title:"ارفع موادك", body:".أضف شرائحك والمنهج والامتحانات السابقة وملاحظات الأستاذ. Proffy يفهرس كل شيء", icon:"upload" },
+      { title:"اسأل أي شيء", body:".تحدث مع ذكاء اصطناعي يعرف مادتك بالضبط، ليس مدرساً عاماً، مدرسك أنت", icon:"chat" },
+      { title:"ادخل مستعداً", body:".خطط دراسية مركّزة، إجابات بمصادر من مادتك، وملخصات موجّهة للامتحان", icon:"check" },
+    ],
+    productsBadge:"الشبكة",
+    productsTitle:"ذكاء اصطناعي واحد، كل مراحل التعليم.",
+    meetBadge:"تعرّف على Proffy",
+    meetTitle:"رفيقك في الدراسة.",
+    meetBody:".Proffy ليس محرك بحث. يقرأ مادتك الدراسية الحقيقية، يتعلم أسلوب أستاذك، ويجيب كأفضل طالب اجتاز هذا الكورس الفصل الماضي. لا اختلاقات، لا نصائح عامة، فقط ما تحتاجه للنجاح",
+    meetPoints:["يعرف مادتك وأستاذك وتاريخ امتحانك","يجيب بمصادر من مادتك الخاصة","يبني خططاً دراسية موجّهة للامتحان","متاح 24/7، حتى ليلة الامتحان"],
+    ctaTitle:"مستعد للدراسة بذكاء أكبر؟",
+    ctaSub:"انضم لآلاف الطلاب في الجامعات الإسرائيلية.",
+    ctaBtn:"احصل على وصول مبكر",
+    footer:`© ${new Date().getFullYear()} Proffy · مبني للطلاب الإسرائيليين`,
+    contact:"تواصل معنا", privacy:"الخصوصية", terms:"الشروط",
+  },
 };
 
 // ─── Products ─────────────────────────────────────────────────────────────────
-const PRODUCTS = (lang: "en"|"he") => [
+const PRODUCTS = (lang: "en"|"he"|"ar") => [
   { key:"bagrut",  color:"#22c55e", border:"rgba(139,92,246,0.22)", glow:"rgba(139,92,246,0.12)",
-    label:"Proffy Bagrut",  sub:lang==="he"?"בגרות":"Bagrut",   live:false, href:"https://bagrut.proffy.study",
-    desc:lang==="he"?"נבנה לבני 16-18. נושאים כקלפים, רצפים, ו-AI שמדבר בשפה שלך.":"Built for 16-18. Subjects as cards, streaks, AI that speaks your language." },
+    label:"Proffy Bagrut",  sub:lang==="he"?"בגרות":lang==="ar"?"بجروت":"Bagrut", live:false, href:"https://bagrut.proffy.study",
+    desc:lang==="he"?"נבנה לבני 16-18. נושאים כקלפים, רצפים, ו-AI שמדבר בשפה שלך.":lang==="ar"?"مبني لطلاب 16-18. مواضيع كبطاقات، ذكاء اصطناعي يتحدث بلغتك.":"Built for 16-18. Subjects as cards, streaks, AI that speaks your language." },
   { key:"yael",   color:"#f59e0b", border:"rgba(245,158,11,0.22)",  glow:"rgba(245,158,11,0.11)",
-    label:lang==="he"?'Proffy יע"ל':"Proffy Yael", sub:lang==="he"?'יע"ל':"Yael", live:false, href:"https://yael.proffy.study",
-    desc:lang==="he"?'הכנה ליע"ל בעברית, חמה ואנושית.':"Hebrew-first yael prep, warm and human." },
+    label:lang==="he"?'Proffy יע"ל':"Proffy Yael", sub:lang==="he"?'יע"ל':lang==="ar"?"يائيل":"Yael", live:false, href:"https://yael.proffy.study",
+    desc:lang==="he"?'הכנה ליע"ל בעברית, חמה ואנושית.':lang==="ar"?"تحضير ليائيل، دافئ وإنساني.":"Hebrew-first yael prep, warm and human." },
   { key:"psycho", color:"#d4a017", border:"rgba(212,160,23,0.22)",  glow:"rgba(212,160,23,0.11)",
-    label:"Proffy Psycho",  sub:lang==="he"?"פסיכומטרי":"Psychometric", live:false, href:"https://psycho.proffy.study",
-    desc:lang==="he"?"הכנה רצינית לפסיכומטרי. תרגילים מובנים בכל קטגוריה.":"Serious psychometric prep. Structured drills. Built to score." },
+    label:"Proffy Psycho",  sub:lang==="he"?"פסיכומטרי":lang==="ar"?"سيكومتري":"Psychometric", live:false, href:"https://psycho.proffy.study",
+    desc:lang==="he"?"הכנה רצינית לפסיכומטרי. תרגילים מובנים בכל קטגוריה.":lang==="ar"?"تحضير جدي للسيكومتري. تمارين منظمة في كل فئة.":"Serious psychometric prep. Structured drills. Built to score." },
   { key:"app",    color:"#16a34a", border:"rgba(22,163,74,0.24)",   glow:"rgba(22,163,74,0.13)",
-    label:"Proffy App",     sub:lang==="he"?"אוניברסיטה":"University", live:true,  href:"https://uni.proffy.study",
-    desc:lang==="he"?"העלה שקפים, שאל הכל, עבור את הבחינה. ה-AI שמכיר את הקורס שלך.":"Upload slides, ask anything, ace the exam. AI that knows your course." },
+    label:"Proffy App",     sub:lang==="he"?"אוניברסיטה":lang==="ar"?"جامعة":"University", live:true,  href:"https://uni.proffy.study",
+    desc:lang==="he"?"העלה שקפים, שאל הכל, עבור את הבחינה. ה-AI שמכיר את הקורס שלך.":lang==="ar"?"ارفع الشرائح، اسأل أي شيء، انجح في الامتحان. الذكاء الاصطناعي الذي يعرف مادتك.":"Upload slides, ask anything, ace the exam. AI that knows your course." },
 ];
 
 // ─── Badge ────────────────────────────────────────────────────────────────────
@@ -182,11 +212,12 @@ function AccessModal({ lang, onClose }: { lang: "en"|"he"; onClose: () => void }
   const [email, setEmail] = useState("");
   const [study, setStudy] = useState("");
   const [status, setStatus] = useState<"idle"|"loading"|"done"|"error">("idle");
-  const isRtl = lang === "he";
+  const isRtl = lang === "he" || lang === "ar";
 
   const labels = {
     en: { title:"Request Access", sub:"We'll reach out with your access code.", name:"Full name", email:"Email", study:"What are you studying?", studyPlaceholder:"e.g. Computer Science, TAU semester B", submit:"Send Request", done:"You're on the list!", doneSub:"We'll be in touch soon.", err:"Something went wrong. Try again." },
     he: { title:"בקשת גישה", sub:"נחזור אליך עם קוד הגישה שלך.", name:"שם מלא", email:"אימייל", study:"מה אתה לומד?", studyPlaceholder:"לדוגמה: מדעי המחשב, ת\"א סמסטר ב", submit:"שלח בקשה", done:"!אתה ברשימה", doneSub:"ניצור איתך קשר בקרוב.", err:"משהו השתבש. נסה שוב." },
+    ar: { title:"طلب وصول", sub:"سنتواصل معك برمز الوصول الخاص بك.", name:"الاسم الكامل", email:"البريد الإلكتروني", study:"ماذا تدرس?", studyPlaceholder:"مثلاً: علوم الحاسوب، التخنيون الفصل ب", submit:"إرسال الطلب", done:"!أنت في القائمة", doneSub:".سنتواصل معك قريباً", err:"حدث خطأ ما. حاول مرة أخرى." },
   }[lang];
 
   const submit = async (e: React.FormEvent) => {
@@ -274,9 +305,9 @@ export default function HubPage() {
   useEffect(() => setMounted(true), []);
 
   const t = T[lang];
-  const isRtl = lang === "he";
+  const isRtl = lang === "he" || lang === "ar";
   const dir = isRtl ? "rtl" : "ltr";
-  const ff = isRtl ? "var(--font-noto-hebrew),system-ui,sans-serif" : "var(--font-inter),system-ui,sans-serif";
+  const ff = lang === "he" ? "var(--font-noto-hebrew),system-ui,sans-serif" : lang === "ar" ? "'Segoe UI','Arial Unicode MS',system-ui,sans-serif" : "var(--font-inter),system-ui,sans-serif";
   const products = PRODUCTS(lang);
 
   return (
@@ -360,6 +391,8 @@ export default function HubPage() {
         <div className="hub-feature-bar" style={{ display:"flex", flexWrap:"wrap", alignItems:"center", justifyContent:"center", gap:"12px" }}>
           {(lang === "he"
             ? ["AI שמכיר את הקורס","תשובות עם מקורות","עברית + אנגלית","כל הפלטפורמות","זמין 24/7"]
+            : lang === "ar"
+            ? ["ذكاء اصطناعي يعرف مادتك","إجابات بمصادر","عربية + عبرية + إنجليزية","كل المنصات","متاح 24/7"]
             : ["Course-aware AI","Source-cited answers","Hebrew & English","All platforms","Available 24/7"]
           ).map(f => (
             <div key={f} style={{ display:"flex", alignItems:"center", gap:"8px", background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"99px", padding:"9px 18px", boxShadow:"var(--card-shadow)" }}>
