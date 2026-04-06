@@ -290,11 +290,9 @@ export default function HubPage() {
 
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"62px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
-        <div style={{ display:"flex", alignItems:"center" }}>
-          {/* Dark mode logo (white text) */}
-          <Image src="/logo-header-dark.png" alt="Proffy" width={140} height={48} className="hub-logo-dark" style={{ objectFit:"contain", height:"38px", width:"auto" }} draggable={false} priority />
-          {/* Light mode logo (dark text) */}
-          <Image src="/logo-header.png" alt="Proffy" width={140} height={48} className="hub-logo-light" style={{ objectFit:"contain", height:"38px", width:"auto" }} draggable={false} priority />
+        <div style={{ display:"flex", alignItems:"center", gap:"9px" }}>
+          <Image src="/logo-owl.png" alt="Proffy" width={36} height={36} style={{ objectFit:"contain", width:"36px", height:"36px", flexShrink:0 }} draggable={false} priority />
+          <span style={{ fontWeight:800, fontSize:"18px", letterSpacing:"-0.02em", color:"var(--text-primary)" }}>Proffy</span>
         </div>
         <div className="hub-nav-toggles">
           {mounted && <span className="hub-hide-mobile"><ThemeToggle /></span>}
