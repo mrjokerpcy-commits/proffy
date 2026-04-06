@@ -95,7 +95,7 @@ export default function LoginPage() {
                 display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem",
                 padding: "0.7rem 1rem", borderRadius: "0.875rem", fontSize: "0.9rem", fontWeight: 500,
                 background: "var(--bg-elevated)", border: "1px solid var(--border-light)",
-                color: "var(--text-primary)", transition: "opacity 0.15s",
+                color: "var(--text-primary)", transition: "opacity 0.15s", cursor: "pointer",
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24">
@@ -164,7 +164,7 @@ export default function LoginPage() {
                 background: "var(--blue)", color: "#fff",
                 boxShadow: "0 2px 16px rgba(79,142,247,0.35)",
                 opacity: loading ? 0.6 : 1, transition: "opacity 0.15s",
-                marginTop: "0.25rem",
+                cursor: loading ? "not-allowed" : "pointer", marginTop: "0.25rem",
               }}
             >
               {loading ? "Signing in…" : "Sign in"}
