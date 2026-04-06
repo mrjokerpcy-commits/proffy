@@ -284,7 +284,7 @@ export default function HubPage() {
       <ConstellationBg />
 
       {/* ── Ambient glow — fixed so it covers all sections while scrolling ── */}
-      <div aria-hidden="true" style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, background:"radial-gradient(ellipse 100vw 80vh at 50% 0%, rgba(22,163,74,0.14) 0%, transparent 60%), radial-gradient(ellipse 90vw 70vh at 0% 50%, rgba(34,197,94,0.11) 0%, transparent 60%), radial-gradient(ellipse 90vw 70vh at 100% 50%, rgba(22,163,74,0.10) 0%, transparent 60%), radial-gradient(ellipse 100vw 80vh at 50% 100%, rgba(34,197,94,0.12) 0%, transparent 60%), radial-gradient(ellipse 70vw 60vh at 50% 50%, rgba(22,163,74,0.08) 0%, transparent 55%)" }} />
+      <div aria-hidden="true" style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, background:"radial-gradient(ellipse 140% 140% at 50% 40%, rgba(22,163,74,0.18) 0%, rgba(22,163,74,0.06) 45%, transparent 70%)" }} />
 
       {/* ── Access modal ── */}
       <AnimatePresence>
@@ -294,11 +294,11 @@ export default function HubPage() {
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"62px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
         <div style={{ display:"flex", alignItems:"center" }}>
-          <Image src="/logo-header-dark.png" alt="Proffy" width={280} height={90} className="hub-logo-dark" style={{ objectFit:"contain", height:"68px", width:"auto" }} draggable={false} priority />
-          <Image src="/logo-header.png" alt="Proffy" width={280} height={90} className="hub-logo-light" style={{ objectFit:"contain", height:"68px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header-dark.png" alt="Proffy" width={360} height={110} className="hub-logo-dark" style={{ objectFit:"contain", height:"88px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header.png" alt="Proffy" width={360} height={110} className="hub-logo-light" style={{ objectFit:"contain", height:"88px", width:"auto" }} draggable={false} priority />
         </div>
         <div className="hub-nav-toggles">
-          {mounted && <span className="hub-hide-mobile"><ThemeToggle /></span>}
+          {mounted && <ThemeToggle />}
           {mounted && <LangToggle />}
           <button onClick={() => setShowModal(true)} style={{ padding:"8px 18px", borderRadius:"10px", fontSize:"13px", fontWeight:600, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", border:"none", cursor:"pointer", boxShadow:"0 2px 12px rgba(22,163,74,0.28)", transition:"opacity 0.12s,transform 0.12s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>{e.currentTarget.style.opacity="0.85";e.currentTarget.style.transform="translateY(-1px)"}}
