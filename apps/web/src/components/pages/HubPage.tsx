@@ -13,17 +13,23 @@ function ConstellationBg() {
     const ctx = c.getContext("2d"); if (!ctx) return;
     let raf: number;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isMobile = window.innerWidth < 768;
     let W = window.innerWidth, H = window.innerHeight;
     c.width = W; c.height = H;
     const onResize = () => { W = window.innerWidth; H = window.innerHeight; c.width = W; c.height = H; };
     window.addEventListener("resize", onResize, { passive: true });
-    const N = 40;
+    const N = isMobile ? 18 : 40;
     const pts = Array.from({ length: N }, () => ({
       x: Math.random() * W, y: Math.random() * H,
       vx: (Math.random() - 0.5) * 0.12, vy: (Math.random() - 0.5) * 0.12,
       r: Math.random() * 1.2 + 0.4,
     }));
+    let frame = 0;
     const draw = () => {
+      if (document.hidden) { raf = requestAnimationFrame(draw); return; }
+      frame++;
+      // Throttle to ~30fps on mobile (skip every other frame)
+      if (isMobile && frame % 2 !== 0) { raf = requestAnimationFrame(draw); return; }
       const light = document.documentElement.classList.contains("light");
       const rgb = light ? "22,163,74" : "34,197,94";
       ctx.clearRect(0, 0, W, H);
@@ -32,7 +38,7 @@ function ConstellationBg() {
         if (p.x < 0 || p.x > W) p.vx *= -1;
         if (p.y < 0 || p.y > H) p.vy *= -1;
       }
-      for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+      if (!isMobile) for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
         const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y, d2 = dx*dx+dy*dy;
         if (d2 < 14400) { const a = (light?.18:.28)*(1-Math.sqrt(d2)/120); ctx.beginPath(); ctx.strokeStyle=`rgba(${rgb},${a.toFixed(3)})`; ctx.lineWidth=.8; ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }
       }
@@ -379,12 +385,23 @@ export default function HubPage() {
             <p style={{ fontSize:"17px", color:"var(--text-secondary)", lineHeight:1.8 }}>{t.missionBody}</p>
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"16px" }}>
-            {["Study smarter","Save time","Source-cited answers","24/7 available"].map((item, i) => (
-              <div key={i} style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"16px", padding:"20px", boxShadow:"var(--card-shadow)" }}>
-                <div style={{ width:"32px", height:"32px", borderRadius:"8px", background:"rgba(22,163,74,0.12)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:"10px" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {(lang === "he" ? [
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, title:"לומד חכם יותר", sub:"AI שמתאים את עצמו לחומר הלימוד שלך ולסגנון הבחינה." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:"חוסך זמן", sub:"קבל תשובות מדויקות תוך שניות, בלי לחפש בגוגל שעות." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, title:"תשובות עם מקורות", sub:"כל תשובה מקושרת לשקף או לדף הרלוונטי מהחומר שלך." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, title:"זמין 24/7", sub:"גם בלילה לפני הבחינה — Proffy תמיד כאן." },
+            ] : [
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, title:"Study smarter", sub:"AI that adapts to your material, professor style, and exam format." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:"Save time", sub:"Get precise answers in seconds, not after hours of searching." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, title:"Source-cited answers", sub:"Every answer links back to the slide or page it came from." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, title:"Available 24/7", sub:"Even the night before your exam, Proffy is always on." },
+            ]).map((card, i) => (
+              <div key={i} style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"16px", padding:"22px", boxShadow:"var(--card-shadow)", display:"flex", flexDirection:"column", gap:"10px" }}>
+                <div style={{ width:"38px", height:"38px", borderRadius:"10px", background:"rgba(22,163,74,0.1)", border:"1px solid rgba(22,163,74,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  {card.icon}
                 </div>
-                <p style={{ fontSize:"13px", fontWeight:600, color:"var(--text-primary)" }}>{item}</p>
+                <p style={{ fontSize:"14px", fontWeight:700, color:"var(--text-primary)", lineHeight:1.3 }}>{card.title}</p>
+                <p style={{ fontSize:"12px", color:"var(--text-secondary)", lineHeight:1.6 }}>{card.sub}</p>
               </div>
             ))}
           </div>
