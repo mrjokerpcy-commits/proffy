@@ -125,7 +125,7 @@ function FloatingMascot() {
       animate={{ y: [0, -6, 0] }}
       transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
     >
-      <Mascot variant="wave" size={88} priority />
+      <Mascot variant="avatar" size={88} priority />
     </motion.div>
   );
 }
