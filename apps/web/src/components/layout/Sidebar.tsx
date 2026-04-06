@@ -185,9 +185,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       <div style={{ padding: "0.875rem 1rem", display: "flex", alignItems: "center", gap: "0.625rem", flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
         <SidebarLogo />
         <span style={{ fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.01em", color: "var(--text-primary)", flex: 1, display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          {subdomain !== "root" && subdomain in SUBDOMAIN_SITES
-            ? SUBDOMAIN_SITES[subdomain as keyof typeof SUBDOMAIN_SITES].label
-            : "Proffy"}
+          {SUBDOMAIN_SITES[subdomain as keyof typeof SUBDOMAIN_SITES]?.label ?? "Proffy"}
           <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--blue)", background: "var(--blue-dim)", border: "1px solid var(--blue-glow)", borderRadius: "4px", padding: "1px 5px", lineHeight: 1.5 }}>
             {PROFFY_VERSION}
           </span>
@@ -198,7 +196,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: "28px", height: "28px", borderRadius: "7px",
-            background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+            background: "var(--bg-elevated)", border: "1px solid var(--border)",
             color: "var(--text-muted)", flexShrink: 0, cursor: "pointer",
             transition: "all 0.15s",
           }}
@@ -611,7 +609,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
         >
           <div style={{
             width: "36px", height: "36px", borderRadius: "9px", flexShrink: 0,
-            background: fcDue > 0 ? "rgba(167,139,250,0.2)" : "rgba(255,255,255,0.05)",
+            background: fcDue > 0 ? "rgba(167,139,250,0.2)" : "var(--bg-elevated)",
             border: `1px solid ${fcDue > 0 ? "rgba(167,139,250,0.38)" : "var(--border)"}`,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
@@ -647,7 +645,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
         >
           <div style={{
             width: "36px", height: "36px", borderRadius: "9px", flexShrink: 0,
-            background: "rgba(255,255,255,0.05)",
+            background: "var(--bg-elevated)",
             border: "1px solid var(--border)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
@@ -790,7 +788,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           style={{
             display: "flex", alignItems: "center", gap: "10px", width: "100%",
             padding: "10px 12px", fontSize: "13px",
-            cursor: "pointer", background: menuOpen ? "rgba(255,255,255,0.04)" : "transparent",
+            cursor: "pointer", background: menuOpen ? "var(--bg-elevated)" : "transparent",
             border: "none", color: "var(--text-secondary)", transition: "background 0.15s",
           }}
         >
