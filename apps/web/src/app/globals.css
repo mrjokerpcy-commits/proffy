@@ -4,31 +4,31 @@
 
 /* ─── Design tokens — Dark mode (default) ──────────────────────────────────── */
 :root {
-  /* ── Background layers — deep navy-purple, like a premium SaaS dashboard ── */
-  --bg-base:       #12102a;
-  --bg-surface:    #1a1840;
-  --bg-elevated:   #222048;
-  --bg-hover:      #2c2860;
+  /* ── Background layers — near-black with green warmth ── */
+  --bg-base:       #060d06;
+  --bg-surface:    #0b160b;
+  --bg-elevated:   #101e10;
+  --bg-hover:      #182418;
   --bg-card:       rgba(255,255,255,0.04);
 
-  /* ── Borders — subtly visible ── */
-  --border:        rgba(120,120,255,0.1);
-  --border-light:  rgba(150,150,255,0.18);
-  --border-focus:  rgba(99,102,241,0.65);
+  /* ── Borders ── */
+  --border:        rgba(22,163,74,0.15);
+  --border-light:  rgba(22,163,74,0.25);
+  --border-focus:  rgba(22,163,74,0.55);
 
   /* ── Text hierarchy ── */
-  --text-primary:   #f0f0ff;
-  --text-secondary: #9090c8;
-  --text-muted:     #5858a0;
-  --text-disabled:  #333360;
+  --text-primary:   #edfaed;
+  --text-secondary: #96b896;
+  --text-muted:     #507050;
+  --text-disabled:  #243624;
 
-  /* ── Brand — vivid indigo → violet ── */
-  --blue:          #6366f1;
-  --blue-hover:    #818cf8;
-  --blue-dim:      rgba(99,102,241,0.14);
-  --blue-glow:     rgba(99,102,241,0.35);
-  --purple:        #c084fc;
-  --purple-glow:   rgba(192,132,252,0.22);
+  /* ── Brand — green ── */
+  --blue:          #16a34a;
+  --blue-hover:    #22c55e;
+  --blue-dim:      rgba(22,163,74,0.12);
+  --blue-glow:     rgba(22,163,74,0.32);
+  --purple:        #4ade80;
+  --purple-glow:   rgba(74,222,128,0.18);
 
   /* ── Accent spectrum ── */
   --accent-cyan:   #22d3ee;
@@ -43,49 +43,49 @@
   --font-heading: inherit;
   --font-body:    inherit;
 
-  /* ── Component tokens (dark mode defaults) ── */
-  --nav-bg:       rgba(11,11,30,0.85);
-  --nav-border:   rgba(120,120,255,0.1);
+  /* ── Component tokens ── */
+  --nav-bg:       rgba(6,13,6,0.90);
+  --nav-border:   rgba(22,163,74,0.20);
   --card-shadow:  none;
 }
 
-/* ─── Light mode — clean white, inspired by Linear/Vercel/Stripe ────────────── */
+/* ─── Light mode — warm cream/beige with green accent ───────────────────────── */
 html.light {
-  /* Backgrounds — pure white system, no color tinting */
-  --bg-base:       #ffffff;
-  --bg-surface:    #f8fafc;
-  --bg-elevated:   #f1f5f9;
-  --bg-hover:      #e2e8f0;
-  --bg-card:       rgba(255,255,255,1);
+  /* Backgrounds — warm cream like Claude */
+  --bg-base:       #f8f5f0;
+  --bg-surface:    #f1ebe2;
+  --bg-elevated:   #e9e1d5;
+  --bg-hover:      #e0d8cc;
+  --bg-card:       rgba(255,255,255,0.7);
 
-  /* Borders — neutral grey, shadow-based depth */
-  --border:        rgba(0,0,0,0.07);
-  --border-light:  rgba(0,0,0,0.12);
-  --border-focus:  rgba(99,102,241,0.5);
+  /* Borders */
+  --border:        rgba(22,163,74,0.14);
+  --border-light:  rgba(22,163,74,0.24);
+  --border-focus:  rgba(22,163,74,0.5);
 
-  /* Text — true slate hierarchy */
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-muted:     #64748b;
-  --text-disabled:  #94a3b8;
+  /* Text */
+  --text-primary:   #1a2e1a;
+  --text-secondary: #3d5c3d;
+  --text-muted:     #6b8f6b;
+  --text-disabled:  #a0bca0;
 
-  /* Brand — slightly deeper for white backgrounds */
-  --blue:          #4f46e5;
-  --blue-hover:    #6366f1;
-  --blue-dim:      rgba(79,70,229,0.08);
-  --blue-glow:     rgba(99,102,241,0.18);
-  --purple:        #7c3aed;
-  --purple-glow:   rgba(124,58,237,0.12);
+  /* Brand — green */
+  --blue:          #16a34a;
+  --blue-hover:    #15803d;
+  --blue-dim:      rgba(22,163,74,0.10);
+  --blue-glow:     rgba(22,163,74,0.20);
+  --purple:        #166534;
+  --purple-glow:   rgba(22,101,52,0.12);
 
   /* Semantic */
   --red:    #dc2626;
   --amber:  #d97706;
-  --green:  #059669;
+  --green:  #16a34a;
 
-  /* Component-specific tokens */
-  --nav-bg:       rgba(255,255,255,0.92);
-  --nav-border:   rgba(0,0,0,0.08);
-  --card-shadow:  0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05);
+  /* Component tokens */
+  --nav-bg:       rgba(248,245,240,0.92);
+  --nav-border:   rgba(22,163,74,0.15);
+  --card-shadow:  0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
 }
 
 /* ─── Subdomain: app.proffy.study — Deep navy + electric indigo ─────────────── */

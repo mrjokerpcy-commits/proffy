@@ -33,10 +33,10 @@ function ProffyAvatar({ thinking = false }: { index: number; thinking?: boolean 
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/mascot/avatar.png"
+        src="/logo-owl.png"
         alt="Proffy"
-        width={32} height={32}
-        style={{ objectFit: "cover", width: "100%", height: "100%" }}
+        width={64} height={64}
+        style={{ objectFit: "contain", width: "100%", height: "100%" }}
         draggable={false}
       />
     </div>
