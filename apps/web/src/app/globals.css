@@ -185,21 +185,6 @@ html[data-subdomain="bagrut"].light {
 html.light [data-hub] .hub-logo-dark  { display: none; }
 html.light [data-hub] .hub-logo-light { display: block; }
 
-/* ─── Hub: ambient green glow orbs across full page ─────────────────────────── */
-[data-hub] {
-  background-image:
-    radial-gradient(ellipse 900px 700px at 15% 15%, rgba(22,163,74,0.08) 0%, transparent 65%),
-    radial-gradient(ellipse 700px 600px at 85% 35%, rgba(34,197,94,0.06) 0%, transparent 65%),
-    radial-gradient(ellipse 800px 600px at 30% 65%, rgba(22,163,74,0.06) 0%, transparent 65%),
-    radial-gradient(ellipse 600px 500px at 75% 85%, rgba(74,222,128,0.05) 0%, transparent 65%);
-}
-html.light [data-hub] {
-  background-image:
-    radial-gradient(ellipse 900px 700px at 15% 15%, rgba(22,163,74,0.05) 0%, transparent 65%),
-    radial-gradient(ellipse 700px 600px at 85% 35%, rgba(34,197,94,0.04) 0%, transparent 65%),
-    radial-gradient(ellipse 800px 600px at 30% 65%, rgba(22,163,74,0.04) 0%, transparent 65%),
-    radial-gradient(ellipse 600px 500px at 75% 85%, rgba(74,222,128,0.03) 0%, transparent 65%);
-}
 
 /* ─── Hub theme tokens — beige + green (scoped to hub page) ─────────────────── */
 [data-hub] {

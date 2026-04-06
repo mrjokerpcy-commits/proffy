@@ -72,7 +72,7 @@ const T = {
   en: {
     badge: "The Proffy Network", getAccess: "Get Access",
     h1a:"One platform.", h1b:"Every Israeli student.",
-    sub:"From bagrut to university — AI that understands your course, your professor, and your exam.",
+    sub:"From bagrut to university, AI that understands your course, your professor, and your exam.",
     cta:"Start with Proffy App",
     missionBadge:"Our Mission",
     missionTitle:"Academic intelligence for every Israeli student.",
@@ -84,7 +84,7 @@ const T = {
     howTitle:"Three steps to exam confidence.",
     howSteps:[
       { title:"Upload your material", body:"Drop your slides, syllabi, past exams, and professor notes. Proffy indexes everything.", icon:"upload" },
-      { title:"Ask anything", body:"Chat with an AI that knows your exact course — not a generic tutor, your tutor.", icon:"chat" },
+      { title:"Ask anything", body:"Chat with an AI that knows your exact course, not a generic tutor, your tutor.", icon:"chat" },
       { title:"Walk in ready", body:"Focused study plans, source-cited answers, and exam-targeted summaries.", icon:"check" },
     ],
     productsBadge:"The Network",
@@ -92,7 +92,7 @@ const T = {
     meetBadge:"Meet Proffy",
     meetTitle:"Your AI study companion.",
     meetBody:"Proffy is not a search engine. It reads your actual course material, learns your professor's style, and answers like a top student who aced this exact class last semester. No hallucinations. No generic advice. Just what you need to pass.",
-    meetPoints:["Knows your course, professor, and exam date","Answers with sources from your own material","Builds exam-focused study plans","Available 24/7 — even the night before"],
+    meetPoints:["Knows your course, professor, and exam date","Answers with sources from your own material","Builds exam-focused study plans","Available 24/7, even the night before"],
     ctaTitle:"Ready to study smarter?",
     ctaSub:"Join thousands of students across Israeli universities.",
     ctaBtn:"Get Early Access",
@@ -102,11 +102,11 @@ const T = {
   he: {
     badge:"רשת Proffy", getAccess:"קבל גישה",
     h1a:"פלטפורמה אחת.", h1b:"לכל סטודנט ישראלי.",
-    sub:"מבגרות ועד האוניברסיטה — AI שמבין את הקורס, המרצה והבחינה שלך.",
+    sub:"מבגרות ועד האוניברסיטה AI שמבין את הקורס, המרצה והבחינה שלך.",
     cta:"התחל עם Proffy App",
     missionBadge:"המשימה שלנו",
     missionTitle:"אינטליגנציה אקדמית לכל סטודנט ישראלי.",
-    missionBody:"Proffy נוצר כדי לתת לכל סטודנט את היתרון שהוא ראוי לו. אנחנו משלבים את חומר הלימוד שלך, ידע על המרצה, וחשיבה של AI — כדי שתלמד חכם יותר, תתכונן מהר יותר, ותיכנס לכל בחינה בביטחון.",
+    missionBody:"Proffy נוצר כדי לתת לכל סטודנט את היתרון שהוא ראוי לו. אנחנו משלבים את חומר הלימוד שלך, ידע על המרצה, וחשיבה של AI, כדי שתלמד חכם יותר, תתכונן מהר יותר, ותיכנס לכל בחינה בביטחון.",
     whoBadge:"מי אנחנו",
     whoTitle:"נבנה על ידי סטודנטים, לסטודנטים.",
     whoBody:"נמאס לנו לנחש מה יצא בבחינה, איזה מרצה לבחור, ואיך לארגן את זמן הלמידה שלנו. אז בנינו את הכלי שרצינו שיהיה לנו. כל פיצ'ר ב-Proffy קיים כי סטודנט אמיתי היה צריך אותו.",
@@ -114,7 +114,7 @@ const T = {
     howTitle:"שלושה שלבים לביטחון בבחינה.",
     howSteps:[
       { title:"העלה את החומר שלך", body:"הפל שקפים, סילבוס, בחינות ישנות והערות מרצה. Proffy מאנדקס הכל.", icon:"upload" },
-      { title:"שאל הכל", body:"שוחח עם AI שמכיר את הקורס המדויק שלך — לא מורה גנרי, המורה שלך.", icon:"chat" },
+      { title:"שאל הכל", body:"שוחח עם AI שמכיר את הקורס המדויק שלך, לא מורה גנרי, המורה שלך.", icon:"chat" },
       { title:"כנס מוכן", body:"תוכניות לימוד ממוקדות, תשובות עם מקורות מהחומר שלך, וסיכומי בחינה.", icon:"check" },
     ],
     productsBadge:"הרשת",
@@ -122,7 +122,7 @@ const T = {
     meetBadge:"הכר את Proffy",
     meetTitle:"עוזר הלמידה שלך.",
     meetBody:"Proffy הוא לא מנוע חיפוש. הוא קורא את חומר הלימוד האמיתי שלך, לומד את סגנון המרצה שלך, ועונה כמו הסטודנט הכי טוב שעבר את הקורס הזה בסמסטר האחרון. לא המצאות. לא עצות גנריות. רק מה שצריך כדי לעבור.",
-    meetPoints:["מכיר את הקורס, המרצה ותאריך הבחינה","עונה עם מקורות מהחומר שלך","בונה תוכניות לימוד ממוקדות לבחינה","זמין 24/7 — גם בלילה לפני הבחינה"],
+    meetPoints:["מכיר את הקורס, המרצה ותאריך הבחינה","עונה עם מקורות מהחומר שלך","בונה תוכניות לימוד ממוקדות לבחינה","זמין 24/7, גם בלילה לפני הבחינה"],
     ctaTitle:"מוכן ללמוד חכם יותר?",
     ctaSub:"הצטרף לאלפי סטודנטים מאוניברסיטאות ישראליות.",
     ctaBtn:"קבל גישה מוקדמת",
@@ -283,6 +283,9 @@ export default function HubPage() {
     <div data-hub style={{ minHeight:"100vh", background:"var(--bg-base)", color:"var(--text-primary)", position:"relative", overflowX:"hidden", fontFamily:ff, direction:dir }}>
       <ConstellationBg />
 
+      {/* ── Ambient glow — fixed so it covers all sections while scrolling ── */}
+      <div aria-hidden="true" style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, background:"radial-gradient(ellipse 70vw 60vh at 15% 25%, rgba(22,163,74,0.11) 0%, transparent 65%), radial-gradient(ellipse 55vw 50vh at 85% 60%, rgba(34,197,94,0.09) 0%, transparent 65%), radial-gradient(ellipse 60vw 55vh at 40% 85%, rgba(22,163,74,0.08) 0%, transparent 65%)" }} />
+
       {/* ── Access modal ── */}
       <AnimatePresence>
         {showModal && <AccessModal lang={lang} onClose={() => setShowModal(false)} />}
@@ -291,8 +294,8 @@ export default function HubPage() {
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"62px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
         <div style={{ display:"flex", alignItems:"center" }}>
-          <Image src="/logo-header-dark.png" alt="Proffy" width={160} height={52} className="hub-logo-dark" style={{ objectFit:"contain", height:"40px", width:"auto" }} draggable={false} priority />
-          <Image src="/logo-header.png" alt="Proffy" width={160} height={52} className="hub-logo-light" style={{ objectFit:"contain", height:"40px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header-dark.png" alt="Proffy" width={220} height={72} className="hub-logo-dark" style={{ objectFit:"contain", height:"54px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header.png" alt="Proffy" width={220} height={72} className="hub-logo-light" style={{ objectFit:"contain", height:"54px", width:"auto" }} draggable={false} priority />
         </div>
         <div className="hub-nav-toggles">
           {mounted && <span className="hub-hide-mobile"><ThemeToggle /></span>}
@@ -387,7 +390,7 @@ export default function HubPage() {
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, title:"לומד חכם יותר", sub:"AI שמתאים את עצמו לחומר הלימוד שלך ולסגנון הבחינה." },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:"חוסך זמן", sub:"קבל תשובות מדויקות תוך שניות, בלי לחפש בגוגל שעות." },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, title:"תשובות עם מקורות", sub:"כל תשובה מקושרת לשקף או לדף הרלוונטי מהחומר שלך." },
-              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, title:"זמין 24/7", sub:"גם בלילה לפני הבחינה — Proffy תמיד כאן." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, title:"זמין 24/7", sub:"גם בלילה לפני הבחינה, Proffy תמיד כאן." },
             ] : [
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, title:"Study smarter", sub:"AI that adapts to your material, professor style, and exam format." },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:"Save time", sub:"Get precise answers in seconds, not after hours of searching." },
