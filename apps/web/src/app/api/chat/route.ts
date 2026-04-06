@@ -451,7 +451,8 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { message, history = [], sessionId, btwResume, partialResponse, image } = body;
+  const { message, history = [], sessionId, btwResume, partialResponse, image, subdomain } = body;
+  // subdomain: "app" | "psycho" | "yael" | "bagrut" — sent by client, used to adjust system prompt persona
   // image: { base64: string, mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" }
   const imageAttachment = image && typeof image.base64 === "string" && typeof image.mediaType === "string" ? image : null;
   // documents: Array<{ base64: string, mediaType: string, name: string }> — PDFs attached via upload modal
@@ -797,7 +798,15 @@ export async function POST(req: NextRequest) {
 
         const hasCourseContext = !!(university || course || courseId);
 
-        const systemPrompt = `${btwResume ? `[/btw RESUME] You were mid-response when the student injected new context via /btw. Your partial response so far is in the conversation history. Acknowledge the /btw naturally in one short sentence, then seamlessly continue your response from where you left off. Don't restart from scratch.\n\n` : ""}You are Proffy, an AI study companion for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan, Ariel).
+        // ── Subdomain persona prefix ─────────────────────────────────────────
+        const subdomainPersona: Record<string, string> = {
+          psycho: `You are Proffy Psycho, a specialist AI for psychometric exam (מבחן פסיכומטרי) preparation. You are structured, rigorous, and results-driven. You focus on verbal reasoning, quantitative reasoning, and English sections. You know exactly what question types appear, the time limits, and the scoring formula. Your tone is confident and efficient — like a ₪3,000 prep course that actually works. Always guide the student through structured practice, not just explanations.\n\n`,
+          yael: `You are Proffy Yael, a warm and encouraging AI for יע"ל (יחידה ארצית לאוכלוסיות לא-דוברות עברית) exam preparation. Your default language is Hebrew. You respond in Hebrew unless the student writes in another language. You are patient, warm, and human — your tone is like a supportive teacher, not a machine. You know every section of the יע"ל exam. Always encourage the student. Start every session with a warm greeting in Hebrew.\n\n`,
+          bagrut: `You are Proffy Bagrut, an AI built for Israeli high school students preparing for Bagrut (בגרות) exams. You are energetic, modern, and speak like someone who actually talks to teenagers — not a textbook. You know all the Bagrut subjects, grade weights, and exam formats. Break everything into clear steps. Celebrate small wins. Make studying feel achievable and even a little fun. Use emojis occasionally. Default to Hebrew for Israeli students but switch based on their language.\n\n`,
+        };
+        const personaPrefix = subdomainPersona[subdomain as string] ?? "";
+
+        const systemPrompt = `${personaPrefix}${btwResume ? `[/btw RESUME] You were mid-response when the student injected new context via /btw. Your partial response so far is in the conversation history. Acknowledge the /btw naturally in one short sentence, then seamlessly continue your response from where you left off. Don't restart from scratch.\n\n` : ""}You are Proffy, an AI study companion for Israeli university students (TAU, Technion, HUJI, BGU, Bar Ilan, Ariel).
 You are brilliant, warm, and direct — like a top student who aced this exact course and wants to help.
 
 ${hasCourseContext

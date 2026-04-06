@@ -5,6 +5,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { ChatMessage, Course, Source } from "@/lib/types";
 import MessageBubble from "./MessageBubble";
 
+function getSubdomain(): string {
+  if (typeof window === "undefined") return "app";
+  const h = window.location.hostname;
+  if (h.startsWith("psycho.")) return "psycho";
+  if (h.startsWith("yael.")) return "yael";
+  if (h.startsWith("bagrut.")) return "bagrut";
+  return "app";
+}
+
 interface Props {
   course?: Course;
   sessionId?: string;
@@ -194,6 +203,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
           professor: course?.professor,
           semester: course?.semester ?? null,
           courseNumber: (course as any)?.course_number ?? null,
+          subdomain: getSubdomain(),
           sessionId,
           history: (() => {
             // Filter out the local greeting and any non-DB messages, then ensure
@@ -356,6 +366,7 @@ export default function ChatWindow({ course, sessionId, initialMessages = [], ha
           professor: course?.professor,
           semester: course?.semester ?? null,
           courseNumber: (course as any)?.course_number ?? null,
+          subdomain: getSubdomain(),
           sessionId,
           history: (() => {
             const hist = historyMessages

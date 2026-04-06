@@ -1,7 +1,9 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import Link from "next/link";
+import HubPage from "@/components/pages/HubPage";
 
 // ─── Inline SVG illustrations ──────────────────────────────────────────────
 
@@ -125,6 +127,11 @@ function StudyIllustration() {
 // ─── Main page ─────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
+  // proffy.study root domain → hub landing page
+  const host = (await headers()).get("host") ?? "";
+  const isHub = !host.startsWith("app.") && !host.includes("localhost") && !host.startsWith("127.");
+  if (isHub) return <HubPage />;
+
   let session = null;
   try { session = await getServerSession(authOptions); } catch {}
   if (session) redirect("/dashboard");
