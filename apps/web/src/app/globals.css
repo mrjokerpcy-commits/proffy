@@ -182,6 +182,9 @@ html[data-subdomain="bagrut"].light {
 }
 html.light .hub-hero-text {
   background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 55%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .hub-card {
   background: var(--bg-surface);

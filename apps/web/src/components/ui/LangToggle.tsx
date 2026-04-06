@@ -11,12 +11,21 @@ export function useLang(): [Lang, (l: Lang) => void] {
     const stored = (localStorage.getItem(LANG_KEY) as Lang) || "en";
     applyLang(stored);
     setLangState(stored);
+
+    const handler = (e: Event) => {
+      const l = (e as CustomEvent<Lang>).detail;
+      applyLang(l);
+      setLangState(l);
+    };
+    window.addEventListener("proffy-lang", handler);
+    return () => window.removeEventListener("proffy-lang", handler);
   }, []);
 
   const setLang = (l: Lang) => {
     localStorage.setItem(LANG_KEY, l);
     applyLang(l);
     setLangState(l);
+    window.dispatchEvent(new CustomEvent<Lang>("proffy-lang", { detail: l }));
   };
 
   return [lang, setLang];

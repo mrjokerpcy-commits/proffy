@@ -244,8 +244,8 @@ export default async function HomePage() {
         </h1>
 
         <p style={{ marginTop: "1.75rem", fontSize: "1.2rem", maxWidth: "36rem", lineHeight: 1.7, color: "var(--text-secondary)" }}>
-          Upload your lecture slides. Get answers straight from your material, learn your professor&apos;s
-          exam patterns, and build a study plan from today to your final.
+          Chat with an AI that understands your course, your professor, and your exam.
+          Get direct answers that actually match what shows up — no guesswork.
         </p>
 
         {/* CTA row */}
