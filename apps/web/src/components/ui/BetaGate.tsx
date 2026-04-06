@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BETA_ACCESS_CODES, BETA_UNLOCK_KEY } from "@/lib/constants";
+import { BETA_UNLOCK_KEY } from "@/lib/constants";
 
 // ─── Typewriter ───────────────────────────────────────────────────────────────
 const PHRASES = [
@@ -164,21 +164,34 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
-      const trimmed = code.trim().toUpperCase();
-      if (BETA_ACCESS_CODES.includes(trimmed)) {
-        setUnlocking(true);
-        localStorage.setItem(BETA_UNLOCK_KEY, "true");
-        setTimeout(() => setStatus("unlocked"), 700);
-      } else {
-        setError("Invalid access code.");
-        setShaking(true);
-        setTimeout(() => setShaking(false), 550);
-        inputRef.current?.select();
+      if (!code.trim() || unlocking) return;
+      setUnlocking(true);
+      setError("");
+      try {
+        const res = await fetch("/api/beta-verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (data.valid) {
+          localStorage.setItem(BETA_UNLOCK_KEY, "true");
+          setTimeout(() => setStatus("unlocked"), 700);
+        } else {
+          setUnlocking(false);
+          setError(res.status === 429 ? data.error : "Invalid access code.");
+          setShaking(true);
+          setTimeout(() => setShaking(false), 550);
+          inputRef.current?.select();
+        }
+      } catch {
+        setUnlocking(false);
+        setError("Something went wrong. Please try again.");
       }
     },
-    [code]
+    [code, unlocking]
   );
 
   if (status === "loading") return null;

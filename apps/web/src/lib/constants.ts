@@ -1,12 +1,6 @@
 // ─── Beta access codes ──────────────────────────────────────────────────────
-// Add / remove codes here. Checked client-side (uppercased, trimmed).
-export const BETA_ACCESS_CODES: readonly string[] = [
-  "PROFFY2024",
-  "EARLYBIRD",
-  "INVITE2024",
-  "PROFFY-BETA",
-  "PROFFYVIP",
-];
+// Codes live in BETA_ACCESS_CODES env var (comma-separated), never in source.
+// Verification happens server-side via /api/beta-verify — codes never reach the browser.
 
 export const BETA_UNLOCK_KEY = "proffy_beta_v1";
 
