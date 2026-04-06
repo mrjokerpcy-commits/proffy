@@ -14,6 +14,18 @@ const pool = new Pool({
   ssl: false,
 });
 
+// ─── Per-user burst rate limiter ─────────────────────────────────────────────
+// Prevents rapid-fire requests within a short window (e.g. looping scripts).
+// Limits: 1 request per 2 seconds per user (in-memory, resets on server restart).
+const chatBurst = new Map<string, number>();
+function isChatBurstLimited(userId: string): boolean {
+  const now = Date.now();
+  const last = chatBurst.get(userId) ?? 0;
+  if (now - last < 2000) return true;
+  chatBurst.set(userId, now);
+  return false;
+}
+
 // Monthly token budgets (input + output combined).
 // Avg message is ~3k tokens on Haiku (free) and ~6k tokens on Sonnet (paid).
 // Displayed to users as "~X messages left" using AVG_TOKENS_PER_MSG.
@@ -407,6 +419,10 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = session.user.id;
+
+  if (isChatBurstLimited(userId)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
+  }
 
   // Check usage limit
   const { rows: planRows } = await pool.query(
@@ -870,7 +886,7 @@ Current student plan: **${plan}**
 
 ## TOOLS
 You have tools to take real actions:
-- **lookup_course**: For Technion students, ALWAYS call this first when they mention a course name or number. Show them the top matches and ask them to confirm before creating. Handles course numbers with varying zero-padding (e.g. "044142" ≈ "44142" ≈ "0440142"). For non-Technion universities, skip this and go straight to create_course.
+- **lookup_course**: For Technion students, ALWAYS call this first when they mention a course name or number. Show them the top matches and ask them to confirm before creating. Handles course numbers with varying zero-padding (e.g. "044142" ≈ "44142" ≈ "0440142"). If no matches found, do NOT suggest or invent possible course names — just ask the student for the exact course name or number as it appears in the Technion course catalog (e.g. "תוכל לתת לי את השם המדויק של הקורס או את המספר שלו?"). For non-Technion universities, skip this and go straight to create_course.
 - **create_course**: Call AFTER the user confirms the course details (or immediately for non-Technion). IMPORTANT: Free users can only have 3 courses total (lifetime). If they already have 3, tell them they need to upgrade to Pro before calling this tool. If the university is "Other", after creating the course say something like: "I've added your course! Since your university isn't one of the main ones I have pre-loaded material for, you'll get the best results by uploading your slides or course material — want to do that now?" (only ask once, don't repeat).
 - **search_web**: Search the internet. Call this proactively at the start of any course-related conversation where you don't already have rich material — search for the official syllabus, past exams, professor pages, course number, and online resources. For Israeli courses always try Hebrew queries too (e.g. "Technion 234218 מבחנים" + "TAU אלגברה לינארית סיכומים"). Don't wait for the student to ask — if you can search and find useful material, do it.
 - **fetch_page**: After finding a promising URL via search_web, fetch the full page to read its content. Use this to read a syllabus, a professor's course page, or a resource page in full before summarizing it to the student.
@@ -965,7 +981,7 @@ When you have no course material for a topic and the student just came from a le
 
 ## STYLE
 - Warm but sharp. Israeli-student aware (Technion stress, exam culture)
-- Use Hebrew naturally if the student writes in Hebrew or mixes languages
+- **Hebrew**: When the student writes in Hebrew or mixes Hebrew/English, respond fully in Hebrew. Write like a real Israeli student talks — casual, direct, natural. NOT formal. NOT stiff. NOT the kind of Hebrew that sounds translated. Use everyday Israeli phrasing. Short sentences. It's okay to mix in English terms for technical words (e.g. "קורס ב-Circuits", "נעשה quiz"). Avoid stilted phrases like "בואו נחל" — say "יאללה נתחיל", "בוא נעשה", "אחלה". Match the student's register.
 - Keep responses focused — students want to understand and move on
 - Cite sources with [Source N] when using retrieved content
 - Math: inline \\$...\\$ or block \\$\\$...\\$\\$

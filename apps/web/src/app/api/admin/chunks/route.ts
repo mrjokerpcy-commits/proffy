@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { QdrantClient } from "@qdrant/js-client-rest";
+import { requireAdmin } from "@/lib/admin-auth";
 
 const qdrant = new QdrantClient({
   url: process.env.QDRANT_URL || "http://localhost:6333",
@@ -9,10 +8,8 @@ const qdrant = new QdrantClient({
 });
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const deny = await requireAdmin(req);
+  if (deny) return deny;
 
   const { searchParams } = new URL(req.url);
   const offset = searchParams.get("offset") ?? undefined;

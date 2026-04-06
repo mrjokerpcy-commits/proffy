@@ -1,13 +1,9 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!session?.user?.email || session.user.email !== adminEmail) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export async function GET(req: NextRequest) {
+  const deny = await requireAdmin(req);
+  if (deny) return deny;
 
   const vars = {
     GOOGLE_SERVICE_ACCOUNT_KEY: !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY,

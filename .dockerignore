@@ -1,0 +1,40 @@
+# Dependencies — installed fresh in Docker
+node_modules
+**/node_modules
+
+# Build output — built fresh in Docker
+.next
+**/.next
+dist
+**/dist
+
+# Git
+.git
+.gitignore
+
+# Local env files — injected via docker-compose env_file
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Dev tooling
+.turbo
+**/.turbo
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+# Test artifacts
+coverage
+**/__tests__
+**/*.test.ts
+**/*.spec.ts

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { QdrantClient } from "@qdrant/js-client-rest";
+import { requireAdmin } from "@/lib/admin-auth";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -13,10 +12,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "placeholder" 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "placeholder" });
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const deny = await requireAdmin(req);
+  if (deny) return deny;
 
   const { question, university, course, withAnswer = true } = await req.json();
   if (!question?.trim()) return NextResponse.json({ error: "question required" }, { status: 400 });

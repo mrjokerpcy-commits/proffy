@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import Anthropic from "@anthropic-ai/sdk";
+import { requireAdmin } from "@/lib/admin-auth";
 import { QdrantClient } from "@qdrant/js-client-rest";
 import OpenAI from "openai";
 import { Pool } from "pg";
@@ -63,11 +62,8 @@ function smartChunk(text: string, maxWords = 300): string[] {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!session?.user?.email || session.user.email !== adminEmail) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const deny = await requireAdmin(req);
+  if (deny) return deny;
 
   const contentType = req.headers.get("content-type") ?? "";
   let url = "", pastedText = "", university = "Technion", label = "reference";
@@ -297,11 +293,8 @@ Course numbers are exactly 6 digits. mandatory=true if marked חובה. Include 
 }
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!session?.user?.email || session.user.email !== adminEmail) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const deny = await requireAdmin(req);
+  if (deny) return deny;
   await ensureSchema().catch(() => {});
   const { rows } = await pool.query("SELECT COUNT(*) as c FROM technion_courses").catch(() => ({ rows: [{ c: "0" }] }));
   return NextResponse.json({ courses: parseInt(rows[0]?.c ?? "0", 10) });

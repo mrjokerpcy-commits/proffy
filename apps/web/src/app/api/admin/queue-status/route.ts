@@ -1,19 +1,15 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
+import { requireAdmin } from "@/lib/admin-auth";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
   ssl: false,
 });
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!session?.user?.email || session.user.email !== adminEmail) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export async function GET(req: NextRequest) {
+  const deny = await requireAdmin(req);
+  if (deny) return deny;
 
   await Promise.all([
     pool.query(`ALTER TABLE material_queue ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`),
