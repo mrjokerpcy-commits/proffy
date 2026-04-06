@@ -284,7 +284,7 @@ export default function HubPage() {
       <ConstellationBg />
 
       {/* ── Ambient glow — fixed so it covers all sections while scrolling ── */}
-      <div aria-hidden="true" style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, background:"radial-gradient(ellipse 70vw 60vh at 15% 25%, rgba(22,163,74,0.11) 0%, transparent 65%), radial-gradient(ellipse 55vw 50vh at 85% 60%, rgba(34,197,94,0.09) 0%, transparent 65%), radial-gradient(ellipse 60vw 55vh at 40% 85%, rgba(22,163,74,0.08) 0%, transparent 65%)" }} />
+      <div aria-hidden="true" style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, background:"radial-gradient(ellipse 100vw 80vh at 50% 0%, rgba(22,163,74,0.14) 0%, transparent 60%), radial-gradient(ellipse 90vw 70vh at 0% 50%, rgba(34,197,94,0.11) 0%, transparent 60%), radial-gradient(ellipse 90vw 70vh at 100% 50%, rgba(22,163,74,0.10) 0%, transparent 60%), radial-gradient(ellipse 100vw 80vh at 50% 100%, rgba(34,197,94,0.12) 0%, transparent 60%), radial-gradient(ellipse 70vw 60vh at 50% 50%, rgba(22,163,74,0.08) 0%, transparent 55%)" }} />
 
       {/* ── Access modal ── */}
       <AnimatePresence>
@@ -294,8 +294,8 @@ export default function HubPage() {
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"62px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
         <div style={{ display:"flex", alignItems:"center" }}>
-          <Image src="/logo-header-dark.png" alt="Proffy" width={220} height={72} className="hub-logo-dark" style={{ objectFit:"contain", height:"54px", width:"auto" }} draggable={false} priority />
-          <Image src="/logo-header.png" alt="Proffy" width={220} height={72} className="hub-logo-light" style={{ objectFit:"contain", height:"54px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header-dark.png" alt="Proffy" width={280} height={90} className="hub-logo-dark" style={{ objectFit:"contain", height:"68px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header.png" alt="Proffy" width={280} height={90} className="hub-logo-light" style={{ objectFit:"contain", height:"68px", width:"auto" }} draggable={false} priority />
         </div>
         <div className="hub-nav-toggles">
           {mounted && <span className="hub-hide-mobile"><ThemeToggle /></span>}
@@ -310,13 +310,6 @@ export default function HubPage() {
 
       {/* ── Hero ── */}
       <section style={{ position:"relative", zIndex:1, padding:"120px max(32px,4vw) 80px", overflow:"hidden" }}>
-        {/* Spotlight glow */}
-        <div aria-hidden="true" style={{
-          position:"absolute", top:"0%", left:"50%", transform:"translateX(-50%)",
-          width:"900px", height:"700px", borderRadius:"50%", pointerEvents:"none", zIndex:0,
-          background:"radial-gradient(ellipse at 50% 35%, rgba(22,163,74,0.28) 0%, rgba(74,222,128,0.12) 40%, transparent 72%)",
-          filter:"blur(48px)",
-        }} />
 
         <div className="hub-hero-grid">
           {/* Text side */}
