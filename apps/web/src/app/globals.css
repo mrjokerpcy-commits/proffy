@@ -179,6 +179,12 @@ html[data-subdomain="bagrut"].light {
 }
 [data-hub] .hub-badge-dot { animation: hub-pulse 2s ease-in-out infinite; }
 
+/* ─── Hub: logo theme switching ─────────────────────────────────────────────── */
+[data-hub] .hub-logo-light { display: none; }
+[data-hub] .hub-logo-dark  { display: block; }
+html.light [data-hub] .hub-logo-dark  { display: none; }
+html.light [data-hub] .hub-logo-light { display: block; }
+
 /* ─── Hub theme tokens — beige + green (scoped to hub page) ─────────────────── */
 [data-hub] {
   --blue:          #16a34a;

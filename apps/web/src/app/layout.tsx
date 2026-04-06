@@ -47,11 +47,12 @@ export const metadata: Metadata = {
   description: "AI-powered study assistant for Israeli university students",
   icons: {
     icon: [
+      { url: "/logo-owl.png", type: "image/png" },
       { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
+    shortcut: "/logo-owl.png",
+    apple: "/logo-owl.png",
   },
 };
 
