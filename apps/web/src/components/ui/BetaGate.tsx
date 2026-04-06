@@ -277,13 +277,14 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
               </div>
 
               {/* Tagline */}
-              <p style={{
+              <p dir="rtl" style={{
                 fontSize: "17px", color: "var(--text-secondary)",
                 lineHeight: 1.6, maxWidth: "400px",
                 margin: "0 auto 8px",
                 fontWeight: 400,
+                unicodeBidi: "plaintext",
               }}>
-                ה-AI שמכיר את הקורסים שלך, את המרצה, ואת מה שבאמת יוצא בבחינה.
+                ה‑AI שמכיר את הקורסים שלך, את המרצה, ואת מה שבאמת יוצא בבחינה.
               </p>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "32px" }}>
                 גישה בהזמנה בלבד. הזן את קוד הגישה שלך להמשך.
