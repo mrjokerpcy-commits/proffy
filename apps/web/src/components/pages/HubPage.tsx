@@ -206,51 +206,57 @@ export default function HubPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", padding:"148px max(32px,4vw) 80px", overflow:"hidden" }}>
-        {/* Spotlight glow — dark mode only */}
+      <section style={{ position:"relative", zIndex:1, padding:"120px max(32px,4vw) 80px", overflow:"hidden" }}>
+        {/* Spotlight glow */}
         <div aria-hidden="true" style={{
-          position:"absolute", top:"10%", left:"50%", transform:"translateX(-50%)",
-          width:"700px", height:"600px", borderRadius:"50%", pointerEvents:"none", zIndex:0,
-          background:"radial-gradient(ellipse at 50% 40%, rgba(22,163,74,0.18) 0%, rgba(74,222,128,0.08) 40%, transparent 70%)",
-          filter:"blur(40px)",
+          position:"absolute", top:"0%", left:"50%", transform:"translateX(-50%)",
+          width:"900px", height:"700px", borderRadius:"50%", pointerEvents:"none", zIndex:0,
+          background:"radial-gradient(ellipse at 50% 35%, rgba(22,163,74,0.16) 0%, rgba(74,222,128,0.07) 40%, transparent 70%)",
+          filter:"blur(48px)",
         }} />
 
-        <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.5}} style={{ position:"relative", zIndex:1 }}>
-          <Badge>{t.badge}</Badge>
-        </motion.div>
+        <div style={{ position:"relative", zIndex:1, maxWidth:"1400px", margin:"0 auto", display:"grid", gridTemplateColumns:"1fr auto", gap:"40px", alignItems:"center" }}>
+          {/* Text side */}
+          <div style={{ direction:dir }}>
+            <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.5}}>
+              <Badge>{t.badge}</Badge>
+            </motion.div>
 
-        <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.06}} style={{ marginBottom:"24px", position:"relative", zIndex:1 }}>
-          <motion.div animate={{y:[0,-8,0]}} transition={{duration:3.5,repeat:Infinity,ease:"easeInOut"}}>
-            <Image src="/mascot/hero.png" alt="Proffy mascot" width={120} height={120} style={{ objectFit:"contain" }} draggable={false} priority />
+            <motion.h1 initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:0.6,delay:0.08}}
+              style={{ fontSize:"clamp(38px,5.5vw,82px)", fontWeight:900, letterSpacing:"-0.04em", lineHeight:1.08, marginBottom:"20px", color:"var(--text-primary)" }}>
+              {t.h1a}<br />
+              <span className="hub-hero-text">{t.h1b}</span>
+            </motion.h1>
+
+            <motion.p initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{duration:0.55,delay:0.14}}
+              style={{ fontSize:"clamp(15px,1.4vw,18px)", color:"var(--text-secondary)", lineHeight:1.75, maxWidth:"480px", marginBottom:"36px" }}>
+              {t.sub}
+            </motion.p>
+
+            <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.2}}
+              style={{ display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
+              <a href="https://uni.proffy.study"
+                style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 36px", borderRadius:"13px", fontSize:"16px", fontWeight:700, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", textDecoration:"none", boxShadow:"0 6px 28px rgba(22,163,74,0.32)", transition:"transform 0.12s,box-shadow 0.12s" }}
+                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 36px rgba(22,163,74,0.42)"}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 6px 28px rgba(22,163,74,0.32)"}}>
+                {t.cta}
+              </a>
+              <a href="#products"
+                style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 28px", borderRadius:"13px", fontSize:"16px", fontWeight:600, background:"rgba(22,163,74,0.08)", color:"var(--blue)", textDecoration:"none", border:"1px solid rgba(22,163,74,0.25)", transition:"background 0.12s,border-color 0.12s" }}
+                onMouseEnter={e=>{e.currentTarget.style.background="rgba(22,163,74,0.14)";e.currentTarget.style.borderColor="rgba(22,163,74,0.45)"}}
+                onMouseLeave={e=>{e.currentTarget.style.background="rgba(22,163,74,0.08)";e.currentTarget.style.borderColor="rgba(22,163,74,0.25)"}}>
+                {lang === "he" ? "גלה עוד" : "Learn more"}
+              </a>
+            </motion.div>
+          </div>
+
+          {/* Owl side */}
+          <motion.div initial={{opacity:0,x:32}} animate={{opacity:1,x:0}} transition={{duration:0.7,delay:0.1}}>
+            <motion.div animate={{y:[0,-12,0]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}}>
+              <Image src="/mascot/hero.png" alt="Proffy mascot" width={420} height={420} style={{ objectFit:"contain", display:"block" }} draggable={false} priority />
+            </motion.div>
           </motion.div>
-        </motion.div>
-
-        <motion.h1 initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:0.6,delay:0.1}}
-          style={{ position:"relative", zIndex:1, fontSize:"clamp(40px,6vw,88px)", fontWeight:900, letterSpacing:"-0.04em", lineHeight:1.08, marginBottom:"20px", color:"var(--text-primary)" }}>
-          {t.h1a}<br />
-          <span className="hub-hero-text">{t.h1b}</span>
-        </motion.h1>
-
-        <motion.p initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{duration:0.55,delay:0.16}}
-          style={{ position:"relative", zIndex:1, fontSize:"clamp(15px,1.5vw,18px)", color:"var(--text-secondary)", lineHeight:1.75, maxWidth:"520px", marginBottom:"40px" }}>
-          {t.sub}
-        </motion.p>
-
-        <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.22}}
-          style={{ position:"relative", zIndex:1, display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap", justifyContent:"center" }}>
-          <a href="https://app.proffy.study"
-            style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 38px", borderRadius:"13px", fontSize:"16px", fontWeight:700, background:"linear-gradient(135deg,#6366f1,#8b5cf6 60%,#a855f7 100%)", color:"white", textDecoration:"none", boxShadow:"0 6px 28px rgba(99,102,241,0.32)", transition:"transform 0.12s,box-shadow 0.12s" }}
-            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 36px rgba(99,102,241,0.42)"}}
-            onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 6px 28px rgba(99,102,241,0.32)"}}>
-            {t.cta}
-          </a>
-          <a href="#products"
-            style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 28px", borderRadius:"13px", fontSize:"16px", fontWeight:600, background:"rgba(99,102,241,0.08)", color:"var(--blue)", textDecoration:"none", border:"1px solid rgba(99,102,241,0.25)", transition:"background 0.12s,border-color 0.12s" }}
-            onMouseEnter={e=>{e.currentTarget.style.background="rgba(99,102,241,0.14)";e.currentTarget.style.borderColor="rgba(99,102,241,0.45)"}}
-            onMouseLeave={e=>{e.currentTarget.style.background="rgba(99,102,241,0.08)";e.currentTarget.style.borderColor="rgba(99,102,241,0.25)"}}>
-            {lang === "he" ? "גלה עוד" : "Learn more"}
-          </a>
-        </motion.div>
+        </div>
       </section>
 
       {/* ── Feature bar ── */}
@@ -399,7 +405,7 @@ export default function HubPage() {
           </div>
           <div style={{ display:"flex", justifyContent:"center", alignItems:"center" }}>
             <motion.div animate={{y:[0,-10,0]}} transition={{duration:3.5,repeat:Infinity,ease:"easeInOut"}}>
-              <Image src="/mascot/celebrate.png" alt="Proffy" width={260} height={260} style={{ objectFit:"contain" }} draggable={false} />
+              <Image src="/mascot/wave.png" alt="Proffy" width={300} height={300} style={{ objectFit:"contain" }} draggable={false} />
             </motion.div>
           </div>
         </div>
