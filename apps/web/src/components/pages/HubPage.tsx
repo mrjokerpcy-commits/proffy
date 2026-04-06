@@ -14,6 +14,8 @@ function ConstellationBg() {
     let raf: number;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isMobile = window.innerWidth < 768;
+    // Skip canvas entirely on mobile — saves CPU/GPU for smooth scroll
+    if (isMobile) return;
     let W = window.innerWidth, H = window.innerHeight;
     c.width = W; c.height = H;
     const onResize = () => { W = window.innerWidth; H = window.innerHeight; c.width = W; c.height = H; };
@@ -56,10 +58,10 @@ function Section({ children, style, id }: { children: React.ReactNode; style?: R
   return (
     <motion.section
       id={id}
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.5 }}
       style={{ position:"relative", zIndex:1, maxWidth:"1400px", margin:"0 auto", padding:"0 max(32px,4vw)", ...style }}
     >
       {children}
@@ -324,9 +326,9 @@ export default function HubPage() {
 
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"80px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
-        <div style={{ display:"flex", alignItems:"center" }}>
-          <Image src="/logo-header-dark.png" alt="Proffy" width={400} height={130} className="hub-logo-dark" style={{ objectFit:"contain", height:"110px", width:"auto" }} draggable={false} priority />
-          <Image src="/logo-header.png" alt="Proffy" width={400} height={130} className="hub-logo-light" style={{ objectFit:"contain", height:"110px", width:"auto" }} draggable={false} priority />
+        <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+          <Image src="/logo-owl.png" alt="Proffy" width={42} height={42} style={{ objectFit:"contain", width:"42px", height:"42px" }} draggable={false} priority />
+          <span style={{ fontWeight:900, fontSize:"1.3rem", letterSpacing:"-0.025em", color:"var(--text-primary)" }}>Proffy</span>
         </div>
         <div className="hub-nav-toggles">
           {mounted && <ThemeToggle />}
@@ -576,8 +578,8 @@ export default function HubPage() {
         </div>
         <div style={{ display:"flex", gap:"18px" }}>
           <a href="mailto:hello@proffy.study" style={{ color:"inherit", textDecoration:"none" }}>{t.contact}</a>
-          <a href="#" style={{ color:"inherit", textDecoration:"none" }}>{t.privacy}</a>
-          <a href="#" style={{ color:"inherit", textDecoration:"none" }}>{t.terms}</a>
+          <a href="/privacy" style={{ color:"inherit", textDecoration:"none" }}>{t.privacy}</a>
+          <a href="/terms" style={{ color:"inherit", textDecoration:"none" }}>{t.terms}</a>
         </div>
       </footer>
     </div>

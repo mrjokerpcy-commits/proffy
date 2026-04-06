@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import type { Course } from "@/lib/types";
 import { SUBDOMAIN_SITES } from "@/lib/constants";
 import UpgradeModal from "./UpgradeModal";
@@ -85,19 +86,7 @@ function IconLock() {
 
 function SidebarLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-      <defs>
-        <linearGradient id="sb-logo-g" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop style={{ stopColor: "var(--blue)" }}/><stop offset="1" style={{ stopColor: "var(--purple)" }}/>
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="9" fill="url(#sb-logo-g)"/>
-      <rect x="4.5" y="9" width="23" height="5.5" rx="2.5" fill="white"/>
-      <path d="M 9 20 A 7 5.5 0 0 0 23 20 Z" fill="white" fillOpacity="0.8"/>
-      <line x1="16" y1="14.5" x2="16" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.5"/>
-      <line x1="27.5" y1="11.75" x2="27.5" y2="21.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.6"/>
-      <circle cx="27.5" cy="23" r="1.7" fill="white" fillOpacity="0.6"/>
-    </svg>
+    <Image src="/logo-owl.png" alt="Proffy" width={32} height={32} style={{ objectFit: "contain", width: "32px", height: "32px" }} priority />
   );
 }
 

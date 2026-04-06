@@ -17,27 +17,27 @@ export interface SiteConfig {
 
 export const SUBDOMAIN_SITES: Record<Exclude<SubdomainKey, "root">, SiteConfig> = {
   app: {
-    label: "Proffy App",
-    href: "https://app.proffy.study",
+    label: "Uni by Proffy",
+    href: "https://uni.proffy.study",
     tagline: "Your AI study companion",
     color: "#6366f1",
   },
   psycho: {
-    label: "Proffy Psycho",
+    label: "Psycho by Proffy",
     href: "https://psycho.proffy.study",
-    tagline: "Psychology studies, elevated",
+    tagline: "Psychometric exam prep, built to score",
     color: "#d4a017",
   },
   yael: {
-    label: "Proffy × Yael",
+    label: "Yael by Proffy",
     href: "https://yael.proffy.study",
-    tagline: "Hebrew-first, human tutoring",
+    tagline: "Yael exam prep, warm and human",
     color: "#f59e0b",
   },
   bagrut: {
-    label: "Proffy Bagrut",
+    label: "Bagrut by Proffy",
     href: "https://bagrut.proffy.study",
-    tagline: "Bagrut exam prep — Gen Z edition",
+    tagline: "Bagrut exam prep, Gen Z edition",
     color: "#8b5cf6",
   },
 };
