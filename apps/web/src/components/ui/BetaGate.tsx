@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BETA_UNLOCK_KEY } from "@/lib/constants";
+import Mascot from "@/components/ui/Mascot";
 
 // ─── Typewriter ───────────────────────────────────────────────────────────────
 const PHRASES = [
@@ -116,69 +117,16 @@ function StatChips() {
   );
 }
 
-// ─── Professor mascot ────────────────────────────────────────────────────────
-function ProfessorMascot() {
+// ─── Mascot — floating owl ────────────────────────────────────────────────────
+function FloatingMascot() {
   return (
-    <motion.svg
-      width="72" height="72" viewBox="0 0 72 80"
-      fill="none" xmlns="http://www.w3.org/2000/svg"
+    <motion.div
       aria-hidden="true"
-      animate={{ y: [0, -5, 0] }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      animate={{ y: [0, -6, 0] }}
+      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
     >
-      {/* ── Mortarboard ── */}
-      <rect x="29" y="6" width="14" height="8" rx="2.5" fill="#111827" />
-      <rect x="14" y="13" width="44" height="5.5" rx="1.5" fill="#111827" />
-      {/* Tassel — curves from right corner and splits into fringe */}
-      <path d="M 58 15 C 63 19 63 25 60 30" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-      <line x1="58" y1="30" x2="56" y2="36" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="60" y1="30" x2="60" y2="36" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="62" y1="30" x2="64" y2="36" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round" />
-
-      {/* ── Head ── */}
-      <circle cx="36" cy="29" r="13" fill="#ffe0b2" />
-
-      {/* ── Eyebrows — distinguished, slightly arched ── */}
-      <path d="M 26 22.5 Q 30 21 34 22.5" fill="none" stroke="#7c5c30" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M 38 22.5 Q 42 21 46 22.5" fill="none" stroke="#7c5c30" strokeWidth="1.6" strokeLinecap="round" />
-
-      {/* ── Glasses — thick frames, round, very professor ── */}
-      <circle cx="30" cy="28" r="5.2" fill="rgba(220,235,255,0.14)" stroke="#1f2937" strokeWidth="2.2" />
-      <circle cx="42" cy="28" r="5.2" fill="rgba(220,235,255,0.14)" stroke="#1f2937" strokeWidth="2.2" />
-      <line x1="35.2" y1="28" x2="36.8" y2="28" stroke="#1f2937" strokeWidth="2" />
-      <line x1="24.8" y1="26.5" x2="21" y2="27.5" stroke="#1f2937" strokeWidth="1.7" strokeLinecap="round" />
-      <line x1="47.2" y1="26.5" x2="51" y2="27.5" stroke="#1f2937" strokeWidth="1.7" strokeLinecap="round" />
-
-      {/* ── Eyes ── */}
-      <circle cx="30" cy="28" r="2.5" fill="#1e1b4b" />
-      <circle cx="42" cy="28" r="2.5" fill="#1e1b4b" />
-      <circle cx="30.9" cy="27" r="1" fill="white" />
-      <circle cx="42.9" cy="27" r="1" fill="white" />
-
-      {/* ── Subtle knowing smile ── */}
-      <path d="M 33 34.5 Q 36 37 39 34.5" fill="none" stroke="#b07040" strokeWidth="1.5" strokeLinecap="round" />
-
-      {/* ── Neck ── */}
-      <rect x="33.5" y="41" width="5" height="6" rx="2" fill="#ffe0b2" />
-
-      {/* ── White academic robe — wide, authoritative ── */}
-      <path d="M 6 80 L 5 50 Q 17 41 36 41 Q 55 41 67 50 L 66 80 Z" fill="white" />
-
-      {/* ── Robe inner shadow for depth ── */}
-      <path d="M 21 44 L 36 80 L 51 44 Q 44 41 36 41 Q 28 41 21 44 Z" fill="rgba(99,102,241,0.07)" />
-
-      {/* ── Dark collar / V-neck ── */}
-      <path d="M 27 46 L 36 58 L 45 46" fill="none" stroke="#111827" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* ── Folded arms — off-white against white robe ── */}
-      {/* Right arm, bottom layer */}
-      <path d="M 66 62 C 52 57 28 57 6 61 C 28 65 52 66 66 66 Z" fill="#dde4f8" stroke="rgba(99,102,241,0.18)" strokeWidth="1" />
-      {/* Left arm, top layer */}
-      <path d="M 6 57 C 22 53 50 53 66 57 C 50 61 22 61 6 62 Z" fill="#eaeefc" stroke="rgba(99,102,241,0.14)" strokeWidth="1" />
-      {/* Elbow bumps */}
-      <ellipse cx="66" cy="64" rx="4" ry="6" fill="#dde4f8" stroke="rgba(99,102,241,0.18)" strokeWidth="1" />
-      <ellipse cx="6" cy="59.5" rx="4" ry="6" fill="#eaeefc" stroke="rgba(99,102,241,0.14)" strokeWidth="1" />
-    </motion.svg>
+      <Mascot variant="wave" size={88} priority />
+    </motion.div>
   );
 }
 
@@ -325,7 +273,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                 }}>
                   Proffy.
                 </span>
-                <ProfessorMascot />
+                <FloatingMascot />
               </div>
 
               {/* Tagline */}
