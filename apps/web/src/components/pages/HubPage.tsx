@@ -145,7 +145,7 @@ const PRODUCTS = (lang: "en"|"he") => [
 function Badge({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display:"inline-flex", alignItems:"center", gap:"7px", background:"rgba(22,163,74,0.1)", border:"1px solid rgba(22,163,74,0.2)", borderRadius:"99px", padding:"5px 16px", marginBottom:"20px" }}>
-      <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#16a34a", boxShadow:"0 0 8px #16a34a", flexShrink:0, className:"hub-badge-dot" }} />
+      <span className="hub-badge-dot" style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#16a34a", boxShadow:"0 0 8px #16a34a", flexShrink:0 }} />
       <span style={{ fontSize:"11px", fontWeight:700, letterSpacing:"0.12em", color:"#16a34a", textTransform:"uppercase" }}>{children}</span>
     </div>
   );
