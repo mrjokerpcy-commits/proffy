@@ -335,7 +335,7 @@ export default function HubPage() {
 
             <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.2}}
               className="hub-cta-row" style={{ display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
-              <a href="https://uni.proffy.study"
+              <a href="https://uni.proffy.study/dashboard"
                 style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 36px", borderRadius:"13px", fontSize:"16px", fontWeight:700, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", textDecoration:"none", boxShadow:"0 6px 28px rgba(22,163,74,0.32)", transition:"transform 0.12s,box-shadow 0.12s" }}
                 onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 36px rgba(22,163,74,0.42)"}}
                 onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 6px 28px rgba(22,163,74,0.32)"}}>
@@ -508,7 +508,7 @@ export default function HubPage() {
                 </li>
               ))}
             </ul>
-            <a href="https://uni.proffy.study" style={{ display:"inline-flex", alignItems:"center", gap:"6px", marginTop:"28px", padding:"12px 28px", borderRadius:"12px", fontSize:"14px", fontWeight:700, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", textDecoration:"none", boxShadow:"0 4px 20px rgba(22,163,74,0.28)", transition:"transform 0.12s" }}
+            <a href="https://uni.proffy.study/dashboard" style={{ display:"inline-flex", alignItems:"center", gap:"6px", marginTop:"28px", padding:"12px 28px", borderRadius:"12px", fontSize:"14px", fontWeight:700, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", textDecoration:"none", boxShadow:"0 4px 20px rgba(22,163,74,0.28)", transition:"transform 0.12s" }}
               onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
               onMouseLeave={e=>e.currentTarget.style.transform=""}>
               {t.cta}
@@ -530,7 +530,7 @@ export default function HubPage() {
           <div style={{ position:"relative" }}>
             <h2 style={{ fontSize:"clamp(26px,3.5vw,52px)", fontWeight:900, letterSpacing:"-0.03em", color:"white", marginBottom:"14px" }}>{t.ctaTitle}</h2>
             <p style={{ fontSize:"17px", color:"rgba(255,255,255,0.75)", marginBottom:"36px" }}>{t.ctaSub}</p>
-            <a href="https://uni.proffy.study" style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"15px 42px", borderRadius:"14px", fontSize:"16px", fontWeight:700, background:"white", color:"#15803d", textDecoration:"none", boxShadow:"0 8px 32px rgba(0,0,0,0.2)", transition:"transform 0.12s,box-shadow 0.12s" }}
+            <a href="https://uni.proffy.study/dashboard" style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"15px 42px", borderRadius:"14px", fontSize:"16px", fontWeight:700, background:"white", color:"#15803d", textDecoration:"none", boxShadow:"0 8px 32px rgba(0,0,0,0.2)", transition:"transform 0.12s,box-shadow 0.12s" }}
               onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(0,0,0,0.28)"}}
               onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 8px 32px rgba(0,0,0,0.2)"}}>
               {t.ctaBtn}
