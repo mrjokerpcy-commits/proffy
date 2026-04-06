@@ -5,10 +5,10 @@ import { BETA_UNLOCK_KEY } from "@/lib/constants";
 
 // ─── Typewriter ───────────────────────────────────────────────────────────────
 const PHRASES = [
-  "STUDY SMARTER EVERY SESSION.",
-  "YOUR AI FOR EVERY COURSE.",
-  "UPLOAD. ASK. ACE THE EXAM.",
-  "BUILT FOR ISRAELI STUDENTS.",
+  "למד חכם יותר בכל שיעור.",
+  "ה-AI שלך לכל קורס.",
+  "העלה. שאל. עבור את הבחינה.",
+  "נבנה לסטודנטים ישראלים.",
 ];
 
 function useTypewriter() {
@@ -90,9 +90,9 @@ function AmbientBg() {
 // ─── Floating stat chips ─────────────────────────────────────────────────────
 function StatChips() {
   const stats = [
-    { label: "Avg exam score boost", value: "+18%" },
-    { label: "Hours saved per week", value: "4.5h" },
-    { label: "Courses indexed", value: "800+" },
+    { label: "שיפור ממוצע בציון", value: "+18%" },
+    { label: "שעות שנחסכות בשבוע", value: "4.5h" },
+    { label: "קורסים באינדקס", value: "800+" },
   ];
   return (
     <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -295,8 +295,8 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                   boxShadow: "0 0 10px var(--blue)",
                   animation: "fc-pulse 2s ease-in-out infinite",
                 }} />
-                <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em", color: "var(--blue)", textTransform: "uppercase" }}>
-                  Early Access
+                <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", color: "var(--blue)", textTransform: "uppercase" }}>
+                  גישה מוקדמת
                 </span>
               </div>
 
@@ -335,10 +335,10 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                 margin: "0 auto 8px",
                 fontWeight: 400,
               }}>
-                Your AI study partner that knows your courses, your professor, and what actually shows up on the exam.
+                ה-AI שמכיר את הקורסים שלך, את המרצה, ואת מה שבאמת יוצא בבחינה.
               </p>
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "32px" }}>
-                Currently invite-only. Enter your access code to continue.
+                גישה בהזמנה בלבד. הזן את קוד הגישה שלך להמשך.
               </p>
 
               {/* Stat chips */}
@@ -357,7 +357,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                   type="text"
                   value={code}
                   onChange={(e) => { setCode(e.target.value); setError(""); }}
-                  placeholder="Access code"
+                  placeholder="קוד גישה"
                   maxLength={32}
                   autoComplete="off"
                   spellCheck={false}
@@ -395,7 +395,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                       cursor: code.trim() && !unlocking ? "pointer" : "default",
                     }}
                   >
-                    {unlocking ? "Verifying…" : "Enter"}
+                    {unlocking ? "מאמת…" : "כניסה"}
                   </button>
                   <a
                     href="mailto:hello@proffy.study"
@@ -407,7 +407,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}
                   >
-                    Request Access
+                    בקשת גישה
                   </a>
                 </div>
               </motion.form>

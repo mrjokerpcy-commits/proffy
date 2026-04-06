@@ -59,14 +59,14 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      dir="ltr"
+      lang="he"
+      dir="rtl"
       className={`min-h-full antialiased ${inter.variable} ${dmSerif.variable} ${notoHebrew.variable} ${plusJakarta.variable}`}
       suppressHydrationWarning
     >
       <body
         className="min-h-full flex flex-col"
-        style={{ fontFamily: "var(--font-inter, system-ui, sans-serif)" }}
+        style={{ fontFamily: "var(--font-noto-hebrew, var(--font-inter), system-ui, sans-serif)" }}
       >
         <Providers>{children}</Providers>
       </body>

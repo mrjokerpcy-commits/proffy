@@ -42,23 +42,50 @@
   /* ── Font families (overridden per subdomain) ── */
   --font-heading: inherit;
   --font-body:    inherit;
+
+  /* ── Component tokens (dark mode defaults) ── */
+  --nav-bg:       rgba(11,11,30,0.85);
+  --nav-border:   rgba(120,120,255,0.1);
+  --card-shadow:  none;
 }
 
-/* ─── Light mode ────────────────────────────────────────────────────────────── */
+/* ─── Light mode — clean white, inspired by Linear/Vercel/Stripe ────────────── */
 html.light {
-  --bg-base:       #f4f4ff;
-  --bg-surface:    #eaeaf8;
-  --bg-elevated:   #ddddf4;
-  --bg-hover:      #d0d0ee;
-  --bg-card:       rgba(255,255,255,0.7);
+  /* Backgrounds — pure white system, no color tinting */
+  --bg-base:       #ffffff;
+  --bg-surface:    #f8fafc;
+  --bg-elevated:   #f1f5f9;
+  --bg-hover:      #e2e8f0;
+  --bg-card:       rgba(255,255,255,1);
+
+  /* Borders — neutral grey, shadow-based depth */
   --border:        rgba(0,0,0,0.07);
-  --border-light:  rgba(0,0,0,0.13);
+  --border-light:  rgba(0,0,0,0.12);
   --border-focus:  rgba(99,102,241,0.5);
-  --text-primary:  #0a0a1e;
-  --text-secondary:#3a3a6a;
-  --text-muted:    #6060a0;
-  --text-disabled: #a0a0c8;
-  --bg-card:       rgba(255,255,255,0.6);
+
+  /* Text — true slate hierarchy */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #64748b;
+  --text-disabled:  #94a3b8;
+
+  /* Brand — slightly deeper for white backgrounds */
+  --blue:          #4f46e5;
+  --blue-hover:    #6366f1;
+  --blue-dim:      rgba(79,70,229,0.08);
+  --blue-glow:     rgba(99,102,241,0.18);
+  --purple:        #7c3aed;
+  --purple-glow:   rgba(124,58,237,0.12);
+
+  /* Semantic */
+  --red:    #dc2626;
+  --amber:  #d97706;
+  --green:  #059669;
+
+  /* Component-specific tokens */
+  --nav-bg:       rgba(255,255,255,0.92);
+  --nav-border:   rgba(0,0,0,0.08);
+  --card-shadow:  0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05);
 }
 
 /* ─── Subdomain: app.proffy.study — Deep navy + electric indigo ─────────────── */
@@ -144,6 +171,38 @@ html[data-subdomain="bagrut"].light {
   --bg-hover:    #d8c8ff;
   --text-primary:#08001a;
 }
+
+/* ─── Hub page classes ───────────────────────────────────────────────────────── */
+.hub-hero-text {
+  background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  padding-bottom: 0.14em;
+}
+html.light .hub-hero-text {
+  background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 55%, #7c3aed 100%);
+}
+.hub-card {
+  background: var(--bg-surface);
+  box-shadow: var(--card-shadow);
+}
+html.light .hub-card {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.07) !important;
+}
+
+/* ─── Light mode — scrollbar ────────────────────────────────────────────────── */
+html.light ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); }
+
+/* ─── Light mode — prose overrides ─────────────────────────────────────────── */
+html.light .prose-chat strong { color: var(--text-primary); }
+html.light .prose-chat code { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #6d28d9; }
+
+/* ─── RTL utilities ─────────────────────────────────────────────────────────── */
+[dir="rtl"] .flip-rtl { transform: scaleX(-1); }
+[dir="rtl"] code, [dir="rtl"] pre, [dir="rtl"] .ltr { direction: ltr; text-align: left; }
 
 /* ─── Reset ──────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
