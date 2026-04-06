@@ -235,7 +235,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                 background: "var(--blue-dim)",
                 border: "1px solid var(--blue-glow)",
                 borderRadius: "99px", padding: "5px 16px",
-                marginBottom: "24px",
+                marginBottom: "24px", direction: "rtl",
               }}>
                 <span style={{
                   width: "6px", height: "6px", borderRadius: "50%",
@@ -243,19 +243,19 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
                   boxShadow: "0 0 10px var(--blue)",
                   animation: "fc-pulse 2s ease-in-out infinite",
                 }} />
-                <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", color: "var(--blue)", textTransform: "uppercase" }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.04em", color: "var(--blue)" }}>
                   גישה מוקדמת
                 </span>
               </div>
 
               {/* Typewriter */}
               <div style={{
-                fontSize: "11px", fontWeight: 700, letterSpacing: "0.22em",
+                fontSize: "13px", fontWeight: 600, letterSpacing: "0.04em",
                 color: "var(--text-muted)", marginBottom: "20px",
-                height: "16px", textTransform: "uppercase", userSelect: "none",
+                height: "20px", userSelect: "none", direction: "rtl",
               }}>
                 {typewriter}
-                <span className="cursor-blink" style={{ borderRight: "2px solid var(--text-muted)", marginLeft: "2px" }} />
+                <span className="cursor-blink" style={{ borderLeft: "2px solid var(--text-muted)", marginRight: "2px" }} />
               </div>
 
               {/* Brand + Duck */}
