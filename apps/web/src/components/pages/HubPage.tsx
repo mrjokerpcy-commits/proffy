@@ -511,7 +511,7 @@ export default function HubPage() {
             </a>
           </div>
           <div className="hub-meet-owl" style={{ display:"flex", justifyContent:"center", alignItems:"flex-end" }}>
-            <motion.div animate={{y:[0,-10,0]}} transition={{duration:3.5,repeat:Infinity,ease:"easeInOut"}}>
+            <motion.div animate={{y:[0,-24,0], rotate:[0,2,0,-2,0]}} transition={{duration:2.4,repeat:Infinity,ease:"easeInOut"}}>
               <Image src="/mascot/meet-tall.png" alt="Proffy" width={420} height={560} style={{ objectFit:"contain", objectPosition:"bottom" }} draggable={false} />
             </motion.div>
           </div>
