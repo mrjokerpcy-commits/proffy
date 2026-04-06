@@ -290,8 +290,8 @@ export default function HubPage() {
           </div>
           <span style={{ fontWeight:800, fontSize:"17px", letterSpacing:"-0.02em" }}>Proffy</span>
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-          {mounted && <ThemeToggle />}
+        <div className="hub-nav-toggles">
+          {mounted && <span className="hub-hide-mobile"><ThemeToggle /></span>}
           {mounted && <LangToggle />}
           <button onClick={() => setShowModal(true)} style={{ padding:"8px 18px", borderRadius:"10px", fontSize:"13px", fontWeight:600, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", border:"none", cursor:"pointer", boxShadow:"0 2px 12px rgba(22,163,74,0.28)", transition:"opacity 0.12s,transform 0.12s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>{e.currentTarget.style.opacity="0.85";e.currentTarget.style.transform="translateY(-1px)"}}
@@ -311,7 +311,7 @@ export default function HubPage() {
           filter:"blur(48px)",
         }} />
 
-        <div style={{ position:"relative", zIndex:1, maxWidth:"1400px", margin:"0 auto", display:"grid", gridTemplateColumns:"1fr auto", gap:"40px", alignItems:"center" }}>
+        <div className="hub-hero-grid">
           {/* Text side */}
           <div style={{ direction:dir }}>
             <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.5}}>
@@ -330,7 +330,7 @@ export default function HubPage() {
             </motion.p>
 
             <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.2}}
-              style={{ display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
+              className="hub-cta-row" style={{ display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
               <a href="https://uni.proffy.study"
                 style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 36px", borderRadius:"13px", fontSize:"16px", fontWeight:700, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", textDecoration:"none", boxShadow:"0 6px 28px rgba(22,163,74,0.32)", transition:"transform 0.12s,box-shadow 0.12s" }}
                 onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 36px rgba(22,163,74,0.42)"}}
@@ -346,8 +346,8 @@ export default function HubPage() {
             </motion.div>
           </div>
 
-          {/* Owl side */}
-          <motion.div initial={{opacity:0,x:32}} animate={{opacity:1,x:0}} transition={{duration:0.7,delay:0.1}}>
+          {/* Owl side — hidden on mobile */}
+          <motion.div className="hub-hero-owl" initial={{opacity:0,x:32}} animate={{opacity:1,x:0}} transition={{duration:0.7,delay:0.1}}>
             <motion.div animate={{y:[0,-12,0]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}}>
               <Image src="/mascot/hero.png" alt="Proffy mascot" width={540} height={540} style={{ objectFit:"contain", display:"block" }} draggable={false} priority />
             </motion.div>
@@ -372,7 +372,7 @@ export default function HubPage() {
 
       {/* ── Mission ── */}
       <Section style={{ padding:"80px max(32px,4vw)" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"80px", alignItems:"center" }}>
+        <div className="hub-two-col">
           <div>
             <Badge>{t.missionBadge}</Badge>
             <h2 style={{ fontSize:"clamp(28px,3vw,46px)", fontWeight:900, letterSpacing:"-0.03em", lineHeight:1.12, marginBottom:"22px" }}>{t.missionTitle}</h2>
@@ -393,7 +393,7 @@ export default function HubPage() {
 
       {/* ── Who We Are ── */}
       <Section style={{ padding:"80px max(32px,4vw)" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"80px", alignItems:"center" }}>
+        <div className="hub-two-col">
           <div style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"24px", padding:"40px", boxShadow:"var(--card-shadow)" }}>
             <p style={{ fontSize:"22px", fontWeight:700, lineHeight:1.6, color:"var(--text-primary)", fontStyle:"italic" }}>
               {lang === "he"
@@ -426,7 +426,7 @@ export default function HubPage() {
           <Badge>{t.howBadge}</Badge>
           <h2 style={{ fontSize:"clamp(28px,3vw,46px)", fontWeight:900, letterSpacing:"-0.03em", lineHeight:1.12 }}>{t.howTitle}</h2>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"24px" }}>
+        <div className="hub-three-col">
           {t.howSteps.map((step, i) => (
             <motion.div key={i} initial={{opacity:0,y:24}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.5,delay:i*0.1}}
               style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"20px", padding:"36px 32px", position:"relative", overflow:"hidden", boxShadow:"var(--card-shadow)" }}>
@@ -450,7 +450,7 @@ export default function HubPage() {
           <Badge>{t.productsBadge}</Badge>
           <h2 style={{ fontSize:"clamp(28px,3vw,46px)", fontWeight:900, letterSpacing:"-0.03em", lineHeight:1.12 }}>{t.productsTitle}</h2>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"16px" }}>
+        <div className="hub-four-col">
           {products.map((p,i) => (
             <motion.a key={p.key} href={p.live ? p.href : undefined}
               initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.5,delay:i*0.07}}
@@ -477,7 +477,7 @@ export default function HubPage() {
 
       {/* ── Meet Proffy ── */}
       <Section style={{ padding:"80px max(32px,4vw)" }}>
-        <div style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"24px", padding:"clamp(36px,5vw,64px)", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"64px", alignItems:"center", overflow:"hidden", position:"relative", boxShadow:"var(--card-shadow)" }}>
+        <div className="hub-meet-inner" style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"24px", padding:"clamp(36px,5vw,64px)", overflow:"hidden", position:"relative", boxShadow:"var(--card-shadow)" }}>
           <div style={{ position:"absolute", top:"-20%", insetInlineEnd:"-5%", width:"400px", height:"400px", borderRadius:"50%", background:"radial-gradient(circle,rgba(22,163,74,0.07) 0%,transparent 65%)", pointerEvents:"none" }} />
           <div style={{ position:"relative" }}>
             <Badge>{t.meetBadge}</Badge>
@@ -499,7 +499,7 @@ export default function HubPage() {
               {t.cta}
             </a>
           </div>
-          <div style={{ display:"flex", justifyContent:"center", alignItems:"flex-end" }}>
+          <div className="hub-meet-owl" style={{ display:"flex", justifyContent:"center", alignItems:"flex-end" }}>
             <motion.div animate={{y:[0,-10,0]}} transition={{duration:3.5,repeat:Infinity,ease:"easeInOut"}}>
               <Image src="/mascot/wave.png" alt="Proffy" width={460} height={460} style={{ objectFit:"contain", objectPosition:"bottom" }} draggable={false} />
             </motion.div>
