@@ -70,7 +70,6 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [feedback, setFeedback] = useState<"like" | "dislike" | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -302,15 +301,6 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
               </button>
             )}
 
-            {/* Sources */}
-            {message.sources && message.sources.length > 0 && (
-              <button
-                onClick={() => setSourcesOpen(v => !v)}
-                style={{ fontSize: "11px", color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", padding: "3px 0" }}
-              >
-                {sourcesOpen ? "Hide sources" : `${message.sources.length} source${message.sources.length !== 1 ? "s" : ""}`}
-              </button>
-            )}
           </div>
         )}
 
@@ -331,18 +321,6 @@ export default function MessageBubble({ message, index, courseId, onRetry, onSav
           </button>
         )}
 
-        {/* Sources */}
-        {sourcesOpen && message.sources && message.sources.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            style={{ width: "100%", display: "flex", flexDirection: "column", gap: "6px", overflow: "hidden" }}
-          >
-            {message.sources.map((src, i) => (
-              <SourceCard key={i} source={src} index={i + 1} />
-            ))}
-          </motion.div>
-        )}
       </div>
 
       {/* User avatar */}
