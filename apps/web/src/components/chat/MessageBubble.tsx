@@ -24,19 +24,18 @@ function ProffyAvatar({ thinking = false }: { index: number; thinking?: boolean 
     <div
       className={thinking ? "thinking-avatar" : undefined}
       style={{
-        width: "32px", height: "32px", flexShrink: 0,
+        width: "36px", height: "36px", flexShrink: 0,
         borderRadius: "10px", overflow: "hidden",
-        background: "linear-gradient(135deg, #4f46e5, #9333ea)",
-        boxShadow: thinking ? undefined : "0 2px 10px rgba(99,102,241,0.35)",
-        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "var(--blue-dim)",
+        border: "1px solid var(--blue-glow)",
+        boxShadow: thinking ? undefined : "0 2px 8px var(--blue-dim)",
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo-owl.png"
         alt="Proffy"
-        width={64} height={64}
-        style={{ objectFit: "contain", width: "100%", height: "100%" }}
+        style={{ width: "64px", height: "64px", objectFit: "contain", marginTop: "-14px", marginLeft: "-14px" }}
         draggable={false}
       />
     </div>

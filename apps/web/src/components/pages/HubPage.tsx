@@ -327,7 +327,7 @@ export default function HubPage() {
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"80px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-          <Image src="/logo-owl.png" alt="Proffy" width={42} height={42} style={{ objectFit:"contain", width:"42px", height:"42px" }} draggable={false} priority />
+          <Image src="/logo-owl.png" alt="Proffy" width={72} height={72} style={{ objectFit:"contain", width:"72px", height:"72px", margin:"-12px -14px -12px -10px" }} draggable={false} priority />
           <span style={{ fontWeight:900, fontSize:"1.3rem", letterSpacing:"-0.025em", color:"var(--text-primary)" }}>Proffy</span>
         </div>
         <div className="hub-nav-toggles">
@@ -573,7 +573,7 @@ export default function HubPage() {
       {/* ── Footer ── */}
       <footer style={{ position:"relative", zIndex:1, borderTop:"1px solid var(--border)", padding:"22px max(32px,4vw)", display:"flex", flexWrap:"wrap", alignItems:"center", justifyContent:"space-between", gap:"12px", fontSize:"13px", color:"var(--text-disabled)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-          <Image src="/logo-owl.png" alt="Proffy" width={28} height={28} style={{ objectFit:"contain", width:"28px", height:"28px" }} draggable={false} />
+          <Image src="/logo-owl.png" alt="Proffy" width={48} height={48} style={{ objectFit:"contain", width:"48px", height:"48px", margin:"-8px -8px -8px -6px" }} draggable={false} />
           <span>{t.footer}</span>
         </div>
         <div style={{ display:"flex", gap:"18px" }}>

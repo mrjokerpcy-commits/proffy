@@ -94,39 +94,8 @@ html.light {
 }
 
 
-/* ─── Subdomain: app.proffy.study — Deep navy + electric indigo ─────────────── */
-html[data-subdomain="app"] {
-  --bg-base:     #04061a;
-  --bg-surface:  #070a20;
-  --bg-elevated: #0c1030;
-  --bg-hover:    #111540;
-  --blue:        #6366f1;
-  --blue-hover:  #818cf8;
-  --blue-dim:    rgba(99,102,241,0.12);
-  --blue-glow:   rgba(99,102,241,0.28);
-  --purple:      #c4b5fd;
-}
-
-html[data-subdomain="app"].light {
-  --bg-base:     #f0f2ff;
-  --bg-surface:  #e6e9ff;
-  --bg-elevated: #d8dcff;
-  --bg-hover:    #c8ceff;
-  --text-primary:  #06007a;
-  --text-secondary:#1e1a8f;
-  --text-muted:    #4338ca;
-  --text-disabled: #818cf8;
-  --blue:          #4f46e5;
-  --blue-hover:    #4338ca;
-  --blue-dim:      rgba(79,70,229,0.10);
-  --blue-glow:     rgba(79,70,229,0.22);
-  --border-focus:  rgba(79,70,229,0.5);
-  --purple:        #7c3aed;
-  --border:        rgba(79,70,229,0.16);
-  --border-light:  rgba(79,70,229,0.28);
-  --nav-bg:        rgba(240,242,255,0.92);
-  --nav-border:    rgba(79,70,229,0.15);
-}
+/* ─── Subdomain: app.proffy.study — uses root green theme (same as hub) ─────── */
+/* No overrides needed — falls through to :root green vars */
 
 /* ─── Subdomain: psycho.proffy.study — Forest green + gold ─────────────────── */
 html[data-subdomain="psycho"] {

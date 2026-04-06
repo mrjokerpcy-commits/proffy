@@ -25,15 +25,18 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax" as const,
         path: "/",
         secure: isProd,
+        // Share session across all *.proffy.study subdomains so admin on root domain works
+        domain: isProd ? ".proffy.study" : undefined,
         maxAge: 30 * 24 * 60 * 60, // 30 days — keep user logged in
       },
     },
     callbackUrl: {
       name: isProd ? "__Secure-next-auth.callback-url" : "next-auth.callback-url",
-      options: { sameSite: "lax" as const, path: "/", secure: isProd },
+      options: { sameSite: "lax" as const, path: "/", secure: isProd, domain: isProd ? ".proffy.study" : undefined },
     },
     csrfToken: {
-      name: isProd ? "__Host-next-auth.csrf-token" : "next-auth.csrf-token",
+      // __Host- prefix is incompatible with domain attribute — use __Secure- instead
+      name: isProd ? "__Secure-next-auth.csrf-token" : "next-auth.csrf-token",
       options: { httpOnly: true, sameSite: "lax" as const, path: "/", secure: isProd },
     },
   },

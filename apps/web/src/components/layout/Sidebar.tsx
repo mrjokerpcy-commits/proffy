@@ -86,7 +86,7 @@ function IconLock() {
 
 function SidebarLogo() {
   return (
-    <Image src="/logo-owl.png" alt="Proffy" width={64} height={64} style={{ objectFit: "contain", width: "64px", height: "64px" }} priority />
+    <Image src="/logo-owl.png" alt="Proffy" width={80} height={80} style={{ objectFit: "contain", width: "80px", height: "80px", margin: "-8px -12px -8px -8px" }} priority />
   );
 }
 
