@@ -290,9 +290,9 @@ export default function HubPage() {
 
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"62px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:"9px" }}>
-          <Image src="/logo-owl.png" alt="Proffy" width={36} height={36} style={{ objectFit:"contain", width:"36px", height:"36px", flexShrink:0 }} draggable={false} priority />
-          <span style={{ fontWeight:800, fontSize:"18px", letterSpacing:"-0.02em", color:"var(--text-primary)" }}>Proffy</span>
+        <div style={{ display:"flex", alignItems:"center" }}>
+          <Image src="/logo-header-dark.png" alt="Proffy" width={160} height={52} className="hub-logo-dark" style={{ objectFit:"contain", height:"40px", width:"auto" }} draggable={false} priority />
+          <Image src="/logo-header.png" alt="Proffy" width={160} height={52} className="hub-logo-light" style={{ objectFit:"contain", height:"40px", width:"auto" }} draggable={false} priority />
         </div>
         <div className="hub-nav-toggles">
           {mounted && <span className="hub-hide-mobile"><ThemeToggle /></span>}
@@ -361,10 +361,10 @@ export default function HubPage() {
 
       {/* ── Feature bar ── */}
       <Section style={{ padding:"0 max(32px,4vw) 80px" }}>
-        <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", justifyContent:"center", gap:"12px" }}>
+        <div className="hub-feature-bar" style={{ display:"flex", flexWrap:"wrap", alignItems:"center", justifyContent:"center", gap:"12px" }}>
           {(lang === "he"
-            ? ["AI שמכיר את הקורס שלך","תשובות עם מקורות מהחומר","עברית + אנגלית","פלטפורמות: בגרות, יע\"ל, פסיכומטרי, אוניברסיטה","זמין 24/7"]
-            : ["Course-aware AI","Source-cited answers","Hebrew & English","Bagrut, Yael, Psycho & University","Available 24/7"]
+            ? ["AI שמכיר את הקורס","תשובות עם מקורות","עברית + אנגלית","כל הפלטפורמות","זמין 24/7"]
+            : ["Course-aware AI","Source-cited answers","Hebrew & English","All platforms","Available 24/7"]
           ).map(f => (
             <div key={f} style={{ display:"flex", alignItems:"center", gap:"8px", background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"99px", padding:"9px 18px", boxShadow:"var(--card-shadow)" }}>
               <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -542,9 +542,7 @@ export default function HubPage() {
       {/* ── Footer ── */}
       <footer style={{ position:"relative", zIndex:1, borderTop:"1px solid var(--border)", padding:"22px max(32px,4vw)", display:"flex", flexWrap:"wrap", alignItems:"center", justifyContent:"space-between", gap:"12px", fontSize:"13px", color:"var(--text-disabled)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-          <div style={{ width:"22px", height:"22px", borderRadius:"5px", overflow:"hidden", background:"linear-gradient(135deg,#16a34a,#4ade80)" }}>
-            <Image src="/mascot/avatar.png" alt="Proffy" width={22} height={22} style={{ objectFit:"cover", width:"100%", height:"100%" }} draggable={false} />
-          </div>
+          <Image src="/logo-owl.png" alt="Proffy" width={28} height={28} style={{ objectFit:"contain", width:"28px", height:"28px" }} draggable={false} />
           <span>{t.footer}</span>
         </div>
         <div style={{ display:"flex", gap:"18px" }}>
