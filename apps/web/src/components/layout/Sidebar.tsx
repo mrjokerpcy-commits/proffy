@@ -5,7 +5,18 @@ import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { Course } from "@/lib/types";
+import { SUBDOMAIN_SITES } from "@/lib/constants";
 import UpgradeModal from "./UpgradeModal";
+
+function detectSubdomain(): string {
+  if (typeof window === "undefined") return "root";
+  const host = window.location.hostname;
+  if (host.startsWith("app.")) return "app";
+  if (host.startsWith("psycho.")) return "psycho";
+  if (host.startsWith("yael.")) return "yael";
+  if (host.startsWith("bagrut.")) return "bagrut";
+  return "root";
+}
 
 // ── Version — update this when releasing Proffy 1.0, 2.0, etc. ──
 const PROFFY_VERSION = "beta";
@@ -77,7 +88,7 @@ function SidebarLogo() {
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
       <defs>
         <linearGradient id="sb-logo-g" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#4f8ef7"/><stop offset="1" stopColor="#a78bfa"/>
+          <stop stopColor="#6366f1"/><stop offset="1" stopColor="#a78bfa"/>
         </linearGradient>
       </defs>
       <rect width="32" height="32" rx="9" fill="url(#sb-logo-g)"/>
@@ -106,6 +117,8 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   const menuRef = useRef<HTMLDivElement>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [subdomain, setSubdomain] = useState<string>("root");
+  useEffect(() => { setSubdomain(detectSubdomain()); }, []);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [mainTab, setMainTab] = useState<"courses" | "history">("courses");
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -177,14 +190,14 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
             {PROFFY_VERSION}
           </span>
         </span>
-        <Link
-          href={`/dashboard?new=${Date.now()}`}
+        <button
+          onClick={() => router.push(`/dashboard?new=${Date.now()}&semester=${selectedSemester}`)}
           title="New chat"
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: "28px", height: "28px", borderRadius: "7px",
             background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
-            color: "var(--text-muted)", textDecoration: "none", flexShrink: 0,
+            color: "var(--text-muted)", flexShrink: 0, cursor: "pointer",
             transition: "all 0.15s",
           }}
           className="sidebar-item"
@@ -192,7 +205,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14"/>
           </svg>
-        </Link>
+        </button>
       </div>
 
       {/* ── Semester tabs ── */}
@@ -657,6 +670,51 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
 
       </div>
 
+      {/* ── Other Proffy sites — only shown on app.proffy.study ── */}
+      {subdomain === "app" && (
+        <div style={{
+          flexShrink: 0,
+          borderTop: "1px solid var(--border)",
+          padding: "12px 12px 10px",
+        }}>
+          <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-disabled)", marginBottom: "8px", paddingLeft: "2px" }}>
+            Proffy Network
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            {(Object.entries(SUBDOMAIN_SITES) as [string, typeof SUBDOMAIN_SITES[keyof typeof SUBDOMAIN_SITES]][])
+              .filter(([key]) => key !== "app")
+              .map(([key, site]) => (
+                <a
+                  key={key}
+                  href={site.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "7px 10px", borderRadius: "8px",
+                    textDecoration: "none", fontSize: "12.5px",
+                    color: "var(--text-secondary)",
+                    transition: "background 0.1s, color 0.1s",
+                  }}
+                  className="sidebar-item"
+                >
+                  <span style={{
+                    width: "7px", height: "7px", borderRadius: "50%",
+                    background: site.color, flexShrink: 0,
+                    boxShadow: `0 0 6px ${site.color}88`,
+                  }} />
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {site.label}
+                  </span>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3, flexShrink: 0 }}>
+                    <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                  </svg>
+                </a>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Bottom user menu ── */}
       <div ref={menuRef} style={{ flexShrink: 0, borderTop: "1px solid var(--border)", position: "relative" }}>
         <AnimatePresence>
@@ -736,7 +794,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
         >
           <div style={{
             width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
-            background: "linear-gradient(135deg,#4f8ef7,#a78bfa)",
+            background: "linear-gradient(135deg,#6366f1,#a78bfa)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "12px", fontWeight: 700, color: "white",
           }}>

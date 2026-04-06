@@ -1,18 +1,29 @@
 "use client";
 import { SessionProvider } from "next-auth/react";
-import CursorGlow from "@/components/ui/CursorGlow";
+import { ThemeProvider } from "next-themes";
+import BetaGate from "@/components/ui/BetaGate";
+import SubdomainTheme from "@/components/ui/SubdomainTheme";
 import UploadModal from "@/components/layout/UploadModal";
 import TourOverlay from "@/components/ui/TourOverlay";
 import ExamFingerprintModal from "@/components/ui/ExamFingerprintModal";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <CursorGlow />
-      <UploadModal />
-      <ExamFingerprintModal />
-      <TourOverlay />
-      {children}
-    </SessionProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange={false}
+    >
+      <SessionProvider>
+        <SubdomainTheme />
+        <UploadModal />
+        <ExamFingerprintModal />
+        <TourOverlay />
+        <BetaGate>
+          {children}
+        </BetaGate>
+      </SessionProvider>
+    </ThemeProvider>
   );
 }
