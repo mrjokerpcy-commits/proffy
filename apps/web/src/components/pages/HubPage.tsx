@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import LangToggle, { useLang } from "@/components/ui/LangToggle";
@@ -170,10 +170,101 @@ function StepIcon({ icon }: { icon: string }) {
   );
 }
 
+// ─── Request access modal ─────────────────────────────────────────────────────
+function AccessModal({ lang, onClose }: { lang: "en"|"he"; onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [study, setStudy] = useState("");
+  const [status, setStatus] = useState<"idle"|"loading"|"done"|"error">("idle");
+  const isRtl = lang === "he";
+
+  const labels = {
+    en: { title:"Request Access", sub:"We'll reach out with your access code.", name:"Full name", email:"Email", study:"What are you studying?", studyPlaceholder:"e.g. Computer Science, TAU semester B", submit:"Send Request", done:"You're on the list!", doneSub:"We'll be in touch soon.", err:"Something went wrong. Try again." },
+    he: { title:"בקשת גישה", sub:"נחזור אליך עם קוד הגישה שלך.", name:"שם מלא", email:"אימייל", study:"מה אתה לומד?", studyPlaceholder:"לדוגמה: מדעי המחשב, ת\"א סמסטר ב", submit:"שלח בקשה", done:"!אתה ברשימה", doneSub:"ניצור איתך קשר בקרוב.", err:"משהו השתבש. נסה שוב." },
+  }[lang];
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim()) return;
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/request-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, study }),
+      });
+      setStatus(res.ok ? "done" : "error");
+    } catch { setStatus("error"); }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ position:"fixed", inset:0, zIndex:9000, background:"rgba(0,0,0,0.6)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"24px" }}
+    >
+      <motion.div
+        initial={{ opacity:0, scale:0.94, y:16 }} animate={{ opacity:1, scale:1, y:0 }} exit={{ opacity:0, scale:0.94, y:16 }}
+        transition={{ duration:0.25, ease:[0.16,1,0.3,1] }}
+        onClick={e => e.stopPropagation()}
+        style={{ background:"var(--bg-elevated)", border:"1px solid var(--border-light)", borderRadius:"22px", padding:"36px", width:"100%", maxWidth:"440px", position:"relative", direction: isRtl ? "rtl" : "ltr" }}
+      >
+        {/* Close */}
+        <button onClick={onClose} style={{ position:"absolute", top:"16px", insetInlineEnd:"16px", background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"6px", borderRadius:"8px" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        {status === "done" ? (
+          <div style={{ textAlign:"center", padding:"12px 0" }}>
+            <motion.div initial={{ scale:0.7, opacity:0 }} animate={{ scale:1, opacity:1 }} transition={{ type:"spring", stiffness:260, damping:18 }}>
+              <Image src="/mascot/wave.png" alt="Done" width={100} height={100} style={{ objectFit:"contain", margin:"0 auto 16px" }} draggable={false} />
+            </motion.div>
+            <h3 style={{ fontSize:"22px", fontWeight:900, marginBottom:"8px" }}>{labels.done}</h3>
+            <p style={{ fontSize:"14px", color:"var(--text-secondary)" }}>{labels.doneSub}</p>
+          </div>
+        ) : (
+          <>
+            <h3 style={{ fontSize:"21px", fontWeight:900, marginBottom:"6px" }}>{labels.title}</h3>
+            <p style={{ fontSize:"13px", color:"var(--text-secondary)", marginBottom:"24px" }}>{labels.sub}</p>
+
+            <form onSubmit={submit} style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
+              <div>
+                <label style={{ fontSize:"12px", fontWeight:600, color:"var(--text-muted)", display:"block", marginBottom:"6px" }}>{labels.name}</label>
+                <input className="input-ring" value={name} onChange={e => setName(e.target.value)} placeholder={isRtl ? "ישראל ישראלי" : "John Smith"} required
+                  style={{ width:"100%", padding:"11px 14px", borderRadius:"10px", background:"var(--bg-surface)", color:"var(--text-primary)", fontSize:"14px" }} />
+              </div>
+              <div>
+                <label style={{ fontSize:"12px", fontWeight:600, color:"var(--text-muted)", display:"block", marginBottom:"6px" }}>{labels.email}</label>
+                <input className="input-ring" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required
+                  style={{ width:"100%", padding:"11px 14px", borderRadius:"10px", background:"var(--bg-surface)", color:"var(--text-primary)", fontSize:"14px" }} />
+              </div>
+              <div>
+                <label style={{ fontSize:"12px", fontWeight:600, color:"var(--text-muted)", display:"block", marginBottom:"6px" }}>{labels.study}</label>
+                <input className="input-ring" value={study} onChange={e => setStudy(e.target.value)} placeholder={labels.studyPlaceholder}
+                  style={{ width:"100%", padding:"11px 14px", borderRadius:"10px", background:"var(--bg-surface)", color:"var(--text-primary)", fontSize:"14px" }} />
+              </div>
+
+              {status === "error" && (
+                <p style={{ fontSize:"12px", color:"var(--red)", margin:0 }}>{labels.err}</p>
+              )}
+
+              <button type="submit" disabled={!name.trim() || !email.trim() || status === "loading"} className="btn-primary"
+                style={{ padding:"13px", borderRadius:"12px", fontSize:"15px", fontWeight:700, border:"none", cursor:"pointer", marginTop:"4px" }}>
+                {status === "loading" ? (isRtl ? "שולח..." : "Sending…") : labels.submit}
+              </button>
+            </form>
+          </>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ─── Hub Page ─────────────────────────────────────────────────────────────────
 export default function HubPage() {
   const [mounted, setMounted] = useState(false);
   const [lang, setLang] = useLang();
+  const [showModal, setShowModal] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const t = T[lang];
@@ -186,6 +277,11 @@ export default function HubPage() {
     <div data-hub style={{ minHeight:"100vh", background:"var(--bg-base)", color:"var(--text-primary)", position:"relative", overflowX:"hidden", fontFamily:ff, direction:dir }}>
       <ConstellationBg />
 
+      {/* ── Access modal ── */}
+      <AnimatePresence>
+        {showModal && <AccessModal lang={lang} onClose={() => setShowModal(false)} />}
+      </AnimatePresence>
+
       {/* ── Nav ── */}
       <nav style={{ position:"fixed", top:0, insetInlineStart:0, insetInlineEnd:0, zIndex:50, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 max(32px,4vw)", height:"62px", background:"var(--nav-bg)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", borderBottom:"1px solid var(--nav-border)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
@@ -197,11 +293,11 @@ export default function HubPage() {
         <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
           {mounted && <ThemeToggle />}
           {mounted && <LangToggle />}
-          <a href="https://uni.proffy.study" style={{ padding:"8px 18px", borderRadius:"10px", fontSize:"13px", fontWeight:600, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", textDecoration:"none", boxShadow:"0 2px 12px rgba(22,163,74,0.28)", transition:"opacity 0.12s,transform 0.12s", whiteSpace:"nowrap" }}
+          <button onClick={() => setShowModal(true)} style={{ padding:"8px 18px", borderRadius:"10px", fontSize:"13px", fontWeight:600, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", border:"none", cursor:"pointer", boxShadow:"0 2px 12px rgba(22,163,74,0.28)", transition:"opacity 0.12s,transform 0.12s", whiteSpace:"nowrap" }}
             onMouseEnter={e=>{e.currentTarget.style.opacity="0.85";e.currentTarget.style.transform="translateY(-1px)"}}
             onMouseLeave={e=>{e.currentTarget.style.opacity="1";e.currentTarget.style.transform=""}}>
             {t.getAccess}
-          </a>
+          </button>
         </div>
       </nav>
 
