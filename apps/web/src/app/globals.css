@@ -4,11 +4,11 @@
 
 /* ─── Design tokens — Dark mode (default) ──────────────────────────────────── */
 :root {
-  /* ── Background layers — rich midnight, not flat black ── */
-  --bg-base:       #0b0b1e;
-  --bg-surface:    #10102a;
-  --bg-elevated:   #181836;
-  --bg-hover:      #202048;
+  /* ── Background layers — deep navy-purple, like a premium SaaS dashboard ── */
+  --bg-base:       #12102a;
+  --bg-surface:    #1a1840;
+  --bg-elevated:   #222048;
+  --bg-hover:      #2c2860;
   --bg-card:       rgba(255,255,255,0.04);
 
   /* ── Borders — subtly visible ── */
@@ -206,6 +206,20 @@ html.light .prose-chat code { background: rgba(0,0,0,0.05); border-color: rgba(0
 
 /* ─── Reset ──────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── Prevent text selection cursor on non-editable content ─────────────────── */
+body { user-select: none; -webkit-user-select: none; }
+input, textarea, [contenteditable="true"], .selectable, .prose-chat { user-select: text; -webkit-user-select: text; }
+
+/* ─── Performance: promote animated layers to GPU ───────────────────────────── */
+button, a, [role="button"] {
+  will-change: auto;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-primary, .btn-ghost, .btn-secondary {
+  transform: translateZ(0);
+}
 
 html { min-height: 100%; scroll-behavior: smooth; }
 
