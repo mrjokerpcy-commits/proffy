@@ -40,9 +40,9 @@ function ConstellationBg() {
       }
       if (!isMobile) for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
         const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y, d2 = dx*dx+dy*dy;
-        if (d2 < 14400) { const a = (light?.18:.28)*(1-Math.sqrt(d2)/120); ctx.beginPath(); ctx.strokeStyle=`rgba(${rgb},${a.toFixed(3)})`; ctx.lineWidth=.8; ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }
+        if (d2 < 14400) { const a = (light?.20:.38)*(1-Math.sqrt(d2)/120); ctx.beginPath(); ctx.strokeStyle=`rgba(${rgb},${a.toFixed(3)})`; ctx.lineWidth=.8; ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }
       }
-      for (const p of pts) { ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=`rgba(${rgb},${light?.28:.42})`; ctx.fill(); }
+      for (const p of pts) { ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=`rgba(${rgb},${light?.32:.58})`; ctx.fill(); }
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
@@ -313,7 +313,7 @@ export default function HubPage() {
         <div aria-hidden="true" style={{
           position:"absolute", top:"0%", left:"50%", transform:"translateX(-50%)",
           width:"900px", height:"700px", borderRadius:"50%", pointerEvents:"none", zIndex:0,
-          background:"radial-gradient(ellipse at 50% 35%, rgba(22,163,74,0.16) 0%, rgba(74,222,128,0.07) 40%, transparent 70%)",
+          background:"radial-gradient(ellipse at 50% 35%, rgba(22,163,74,0.28) 0%, rgba(74,222,128,0.12) 40%, transparent 72%)",
           filter:"blur(48px)",
         }} />
 

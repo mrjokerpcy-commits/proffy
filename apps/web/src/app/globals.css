@@ -194,19 +194,19 @@ html.light [data-hub] .hub-logo-light { display: block; }
   --purple:        #4ade80;
   --purple-glow:   rgba(74,222,128,0.18);
   --border-focus:  rgba(22,163,74,0.5);
-  /* Dark: near-black with subtle green warmth */
-  --bg-base:       #070a07;
-  --bg-surface:    #0d120d;
-  --bg-elevated:   #121a12;
-  --bg-hover:      #1a261a;
-  --nav-bg:        rgba(7,10,7,0.88);
-  --nav-border:    rgba(22,163,74,0.12);
-  --border:        rgba(22,163,74,0.10);
-  --border-light:  rgba(22,163,74,0.18);
-  --text-primary:  #f0fff0;
-  --text-secondary:#8ca88c;
-  --text-muted:    #4a664a;
-  --text-disabled: #233023;
+  /* Dark: near-black with green warmth */
+  --bg-base:       #060d06;
+  --bg-surface:    #0b160b;
+  --bg-elevated:   #101e10;
+  --bg-hover:      #182418;
+  --nav-bg:        rgba(6,13,6,0.90);
+  --nav-border:    rgba(22,163,74,0.20);
+  --border:        rgba(22,163,74,0.15);
+  --border-light:  rgba(22,163,74,0.25);
+  --text-primary:  #edfaed;
+  --text-secondary:#96b896;
+  --text-muted:    #507050;
+  --text-disabled: #243624;
 }
 
 html.light [data-hub] {
