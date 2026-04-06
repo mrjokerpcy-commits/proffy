@@ -129,8 +129,9 @@ function StudyIllustration() {
 export default async function HomePage() {
   // proffy.study root domain → hub landing page
   const host = (await headers()).get("host") ?? "";
-  const isHub = !host.startsWith("app.") && !host.includes("localhost") && !host.startsWith("127.");
-  if (isHub) return <HubPage />;
+  // uni.proffy.study = chat app, everything else (including app.) = hub
+  const isApp = host.startsWith("uni.") || host.includes("localhost") || host.startsWith("127.");
+  if (!isApp) return <HubPage />;
 
   let session = null;
   try { session = await getServerSession(authOptions); } catch {}

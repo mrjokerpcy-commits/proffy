@@ -46,9 +46,10 @@ function ConstellationBg() {
 }
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
-function Section({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function Section({ children, style, id }: { children: React.ReactNode; style?: React.CSSProperties; id?: string }) {
   return (
     <motion.section
+      id={id}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
@@ -182,7 +183,7 @@ export default function HubPage() {
   const products = PRODUCTS(lang);
 
   return (
-    <div style={{ minHeight:"100vh", background:"var(--bg-base)", color:"var(--text-primary)", position:"relative", overflowX:"hidden", fontFamily:ff, direction:dir }}>
+    <div data-hub style={{ minHeight:"100vh", background:"var(--bg-base)", color:"var(--text-primary)", position:"relative", overflowX:"hidden", fontFamily:ff, direction:dir }}>
       <ConstellationBg />
 
       {/* ── Nav ── */}
@@ -205,34 +206,51 @@ export default function HubPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", padding:"148px max(32px,4vw) 72px" }}>
-        <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.5}}>
+      <section style={{ position:"relative", zIndex:1, display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", padding:"148px max(32px,4vw) 80px", overflow:"hidden" }}>
+        {/* Spotlight glow — dark mode only */}
+        <div aria-hidden="true" style={{
+          position:"absolute", top:"10%", left:"50%", transform:"translateX(-50%)",
+          width:"700px", height:"600px", borderRadius:"50%", pointerEvents:"none", zIndex:0,
+          background:"radial-gradient(ellipse at 50% 40%, rgba(22,163,74,0.18) 0%, rgba(74,222,128,0.08) 40%, transparent 70%)",
+          filter:"blur(40px)",
+        }} />
+
+        <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.5}} style={{ position:"relative", zIndex:1 }}>
           <Badge>{t.badge}</Badge>
         </motion.div>
 
-        <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.06}} style={{ marginBottom:"24px" }}>
+        <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.06}} style={{ marginBottom:"24px", position:"relative", zIndex:1 }}>
           <motion.div animate={{y:[0,-8,0]}} transition={{duration:3.5,repeat:Infinity,ease:"easeInOut"}}>
             <Image src="/mascot/hero.png" alt="Proffy mascot" width={120} height={120} style={{ objectFit:"contain" }} draggable={false} priority />
           </motion.div>
         </motion.div>
 
         <motion.h1 initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:0.6,delay:0.1}}
-          className="hub-hero-text"
-          style={{ fontSize:"clamp(40px,6vw,84px)", fontWeight:900, letterSpacing:"-0.04em", lineHeight:1.08, marginBottom:"20px" }}>
-          {t.h1a}<br />{t.h1b}
+          style={{ position:"relative", zIndex:1, fontSize:"clamp(40px,6vw,88px)", fontWeight:900, letterSpacing:"-0.04em", lineHeight:1.08, marginBottom:"20px", color:"var(--text-primary)" }}>
+          {t.h1a}<br />
+          <span className="hub-hero-text">{t.h1b}</span>
         </motion.h1>
 
         <motion.p initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{duration:0.55,delay:0.16}}
-          style={{ fontSize:"clamp(15px,1.6vw,19px)", color:"var(--text-secondary)", lineHeight:1.7, maxWidth:"540px", marginBottom:"40px" }}>
+          style={{ position:"relative", zIndex:1, fontSize:"clamp(15px,1.5vw,18px)", color:"var(--text-secondary)", lineHeight:1.75, maxWidth:"520px", marginBottom:"40px" }}>
           {t.sub}
         </motion.p>
 
-        <motion.a href="https://app.proffy.study" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.22}}
-          style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 38px", borderRadius:"13px", fontSize:"16px", fontWeight:700, background:"linear-gradient(135deg,#6366f1,#8b5cf6 60%,#a855f7 100%)", color:"white", textDecoration:"none", boxShadow:"0 6px 28px rgba(99,102,241,0.32)", transition:"transform 0.12s,box-shadow 0.12s" }}
-          onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 36px rgba(99,102,241,0.42)"}}
-          onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 6px 28px rgba(99,102,241,0.32)"}}>
-          {t.cta}
-        </motion.a>
+        <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:0.22}}
+          style={{ position:"relative", zIndex:1, display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap", justifyContent:"center" }}>
+          <a href="https://app.proffy.study"
+            style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 38px", borderRadius:"13px", fontSize:"16px", fontWeight:700, background:"linear-gradient(135deg,#6366f1,#8b5cf6 60%,#a855f7 100%)", color:"white", textDecoration:"none", boxShadow:"0 6px 28px rgba(99,102,241,0.32)", transition:"transform 0.12s,box-shadow 0.12s" }}
+            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 12px 36px rgba(99,102,241,0.42)"}}
+            onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 6px 28px rgba(99,102,241,0.32)"}}>
+            {t.cta}
+          </a>
+          <a href="#products"
+            style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 28px", borderRadius:"13px", fontSize:"16px", fontWeight:600, background:"rgba(99,102,241,0.08)", color:"var(--blue)", textDecoration:"none", border:"1px solid rgba(99,102,241,0.25)", transition:"background 0.12s,border-color 0.12s" }}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(99,102,241,0.14)";e.currentTarget.style.borderColor="rgba(99,102,241,0.45)"}}
+            onMouseLeave={e=>{e.currentTarget.style.background="rgba(99,102,241,0.08)";e.currentTarget.style.borderColor="rgba(99,102,241,0.25)"}}>
+            {lang === "he" ? "גלה עוד" : "Learn more"}
+          </a>
+        </motion.div>
       </section>
 
       {/* ── Feature bar ── */}
@@ -325,7 +343,7 @@ export default function HubPage() {
       </Section>
 
       {/* ── Products ── */}
-      <Section style={{ padding:"80px max(32px,4vw)" }}>
+      <Section style={{ padding:"80px max(32px,4vw)" }} id="products">
         <div style={{ textAlign:"center", marginBottom:"52px" }}>
           <Badge>{t.productsBadge}</Badge>
           <h2 style={{ fontSize:"clamp(28px,3vw,46px)", fontWeight:900, letterSpacing:"-0.03em", lineHeight:1.12 }}>{t.productsTitle}</h2>

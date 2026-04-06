@@ -143,7 +143,7 @@ export default function BetaGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Gate only applies on app.proffy.study and localhost (dev)
     const host = window.location.hostname;
-    const gated = host.startsWith("app.") || host === "localhost" || host === "127.0.0.1";
+    const gated = host.startsWith("uni.") || host === "localhost" || host === "127.0.0.1";
     if (!gated) { setStatus("unlocked"); return; }
     const stored = localStorage.getItem(BETA_UNLOCK_KEY);
     setStatus(stored === "true" ? "unlocked" : "locked");

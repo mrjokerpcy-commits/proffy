@@ -172,16 +172,64 @@ html[data-subdomain="bagrut"].light {
   --text-primary:#08001a;
 }
 
-/* ─── Hub page classes ───────────────────────────────────────────────────────── */
+/* ─── Hub theme tokens — beige + green (scoped to hub page) ─────────────────── */
+[data-hub] {
+  --blue:          #16a34a;
+  --blue-hover:    #22c55e;
+  --blue-dim:      rgba(22,163,74,0.10);
+  --blue-glow:     rgba(22,163,74,0.28);
+  --purple:        #4ade80;
+  --purple-glow:   rgba(74,222,128,0.18);
+  --border-focus:  rgba(22,163,74,0.5);
+  /* Dark: near-black with subtle green warmth */
+  --bg-base:       #070a07;
+  --bg-surface:    #0d120d;
+  --bg-elevated:   #121a12;
+  --bg-hover:      #1a261a;
+  --nav-bg:        rgba(7,10,7,0.88);
+  --nav-border:    rgba(22,163,74,0.12);
+  --border:        rgba(22,163,74,0.10);
+  --border-light:  rgba(22,163,74,0.18);
+  --text-primary:  #f0fff0;
+  --text-secondary:#8ca88c;
+  --text-muted:    #4a664a;
+  --text-disabled: #233023;
+}
+
+html.light [data-hub] {
+  /* Light: warm cream/beige like Claude, green accent */
+  --bg-base:       #f8f5f0;
+  --bg-surface:    #f1ebe2;
+  --bg-elevated:   #e9e1d5;
+  --bg-hover:      #dfd5c5;
+  --bg-card:       rgba(255,255,255,0.95);
+  --nav-bg:        rgba(248,245,240,0.92);
+  --nav-border:    rgba(0,0,0,0.08);
+  --border:        rgba(0,0,0,0.08);
+  --border-light:  rgba(0,0,0,0.14);
+  --card-shadow:   0 1px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05);
+  --text-primary:  #18180e;
+  --text-secondary:#5c5c4a;
+  --text-muted:    #7a7a6a;
+  --text-disabled: #a8a898;
+  --blue:          #16a34a;
+  --blue-hover:    #15803d;
+  --blue-dim:      rgba(22,163,74,0.08);
+  --blue-glow:     rgba(22,163,74,0.20);
+  --purple:        #15803d;
+  --border-focus:  rgba(22,163,74,0.45);
+}
+
+/* ─── Hub page gradient text ─────────────────────────────────────────────────── */
 .hub-hero-text {
-  background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #c084fc 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #86efac 45%, #4ade80 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   padding-bottom: 0.14em;
 }
 html.light .hub-hero-text {
-  background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 55%, #7c3aed 100%);
+  background: linear-gradient(135deg, #14532d 0%, #16a34a 55%, #22c55e 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -191,7 +239,7 @@ html.light .hub-hero-text {
   box-shadow: var(--card-shadow);
 }
 html.light .hub-card {
-  background: #ffffff;
+  background: #fff;
   border-color: rgba(0,0,0,0.07) !important;
 }
 
