@@ -172,6 +172,13 @@ html[data-subdomain="bagrut"].light {
   --text-primary:#08001a;
 }
 
+/* ─── Hub: green pulse (overrides purple fc-pulse for hub badges) ────────────── */
+@keyframes hub-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0), 0 0 10px rgba(22,163,74,0.12); }
+  50%      { box-shadow: 0 0 0 4px rgba(22,163,74,0.12), 0 0 24px rgba(34,197,94,0.28); }
+}
+[data-hub] .hub-badge-dot { animation: hub-pulse 2s ease-in-out infinite; }
+
 /* ─── Hub theme tokens — beige + green (scoped to hub page) ─────────────────── */
 [data-hub] {
   --blue:          #16a34a;

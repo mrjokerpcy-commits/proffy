@@ -34,7 +34,7 @@ function ConstellationBg() {
       }
       for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
         const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y, d2 = dx*dx+dy*dy;
-        if (d2 < 14400) { const a = (light?.1:.14)*(1-Math.sqrt(d2)/120); ctx.beginPath(); ctx.strokeStyle=`rgba(${rgb},${a.toFixed(3)})`; ctx.lineWidth=.8; ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }
+        if (d2 < 14400) { const a = (light?.18:.28)*(1-Math.sqrt(d2)/120); ctx.beginPath(); ctx.strokeStyle=`rgba(${rgb},${a.toFixed(3)})`; ctx.lineWidth=.8; ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }
       }
       for (const p of pts) { ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=`rgba(${rgb},${light?.28:.42})`; ctx.fill(); }
       raf = requestAnimationFrame(draw);
@@ -145,7 +145,7 @@ const PRODUCTS = (lang: "en"|"he") => [
 function Badge({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display:"inline-flex", alignItems:"center", gap:"7px", background:"rgba(22,163,74,0.1)", border:"1px solid rgba(22,163,74,0.2)", borderRadius:"99px", padding:"5px 16px", marginBottom:"20px" }}>
-      <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#16a34a", boxShadow:"0 0 8px #16a34a", flexShrink:0, animation:"fc-pulse 2s ease-in-out infinite" }} />
+      <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#16a34a", boxShadow:"0 0 8px #16a34a", flexShrink:0, className:"hub-badge-dot" }} />
       <span style={{ fontSize:"11px", fontWeight:700, letterSpacing:"0.12em", color:"#16a34a", textTransform:"uppercase" }}>{children}</span>
     </div>
   );
