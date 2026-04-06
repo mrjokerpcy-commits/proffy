@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { Pool } from "pg";
 import AdminClient from "./AdminClient";
 
@@ -11,6 +12,11 @@ const pool = new Pool({
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
+  // Only accessible from root domain (proffy.study), not sub-sites
+  const host = headers().get("host") ?? "";
+  const isSubdomain = /^(uni|app|psycho|yael|bagrut)\./.test(host);
+  if (isSubdomain) redirect("/");
+
   const adminEmails = new Set(
     (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
       .split(",").map(e => e.trim().toLowerCase()).filter(Boolean)

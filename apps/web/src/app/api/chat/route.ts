@@ -504,17 +504,11 @@ export async function POST(req: NextRequest) {
   const userId = session.user.id;
   const userEmail = (session.user.email ?? "").toLowerCase();
 
-  // ── Role detection ──────────────────────────────────────────────────────────
+  // ── Role detection (admin check before body parse; mod check after) ──────────
   const adminEmails = new Set((process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean));
-  // Moderators are scoped per subdomain — a uni mod has no elevated access on psycho, etc.
-  const subdomainKey = ((subdomain as string) ?? "uni").toUpperCase().replace("APP", "UNI");
-  const modEnvKey    = `MODERATOR_EMAILS_${subdomainKey}`;
-  const modEmails    = new Set((process.env[modEnvKey] ?? "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean));
-  const isAdmin      = adminEmails.has(userEmail);
-  const isModerator  = !isAdmin && modEmails.has(userEmail);
-  const isPrivileged = isAdmin || isModerator;
+  const isAdmin = adminEmails.has(userEmail);
 
-  if (!isPrivileged && isChatBurstLimited(userId)) {
+  if (!isAdmin && isChatBurstLimited(userId)) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
   }
 
@@ -523,9 +517,9 @@ export async function POST(req: NextRequest) {
     "SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active'",
     [userId]
   );
-  const plan = isPrivileged ? "max" : (planRows[0]?.plan ?? "free");
+  const plan = isAdmin ? "max" : (planRows[0]?.plan ?? "free");
 
-  if (!isPrivileged) {
+  if (!isAdmin) {
     const { rows: usageRows } = await pool.query(
       `SELECT SUM(tokens_input) AS tokens_input, SUM(tokens_output) AS tokens_output
        FROM usage WHERE user_id = $1 AND date >= DATE_TRUNC('month', CURRENT_DATE)`,
@@ -546,6 +540,11 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { message, history = [], sessionId, btwResume, partialResponse, image, subdomain } = body;
+  // Moderators are scoped per subdomain — a uni mod has no elevated access on psycho, etc.
+  const subdomainKey = ((subdomain as string) ?? "uni").toUpperCase().replace("APP", "UNI");
+  const modEmails    = new Set((process.env[`MODERATOR_EMAILS_${subdomainKey}`] ?? "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean));
+  const isModerator  = !isAdmin && modEmails.has(userEmail);
+  const isPrivileged = isAdmin || isModerator;
   // subdomain: "app" | "psycho" | "yael" | "bagrut" — sent by client, used to adjust system prompt persona
   // image: { base64: string, mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" }
   const imageAttachment = image && typeof image.base64 === "string" && typeof image.mediaType === "string" ? image : null;

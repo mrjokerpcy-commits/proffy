@@ -92,6 +92,60 @@ export default function AdminClient({
   queue: QueueItem[];
 }) {
   const [tab, setTab] = useState<"overview" | "users" | "usage" | "queue" | "knowledge" | "simulate" | "notes">("overview");
+  const [selectedSite, setSelectedSite] = useState<"platform" | "uni" | "psycho" | "yael" | "bagrut">("platform");
+  const [siteSubTab, setSiteSubTab] = useState<"ingest" | "chat" | "knowledge" | "features">("ingest");
+
+  const SITES = {
+    uni:    { label: "Uni",    color: "#6366f1", subdomain: "app" },
+    psycho: { label: "Psycho", color: "#d4a017", subdomain: "psycho" },
+    yael:   { label: "Yael",   color: "#f59e0b", subdomain: "yael" },
+    bagrut: { label: "Bagrut", color: "#8b5cf6", subdomain: "bagrut" },
+  } as const;
+
+  // Per-site chat
+  const [chatHistory, setChatHistory] = useState<{role:"user"|"assistant",content:string}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatStreaming, setChatStreaming] = useState(false);
+  const chatEndRef = React.useRef<HTMLDivElement>(null);
+
+  async function sendSiteChat() {
+    if (!chatInput.trim() || chatStreaming || selectedSite === "platform") return;
+    const site = SITES[selectedSite as keyof typeof SITES];
+    const msg = chatInput.trim();
+    const history = chatHistory;
+    setChatHistory(h => [...h, { role: "user", content: msg }]);
+    setChatInput("");
+    setChatStreaming(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, history, subdomain: site.subdomain }),
+      });
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let text = "";
+      setChatHistory(h => [...h, { role: "assistant", content: "" }]);
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          for (const line of decoder.decode(value).split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const d = JSON.parse(line.slice(6));
+              if (d.type === "text") {
+                text += d.text;
+                setChatHistory(h => [...h.slice(0, -1), { role: "assistant", content: text }]);
+              }
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+    setChatStreaming(false);
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  }
   const [purgeCode, setPurgeCode] = useState("");
   const [purging, setPurging] = useState(false);
   const [purgeResult, setPurgeResult] = useState<string | null>(null);
@@ -415,27 +469,69 @@ export default function AdminClient({
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2rem" }}>
-          <div>
-            <h1 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: "2px" }}>Admin</h1>
-            <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Proffy platform dashboard</p>
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+            <div>
+              <h1 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: "2px" }}>Admin</h1>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Proffy platform dashboard</p>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: "6px", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "10px", padding: "4px" }}>
-            {(["overview", "users", "usage", "queue", "knowledge", "simulate", "notes"] as const).map(t => (
-              <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-                {t === "queue" && queue.filter(q => q.status === "pending").length > 0 && (
-                  <span style={{ marginLeft: "5px", background: "var(--blue)", color: "#fff", borderRadius: "99px", padding: "1px 6px", fontSize: "11px" }}>
-                    {queue.filter(q => q.status === "pending").length}
-                  </span>
-                )}
+
+          {/* Site selector */}
+          <div style={{ display: "flex", gap: "6px", marginBottom: "8px", flexWrap: "wrap" }}>
+            <button
+              style={{ ...tabStyle(selectedSite === "platform"), border: "1px solid var(--border)", padding: "7px 18px" }}
+              onClick={() => setSelectedSite("platform")}
+            >
+              Platform
+            </button>
+            {(Object.entries(SITES) as [keyof typeof SITES, typeof SITES[keyof typeof SITES]][]).map(([key, s]) => (
+              <button
+                key={key}
+                style={{
+                  padding: "7px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: 700,
+                  cursor: "pointer", border: `1px solid ${selectedSite === key ? s.color + "66" : "var(--border)"}`,
+                  background: selectedSite === key ? s.color + "18" : "transparent",
+                  color: selectedSite === key ? s.color : "var(--text-muted)",
+                  transition: "all 0.15s",
+                }}
+                onClick={() => { setSelectedSite(key); setSiteSubTab("ingest"); setChatHistory([]); }}
+              >
+                {s.label}
               </button>
             ))}
           </div>
+
+          {/* Platform sub-tabs */}
+          {selectedSite === "platform" && (
+            <div style={{ display: "flex", gap: "4px", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "10px", padding: "4px", flexWrap: "wrap" }}>
+              {(["overview", "users", "usage", "queue", "knowledge", "simulate", "notes"] as const).map(t => (
+                <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                  {t === "queue" && queue.filter(q => q.status === "pending").length > 0 && (
+                    <span style={{ marginLeft: "5px", background: "var(--blue)", color: "#fff", borderRadius: "99px", padding: "1px 6px", fontSize: "11px" }}>
+                      {queue.filter(q => q.status === "pending").length}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Site sub-tabs */}
+          {selectedSite !== "platform" && (
+            <div style={{ display: "flex", gap: "4px", background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "10px", padding: "4px" }}>
+              {(["ingest", "chat", "knowledge", "features"] as const).map(t => (
+                <button key={t} style={tabStyle(siteSubTab === t)} onClick={() => setSiteSubTab(t)}>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* ── OVERVIEW ── */}
-        {tab === "overview" && (
+        {/* ── PLATFORM TABS ── */}
+        {selectedSite === "platform" && tab === "overview" && (
           <div>
             {/* Stats grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
@@ -495,7 +591,7 @@ export default function AdminClient({
         )}
 
         {/* ── USERS ── */}
-        {tab === "users" && (
+        {selectedSite === "platform" && tab === "users" && (
           <div>
             <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", flexWrap: "wrap" }}>
               <input
@@ -586,7 +682,7 @@ export default function AdminClient({
         )}
 
         {/* ── USAGE ── */}
-        {tab === "usage" && (
+        {selectedSite === "platform" && tab === "usage" && (
           <div>
             <div style={{ ...cardStyle }}>
               <h3 style={{ fontWeight: 700, marginBottom: "1.25rem", fontSize: "14px" }}>Daily usage (last 30 days)</h3>
@@ -626,7 +722,7 @@ export default function AdminClient({
         )}
 
         {/* ── QUEUE ── */}
-        {tab === "queue" && (
+        {selectedSite === "platform" && tab === "queue" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
             {/* Env vars status panel */}
@@ -911,7 +1007,7 @@ export default function AdminClient({
         )}
 
         {/* ── SIMULATE ── */}
-        {tab === "simulate" && (
+        {selectedSite === "platform" && tab === "simulate" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
 
             {/* Input panel */}
@@ -1009,7 +1105,7 @@ export default function AdminClient({
         )}
 
         {/* ── KNOWLEDGE ── */}
-        {tab === "knowledge" && (
+        {selectedSite === "platform" && tab === "knowledge" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
             {/* Danger zone — purge material */}
@@ -1174,7 +1270,7 @@ export default function AdminClient({
         )}
 
         {/* ── NOTES ── */}
-        {tab === "notes" && (
+        {selectedSite === "platform" && tab === "notes" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={cardStyle}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
@@ -1204,6 +1300,233 @@ export default function AdminClient({
             </div>
           </div>
         )}
+
+        {/* ── SITE: INGEST ── */}
+        {selectedSite !== "platform" && siteSubTab === "ingest" && (() => {
+          const site = SITES[selectedSite as keyof typeof SITES];
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <div style={{ ...cardStyle, borderColor: site.color + "44" }}>
+                <h3 style={{ fontWeight: 700, marginBottom: "0.5rem", fontSize: "14px", color: site.color }}>
+                  Ingest material for {site.label}
+                </h3>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "1rem" }}>
+                  Drive folders and reference documents ingested here are tagged for the {site.label} site.
+                </p>
+
+                {/* Drive form */}
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <div style={{ fontWeight: 600, fontSize: "13px", marginBottom: "8px", color: "var(--text-secondary)" }}>Google Drive folder</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <input value={driveUrl} onChange={e => setDriveUrl(e.target.value)} placeholder="Google Drive folder URL"
+                      style={{ padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }} />
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input value={driveUniversity} onChange={e => setDriveUniversity(e.target.value)} placeholder="University (e.g. TAU)"
+                        style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }} />
+                      <input value={driveFaculty} onChange={e => setDriveFaculty(e.target.value)} placeholder="Faculty"
+                        style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }} />
+                    </div>
+                    <button onClick={submitDrive} disabled={!driveUrl.trim() || driveStatus === "loading"}
+                      style={{ padding: "9px 20px", borderRadius: "8px", border: "none", cursor: driveUrl.trim() ? "pointer" : "not-allowed", background: site.color, color: "#fff", fontSize: "13px", fontWeight: 700, alignSelf: "flex-start" }}>
+                      {driveStatus === "loading" ? "Adding…" : driveStatus === "ok" ? "Added!" : "Add to Queue"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Reference ingest */}
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "13px", marginBottom: "8px", color: "var(--text-secondary)" }}>Reference document (URL / text / PDF)</div>
+                  <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
+                    {(["url", "text", "file"] as const).map(m => (
+                      <button key={m} onClick={() => setIngestMode(m)} style={{ padding: "5px 14px", borderRadius: "6px", border: "1px solid var(--border)", cursor: "pointer", fontSize: "12px", fontWeight: 600, background: ingestMode === m ? site.color + "22" : "transparent", color: ingestMode === m ? site.color : "var(--text-muted)" }}>
+                        {m === "url" ? "URL" : m === "text" ? "Paste text" : "PDF file"}
+                      </button>
+                    ))}
+                  </div>
+                  {ingestMode === "url" && <input value={ingestUrl} onChange={e => setIngestUrl(e.target.value)} placeholder="https://..." style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />}
+                  {ingestMode === "text" && <textarea value={ingestText} onChange={e => setIngestText(e.target.value)} rows={6} placeholder="Paste text..." style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "12px", outline: "none", resize: "vertical", fontFamily: "monospace", boxSizing: "border-box" }} />}
+                  {ingestMode === "file" && (
+                    <label onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type === "application/pdf") setIngestFile(f); }}
+                      style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "24px", borderRadius: "10px", border: `2px dashed ${ingestFile ? site.color : "var(--border)"}`, background: "var(--bg-elevated)", cursor: "pointer", textAlign: "center" }}>
+                      <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={e => setIngestFile(e.target.files?.[0] ?? null)} />
+                      {ingestFile ? <div style={{ fontSize: "13px", fontWeight: 700, color: site.color }}>{ingestFile.name}</div> : <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>Drop PDF here or click to select</div>}
+                    </label>
+                  )}
+                  <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                    <input value={ingestUniversity} onChange={e => setIngestUniversity(e.target.value)} placeholder="University"
+                      style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }} />
+                    <input value={ingestLabel} onChange={e => setIngestLabel(e.target.value)} placeholder="Label"
+                      style={{ flex: 2, padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }} />
+                    <button onClick={runIngestUrl} disabled={!(ingestMode === "file" ? ingestFile : ingestMode === "text" ? ingestText.trim() : ingestUrl.trim()) || ingestStatus === "loading"}
+                      style={{ padding: "9px 20px", borderRadius: "8px", border: "none", background: ingestStatus === "ok" ? "rgba(52,211,153,0.2)" : ingestStatus === "err" ? "rgba(248,113,113,0.2)" : site.color + "33", color: ingestStatus === "ok" ? "#34d399" : ingestStatus === "err" ? "#f87171" : site.color, fontSize: "13px", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+                      {ingestStatus === "loading" ? "Ingesting…" : ingestStatus === "ok" ? "Done!" : ingestStatus === "err" ? "Error" : "Ingest"}
+                    </button>
+                  </div>
+                  {ingestResult && <div style={{ marginTop: "8px", fontSize: "12px", color: "#34d399", padding: "8px 12px", borderRadius: "8px", background: "rgba(52,211,153,0.1)" }}>Saved {ingestResult.courses} courses + {ingestResult.chunks} chunks</div>}
+                  {ingestStatus === "err" && ingestError && <div style={{ marginTop: "8px", fontSize: "12px", color: "#f87171", padding: "8px 12px", borderRadius: "8px", background: "rgba(248,113,113,0.1)" }}>{ingestError}</div>}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── SITE: CHAT ── */}
+        {selectedSite !== "platform" && siteSubTab === "chat" && (() => {
+          const site = SITES[selectedSite as keyof typeof SITES];
+          return (
+            <div style={{ ...cardStyle, display: "flex", flexDirection: "column", height: "70vh" }}>
+              <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "1rem", color: site.color }}>
+                Chat with {site.label} AI
+                <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: 500, color: "var(--text-muted)" }}>Testing {site.subdomain} persona</span>
+              </div>
+
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px", marginBottom: "12px", paddingRight: "4px" }}>
+                {chatHistory.length === 0 && (
+                  <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "13px", marginTop: "2rem" }}>
+                    Send a message to test the {site.label} AI persona
+                  </div>
+                )}
+                {chatHistory.map((m, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+                    <div style={{
+                      maxWidth: "75%", padding: "10px 14px", borderRadius: "12px", fontSize: "13px", lineHeight: 1.6,
+                      background: m.role === "user" ? site.color : "var(--bg-elevated)",
+                      color: m.role === "user" ? "#fff" : "var(--text-primary)",
+                      whiteSpace: "pre-wrap", wordBreak: "break-word",
+                    }}>
+                      {m.content || (chatStreaming && i === chatHistory.length - 1 ? "…" : "")}
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Input */}
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendSiteChat()}
+                  placeholder={`Message ${site.label} AI…`}
+                  disabled={chatStreaming}
+                  style={{ flex: 1, padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px", outline: "none" }}
+                />
+                <button onClick={() => { setChatHistory([]); setChatInput(""); }} style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--border)", background: "transparent", color: "var(--text-muted)", fontSize: "12px", cursor: "pointer" }}>
+                  Clear
+                </button>
+                <button onClick={sendSiteChat} disabled={!chatInput.trim() || chatStreaming}
+                  style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: site.color, color: "#fff", fontSize: "13px", fontWeight: 700, cursor: chatInput.trim() ? "pointer" : "not-allowed", opacity: (!chatInput.trim() || chatStreaming) ? 0.6 : 1 }}>
+                  {chatStreaming ? "…" : "Send"}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── SITE: KNOWLEDGE ── */}
+        {selectedSite !== "platform" && siteSubTab === "knowledge" && (() => {
+          const site = SITES[selectedSite as keyof typeof SITES];
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                Showing all knowledge chunks. Filter by university to narrow results for {site.label}.
+              </div>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                <input placeholder="Filter by university" value={chunkFilterUni} onChange={e => setChunkFilterUni(e.target.value)} onKeyDown={e => e.key === "Enter" && loadChunks(null)}
+                  style={{ flex: 1, minWidth: "180px", padding: "8px 14px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px" }} />
+                <input placeholder="Filter by course" value={chunkFilterCourse} onChange={e => setChunkFilterCourse(e.target.value)} onKeyDown={e => e.key === "Enter" && loadChunks(null)}
+                  style={{ flex: 2, minWidth: "200px", padding: "8px 14px", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", fontSize: "13px" }} />
+                <button onClick={() => loadChunks(null)} disabled={chunksLoading}
+                  style={{ padding: "8px 18px", borderRadius: "10px", border: "none", background: site.color, color: "#fff", fontSize: "13px", fontWeight: 700, cursor: "pointer", opacity: chunksLoading ? 0.6 : 1 }}>
+                  {chunksLoading ? "Loading…" : "Search"}
+                </button>
+                <div style={{ padding: "8px 14px", borderRadius: "10px", background: "var(--bg-surface)", border: "1px solid var(--border)", fontSize: "13px", color: "var(--text-muted)" }}>{fmtNum(chunksTotal)} chunks</div>
+              </div>
+              <div style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-elevated)" }}>
+                      {["Filename", "Course", "Uni", "Type", "Trust", "Text preview"].map(h => (
+                        <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: "var(--text-muted)", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chunks.map(c => {
+                      const p = c.payload;
+                      const isExp = expandedChunk === c.id;
+                      return (
+                        <tr key={c.id} onClick={() => setExpandedChunk(isExp ? null : c.id)}
+                          style={{ borderBottom: "1px solid var(--border)", cursor: "pointer", background: isExp ? "var(--bg-elevated)" : "transparent" }}>
+                          <td style={{ padding: "10px 14px", maxWidth: "200px" }}>
+                            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{p.filename ?? "—"}</div>
+                          </td>
+                          <td style={{ padding: "10px 14px", color: "var(--text-secondary)", maxWidth: "140px" }}>
+                            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.course ?? "—"}</div>
+                          </td>
+                          <td style={{ padding: "10px 14px", color: site.color, fontWeight: 600 }}>{p.university ?? "—"}</td>
+                          <td style={{ padding: "10px 14px" }}>
+                            <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 600, background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>{p.type ?? "?"}</span>
+                          </td>
+                          <td style={{ padding: "10px 14px" }}>
+                            <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 600, background: p.trust_level === "verified" ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)", color: p.trust_level === "verified" ? "var(--green)" : "var(--text-muted)" }}>{p.trust_level ?? "?"}</span>
+                          </td>
+                          <td style={{ padding: "10px 14px", maxWidth: "260px" }}>
+                            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: isExp ? "pre-wrap" : "nowrap", color: "var(--text-secondary)", maxHeight: isExp ? "160px" : undefined, overflowY: isExp ? "auto" : undefined }}>
+                              {isExp ? p.text : p.text?.slice(0, 100) ?? "—"}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {chunks.length === 0 && !chunksLoading && (
+                      <tr><td colSpan={6} style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>No chunks. Click Search to load.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button onClick={() => loadChunks(null)} disabled={chunksOffset === null || chunksLoading}
+                  style={{ padding: "7px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-secondary)", fontSize: "13px", cursor: "pointer", opacity: chunksOffset === null ? 0.4 : 1 }}>First page</button>
+                <button onClick={() => chunksNextOffset !== null && loadChunks(chunksNextOffset)} disabled={chunksNextOffset === null || chunksLoading}
+                  style={{ padding: "7px 16px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-elevated)", color: "var(--text-secondary)", fontSize: "13px", cursor: "pointer", opacity: chunksNextOffset === null ? 0.4 : 1 }}>Next 20 →</button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── SITE: FEATURES ── */}
+        {selectedSite !== "platform" && siteSubTab === "features" && (() => {
+          const site = SITES[selectedSite as keyof typeof SITES];
+          return (
+            <div style={{ ...cardStyle }}>
+              <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "1rem", color: site.color }}>{site.label} — Features</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {[
+                  { label: "AI Chat", desc: "Core chat with RAG retrieval", active: true },
+                  { label: "Flashcards", desc: "AI-generated study flashcards", active: true },
+                  { label: "Course Catalog", desc: "Course lookup and indexing", active: true },
+                  { label: "Web Search", desc: "Real-time web search in chat", active: true },
+                  { label: "File Upload", desc: "Student can upload PDFs/images", active: true },
+                ].map(f => (
+                  <div key={f.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderRadius: "10px", background: "var(--bg-elevated)", border: "1px solid var(--border)" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: "13px" }}>{f.label}</div>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{f.desc}</div>
+                    </div>
+                    <span style={{ padding: "3px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 700, background: f.active ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.06)", color: f.active ? "var(--green)" : "var(--text-muted)" }}>
+                      {f.active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                ))}
+                <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
+                  Feature flags are managed via environment variables. Contact the dev team to toggle them per site.
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
     </div>
