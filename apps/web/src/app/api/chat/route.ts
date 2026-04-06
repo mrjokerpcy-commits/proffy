@@ -716,7 +716,7 @@ export async function POST(req: NextRequest) {
       try {
         // RAG: embed + search (only when course context exists and OpenAI key is set)
         let context = "";
-        let sources: { filename: string; type: string; professor?: string; score: number }[] = [];
+        let sources: { id?: string; filename: string; type: string; professor?: string; score: number }[] = [];
 
         if (process.env.OPENAI_API_KEY) {
           send({ type: "thinking", text: "Searching course material…" });

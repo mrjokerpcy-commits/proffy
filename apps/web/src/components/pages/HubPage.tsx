@@ -167,8 +167,8 @@ const PRODUCTS = (lang: "en"|"he"|"ar") => [
     label:"Proffy Bagrut",  sub:lang==="he"?"בגרות":lang==="ar"?"بجروت":"Bagrut", live:false, href:"https://bagrut.proffy.study",
     desc:lang==="he"?"נבנה לבני 16-18. נושאים כקלפים, רצפים, ו-AI שמדבר בשפה שלך.":lang==="ar"?"مبني لطلاب 16-18. مواضيع كبطاقات، ذكاء اصطناعي يتحدث بلغتك.":"Built for 16-18. Subjects as cards, streaks, AI that speaks your language." },
   { key:"yael",   color:"#f59e0b", border:"rgba(245,158,11,0.22)",  glow:"rgba(245,158,11,0.11)",
-    label:lang==="he"?'Proffy יע"ל':"Proffy Yael", sub:lang==="he"?'יע"ל':lang==="ar"?"يائيل":"Yael", live:false, href:"https://yael.proffy.study",
-    desc:lang==="he"?'הכנה ליע"ל בעברית, חמה ואנושית.':lang==="ar"?"تحضير ليائيل، دافئ وإنساني.":"Hebrew-first yael prep, warm and human." },
+    label:lang==="he"?'Proffy יע"ל':"Proffy Yael", sub:lang==="he"?'יע"ל':lang==="ar"?"ياعيل":"Yael", live:false, href:"https://yael.proffy.study",
+    desc:lang==="he"?'הכנה ליע"ל בעברית, חמה ואנושית.':lang==="ar"?"تحضير لياعيل، دافئ وإنساني.":"Hebrew-first yael prep, warm and human." },
   { key:"psycho", color:"#d4a017", border:"rgba(212,160,23,0.22)",  glow:"rgba(212,160,23,0.11)",
     label:"Proffy Psycho",  sub:lang==="he"?"פסיכומטרי":lang==="ar"?"سيكومتري":"Psychometric", live:false, href:"https://psycho.proffy.study",
     desc:lang==="he"?"הכנה רצינית לפסיכומטרי. תרגילים מובנים בכל קטגוריה.":lang==="ar"?"تحضير جدي للسيكومتري. تمارين منظمة في كل فئة.":"Serious psychometric prep. Structured drills. Built to score." },
@@ -207,7 +207,7 @@ function StepIcon({ icon }: { icon: string }) {
 }
 
 // ─── Request access modal ─────────────────────────────────────────────────────
-function AccessModal({ lang, onClose }: { lang: "en"|"he"; onClose: () => void }) {
+function AccessModal({ lang, onClose }: { lang: "en"|"he"|"ar"; onClose: () => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [study, setStudy] = useState("");
