@@ -11,8 +11,11 @@ const pool = new Pool({
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!session?.user?.email || session.user.email !== adminEmail) redirect("/");
+  const adminEmails = new Set(
+    (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
+      .split(",").map(e => e.trim().toLowerCase()).filter(Boolean)
+  );
+  if (!session?.user?.email || !adminEmails.has(session.user.email.toLowerCase())) redirect("/");
 
   // ── Overview stats ──────────────────────────────────────────────────────────
   const [totalUsers, paidUsers, todayUsage, weeklyUsage, monthlyUsage, allTimeUsage, recentUsers] =

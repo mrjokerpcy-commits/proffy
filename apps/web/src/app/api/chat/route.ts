@@ -506,9 +506,12 @@ export async function POST(req: NextRequest) {
 
   // ── Role detection ──────────────────────────────────────────────────────────
   const adminEmails = new Set((process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean));
-  const modEmails   = new Set((process.env.MODERATOR_EMAILS ?? "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean));
-  const isAdmin     = adminEmails.has(userEmail);
-  const isModerator = !isAdmin && modEmails.has(userEmail);
+  // Moderators are scoped per subdomain — a uni mod has no elevated access on psycho, etc.
+  const subdomainKey = ((subdomain as string) ?? "uni").toUpperCase().replace("APP", "UNI");
+  const modEnvKey    = `MODERATOR_EMAILS_${subdomainKey}`;
+  const modEmails    = new Set((process.env[modEnvKey] ?? "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean));
+  const isAdmin      = adminEmails.has(userEmail);
+  const isModerator  = !isAdmin && modEmails.has(userEmail);
   const isPrivileged = isAdmin || isModerator;
 
   if (!isPrivileged && isChatBurstLimited(userId)) {
