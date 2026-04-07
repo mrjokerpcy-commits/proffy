@@ -25,19 +25,19 @@ export const SUBDOMAIN_SITES: Record<Exclude<SubdomainKey, "root">, SiteConfig> 
   psycho: {
     label: "Psycho by Proffy",
     href: "https://psycho.proffy.study",
-    tagline: "Psychometric exam prep, built to score",
+    tagline: "Psychometric exam prep",
     color: "#d4a017",
   },
   yael: {
     label: "Yael by Proffy",
     href: "https://yael.proffy.study",
-    tagline: "Yael exam prep, warm and human",
+    tagline: "Prepare for יע\"ל with Proffy",
     color: "#f59e0b",
   },
   bagrut: {
     label: "Bagrut by Proffy",
     href: "https://bagrut.proffy.study",
-    tagline: "Bagrut exam prep, Gen Z edition",
+    tagline: "Bagrut prep for every subject",
     color: "#8b5cf6",
   },
 };
