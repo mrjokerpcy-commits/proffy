@@ -180,7 +180,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           </span>
         </span>
         <button
-          onClick={() => router.push(`/dashboard?new=${Date.now()}&semester=${selectedSemester}`)}
+          onClick={() => router.push(`/chat?new=${Date.now()}&semester=${selectedSemester}`)}
           title="New chat"
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -204,8 +204,8 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
             <button key={s.key} onClick={() => {
               setSelectedSemester(s.key);
               // On dashboard, navigate to ?semester=X to load a separate chat session
-              if (pathname === "/dashboard") {
-                router.push(`/dashboard?semester=${s.key}`);
+              if (pathname === "/chat") {
+                router.push(`/chat?semester=${s.key}`);
               }
             }} style={{
               fontSize: "12px", padding: "6px 0", borderRadius: "7px", fontWeight: 600, transition: "all 0.15s",
@@ -489,7 +489,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                           setDeletingId(null);
                           setHoveredId(null);
                           router.refresh();
-                          if (isActive) router.push("/dashboard");
+                          if (isActive) router.push("/chat");
                         }}
                         title="Delete course"
                         style={{

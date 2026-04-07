@@ -190,7 +190,18 @@ ${slice}`,
     try {
       const res = await fetch(url, {
         signal: AbortSignal.timeout(90_000),
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; ProffyBot/1.0)", "Accept": "application/pdf,*/*" },
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9,he;q=0.8",
+          "Accept-Encoding": "gzip, deflate, br",
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache",
+          "Sec-Fetch-Dest": "document",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-Site": "none",
+          "Upgrade-Insecure-Requests": "1",
+        },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
       buffer = Buffer.from(await res.arrayBuffer());

@@ -3,84 +3,74 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Pool } from "pg";
 import AppShell from "@/components/layout/AppShell";
-import ChatWindow from "@/components/chat/ChatWindow";
-import CoursesStrip from "./CoursesStrip";
-import OpenUploadButton from "@/components/ui/OpenUploadButton";
+import DashboardClient from "./DashboardClient";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
   ssl: false,
 });
 
-
-export default async function DashboardPage({ searchParams }: { searchParams: { semester?: string; new?: string; tour?: string } }) {
+export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
 
   const uid = session.user.id;
-  const semester = (searchParams.semester ?? "a").toLowerCase();
-  const validSemesters = new Set(["a", "b", "s"]);
-  const safeSemester = validSemesters.has(semester) ? semester : "a";
 
-  const [coursesRes, usageRes, planRes, fcRes, notesRes, userRes] = await Promise.all([
+  const [coursesRes, usageRes, planRes, fcRes, notesRes, userRes, courseStatsRes, recentRes] = await Promise.all([
     pool.query("SELECT * FROM courses WHERE user_id = $1 ORDER BY created_at DESC", [uid]),
     pool.query("SELECT SUM(tokens_input) AS tokens_input, SUM(tokens_output) AS tokens_output FROM usage WHERE user_id = $1 AND date >= DATE_TRUNC('month', CURRENT_DATE)", [uid]),
     pool.query("SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active'", [uid]),
     pool.query("SELECT COUNT(*) as c FROM flashcards WHERE user_id = $1 AND next_review_at <= NOW()", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
     pool.query("SELECT COUNT(*) as c FROM course_notes WHERE user_id = $1", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
     pool.query("SELECT onboarding_done, email_verified FROM users WHERE id = $1", [uid]).catch(() => ({ rows: [{ onboarding_done: true, email_verified: true }] })),
+    // Per-course: materials + message counts
+    pool.query(`
+      SELECT
+        c.id, c.name, c.color, c.professor, c.exam_date, c.number,
+        COALESCE(m.cnt, 0)::int AS material_count,
+        COALESCE(msg.cnt, 0)::int AS message_count,
+        msg.last_chat
+      FROM courses c
+      LEFT JOIN (
+        SELECT course_id, COUNT(*) AS cnt FROM materials GROUP BY course_id
+      ) m ON m.course_id = c.id
+      LEFT JOIN (
+        SELECT cs.course_id, COUNT(cm.id) AS cnt, MAX(cm.created_at) AS last_chat
+        FROM chat_sessions cs
+        LEFT JOIN chat_messages cm ON cm.session_id = cs.id
+        WHERE cs.user_id = $1
+        GROUP BY cs.course_id
+      ) msg ON msg.course_id = c.id
+      WHERE c.user_id = $1
+      ORDER BY msg.last_chat DESC NULLS LAST
+    `, [uid]).catch(() => ({ rows: [] })),
+    // Recent chat sessions (last 5)
+    pool.query(`
+      SELECT cs.id, cs.course_id, cs.created_at, c.name AS course_name, c.color,
+        COUNT(cm.id)::int AS message_count
+      FROM chat_sessions cs
+      LEFT JOIN courses c ON c.id = cs.course_id
+      LEFT JOIN chat_messages cm ON cm.session_id = cs.id
+      WHERE cs.user_id = $1
+      GROUP BY cs.id, c.name, c.color
+      ORDER BY cs.created_at DESC
+      LIMIT 5
+    `, [uid]).catch(() => ({ rows: [] })),
   ]);
-
-  const isNewChat = !!searchParams.new;
-
-  // Get or create a general chat session per semester (so each semester has its own memory)
-  let generalSessionId: string | undefined;
-  let generalMessages: { id: string; role: string; content: string }[] = [];
-  try {
-    if (isNewChat) {
-      // New chat — create a fresh session, don't load old messages
-      const { rows: newSession } = await pool.query(
-        `INSERT INTO chat_sessions (user_id, title) VALUES ($1, $2) RETURNING id`,
-        [uid, `general_${safeSemester}`]
-      );
-      generalSessionId = newSession[0].id;
-    } else {
-    const { rows: sessionRows } = await pool.query(
-      `SELECT id FROM chat_sessions
-       WHERE user_id = $1 AND course_id IS NULL AND title = $2
-       ORDER BY created_at DESC LIMIT 1`,
-      [uid, `general_${safeSemester}`]
-    );
-    if (sessionRows.length > 0) {
-      generalSessionId = sessionRows[0].id;
-    } else {
-      const { rows: newSession } = await pool.query(
-        `INSERT INTO chat_sessions (user_id, title) VALUES ($1, $2) RETURNING id`,
-        [uid, `general_${safeSemester}`]
-      );
-      generalSessionId = newSession[0].id;
-    }
-    if (generalSessionId) {
-      const { rows: msgs } = await pool.query(
-        `SELECT id, role, content FROM chat_messages WHERE session_id = $1 ORDER BY created_at ASC`,
-        [generalSessionId]
-      );
-      generalMessages = msgs;
-    }
-    } // end else (not new chat)
-  } catch { /* non-fatal — chat still works without session */ }
 
   if (!userRes.rows[0]?.email_verified) redirect("/verify-email");
   if (!userRes.rows[0]?.onboarding_done) redirect("/onboarding");
 
-  const courses       = coursesRes.rows;
-  const monthTokens   = (Number(usageRes.rows[0]?.tokens_input) || 0) + (Number(usageRes.rows[0]?.tokens_output) || 0);
-  const userPlan      = planRes.rows[0]?.plan ?? "free";
+  const courses = coursesRes.rows;
+  const monthTokens = (Number(usageRes.rows[0]?.tokens_input) || 0) + (Number(usageRes.rows[0]?.tokens_output) || 0);
+  const userPlan = planRes.rows[0]?.plan ?? "free";
   const MONTHLY_LIMITS: Record<string, number> = { free: 600_000, pro: 4_000_000, max: 10_000_000 };
-  const tokenLimit    = MONTHLY_LIMITS[userPlan] ?? MONTHLY_LIMITS.free;
-  const fcDue        = parseInt(fcRes.rows[0]?.c ?? "0", 10);
+  const tokenLimit = MONTHLY_LIMITS[userPlan] ?? MONTHLY_LIMITS.free;
+  const fcDue = parseInt(fcRes.rows[0]?.c ?? "0", 10);
   const notesCount = parseInt(notesRes.rows[0]?.c ?? "0", 10);
-  const firstName  = (session.user.name ?? "").split(" ")[0] || "there";
+  const firstName = (session.user.name ?? "").split(" ")[0] || "there";
+  const courseStats = courseStatsRes.rows;
+  const recentSessions = recentRes.rows;
 
   const nextExam = courses
     .filter((c: any) => c.exam_date)
@@ -90,85 +80,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
   return (
     <AppShell courses={courses} flashcardsDue={fcDue} userPlan={userPlan as "free" | "pro" | "max"}>
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-
-        {/* ── Top bar ── */}
-        <div style={{
-          flexShrink: 0, padding: "14px 24px",
-          borderBottom: "1px solid var(--border)",
-          background: "linear-gradient(135deg, rgba(79,142,247,0.05) 0%, rgba(167,139,250,0.03) 60%, transparent 100%)",
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", minWidth: 0 }}>
-            <div>
-              <div style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2 }}>
-                Hey, {firstName} 👋
-              </div>
-              {nextExam ? (
-                <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
-                  Next exam:{" "}
-                  <span style={{
-                    color: nextExam.days <= 7 ? "#f87171" : nextExam.days <= 14 ? "#fbbf24" : "#34d399",
-                    fontWeight: 600,
-                  }}>
-                    {nextExam.name}
-                  </span>{" "}
-                  in {nextExam.days}d
-                </div>
-              ) : (
-                <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
-                  {courses.length === 0 ? "Add your first course to get started" : `${courses.length} course${courses.length !== 1 ? "s" : ""} enrolled`}
-                </div>
-              )}
-            </div>
-
-            {/* Inline stats pills */}
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-              {fcDue > 0 && (
-                <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "99px", background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.3)", color: "#a78bfa" }}>
-                  {fcDue} cards due
-                </span>
-              )}
-              {notesCount > 0 && (
-                <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 9px", borderRadius: "99px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", color: "#34d399" }}>
-                  {notesCount} notes
-                </span>
-              )}
-              {monthTokens / tokenLimit >= 0.6 && (
-                <span style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "99px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                  <span style={{ width: "60px", height: "4px", borderRadius: "99px", background: "var(--border)", overflow: "hidden", display: "inline-block" }}>
-                    <span style={{ display: "block", height: "100%", borderRadius: "99px", width: `${Math.min(100, Math.round(monthTokens / tokenLimit * 100))}%`, background: monthTokens / tokenLimit > 0.85 ? "#f87171" : "#fbbf24", transition: "width 0.4s" }} />
-                  </span>
-                  {Math.round(monthTokens / tokenLimit * 100)}% this month
-                </span>
-              )}
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── Main body: courses strip + chat ── */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
-          {/* Courses horizontal strip — only if courses exist */}
-          {courses.length > 0 && <CoursesStrip courses={courses} />}
-
-          {/* Chat — takes all remaining space */}
-          <div style={{ flex: 1, overflow: "hidden" }}>
-            <ChatWindow
-              key={generalSessionId}
-              hasCourses={courses.length > 0}
-              userPlan={userPlan}
-              initialUsedTokens={monthTokens}
-              tokenLimit={tokenLimit}
-              sessionId={generalSessionId}
-              initialMessages={generalMessages as any}
-            />
-          </div>
-        </div>
-
-      </div>
+      <DashboardClient
+        firstName={firstName}
+        courses={courses}
+        courseStats={courseStats}
+        recentSessions={recentSessions}
+        monthTokens={monthTokens}
+        tokenLimit={tokenLimit}
+        userPlan={userPlan}
+        fcDue={fcDue}
+        notesCount={notesCount}
+        nextExam={nextExam}
+      />
     </AppShell>
   );
 }
-
