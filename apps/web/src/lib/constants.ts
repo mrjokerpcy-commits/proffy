@@ -17,7 +17,7 @@ export interface SiteConfig {
 
 export const SUBDOMAIN_SITES: Record<Exclude<SubdomainKey, "root">, SiteConfig> = {
   app: {
-    label: "Uni by Proffy",
+    label: "Proffy Uni",
     href: "https://uni.proffy.study",
     tagline: "Your AI study companion",
     color: "#6366f1",
