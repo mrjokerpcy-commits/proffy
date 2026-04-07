@@ -549,8 +549,10 @@ export async function POST(req: NextRequest) {
   // image: { base64: string, mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" }
   const imageAttachment = image && typeof image.base64 === "string" && typeof image.mediaType === "string" ? image : null;
   // documents: Array<{ base64: string, mediaType: string, name: string }> — PDFs attached via upload modal
+  // Limit PDF attachments: Claude allows max 100 pages per PDF.
+  // ~5MB base64 ≈ 3.7MB raw ≈ ~40 pages — safe upper bound.
   const docAttachments: { base64: string; mediaType: string; name: string }[] = Array.isArray(body.documents)
-    ? body.documents.filter((d: any) => typeof d.base64 === "string" && d.base64.length < 20_000_000).slice(0, 5)
+    ? body.documents.filter((d: any) => typeof d.base64 === "string" && d.base64.length < 5_000_000).slice(0, 3)
     : [];
   // These can be overridden by authoritative DB values below
   let university: string | undefined = body.university;
@@ -1386,7 +1388,6 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
             model: selectedModel,
             max_tokens: selectedModel === "claude-haiku-4-5-20251001" ? 1024 : 10000,
             ...(useThinking ? { thinking: { type: "enabled", budget_tokens: 5000 } } : {}),
-            ...(useThinking ? { betas: ["interleaved-thinking-2025-05-14"] } : {}),
             system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
             messages: msgs,
             tools: [...TOOLS, ...(isAdmin ? ADMIN_TOOLS : isModerator ? MODERATOR_TOOLS : [])],
