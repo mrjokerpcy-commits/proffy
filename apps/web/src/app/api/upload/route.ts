@@ -222,20 +222,23 @@ export async function POST(req: NextRequest) {
   catch { return NextResponse.json({ error: "Invalid form data" }, { status: 400 }); }
 
   const file       = formData.get("file") as File | null;
-  const courseId   = formData.get("courseId") as string | null;
+  const courseId   = formData.get("courseId") as string | null; // null or "general" = no course
   const rawDocType = formData.get("type") as string | null;
 
-  if (!file || !courseId) {
-    return NextResponse.json({ error: "file and courseId are required" }, { status: 400 });
-  }
-  if (!UUID_RE.test(courseId)) {
-    return NextResponse.json({ error: "Invalid courseId" }, { status: 400 });
+  if (!file) {
+    return NextResponse.json({ error: "file is required" }, { status: 400 });
   }
   if (file.size > MAX_FILE_SIZE) {
     return NextResponse.json({ error: "File too large (max 25 MB)" }, { status: 413 });
   }
 
-  // Enforce per-plan file count limits per course
+  // Validate courseId if provided (not general upload)
+  const isGeneral = !courseId || courseId === "general";
+  if (!isGeneral && !UUID_RE.test(courseId!)) {
+    return NextResponse.json({ error: "Invalid courseId" }, { status: 400 });
+  }
+
+  // Enforce per-plan file count limits
   const { rows: planRows } = await pool.query(
     `SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1`,
     [session.user.id]
@@ -243,7 +246,7 @@ export async function POST(req: NextRequest) {
   const userPlan: string = planRows[0]?.plan ?? "free";
   const FILE_LIMITS: Record<string, number> = { free: 5, pro: 30, max: Infinity };
   const fileLimit = FILE_LIMITS[userPlan] ?? 5;
-  if (fileLimit !== Infinity) {
+  if (fileLimit !== Infinity && !isGeneral) {
     const { rows: countRows } = await pool.query(
       `SELECT COUNT(*) as cnt FROM documents WHERE course_id = $1 AND user_id = $2`,
       [courseId, session.user.id]
@@ -269,15 +272,18 @@ export async function POST(req: NextRequest) {
   // Sanitise filename
   const safeFilename = file.name.replace(/[^a-zA-Z0-9._\-\u0590-\u05FF ]/g, "_").slice(0, 200);
 
-  // Verify course belongs to user
-  const { rows: courseRows } = await pool.query(
-    "SELECT * FROM courses WHERE id = $1 AND user_id = $2",
-    [courseId, session.user.id]
-  );
-  if (!courseRows[0]) {
-    return NextResponse.json({ error: "Course not found" }, { status: 404 });
+  // Resolve course (null for general uploads)
+  let course: any = null;
+  if (!isGeneral) {
+    const { rows: courseRows } = await pool.query(
+      "SELECT * FROM courses WHERE id = $1 AND user_id = $2",
+      [courseId, session.user.id]
+    );
+    if (!courseRows[0]) {
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    }
+    course = courseRows[0];
   }
-  const course = courseRows[0];
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
@@ -403,11 +409,11 @@ export async function POST(req: NextRequest) {
               text:          batch[j].text,
               filename:      safeFilename,
               type:          file_type_detected,
-              professor:     course.professor ?? null,
-              university:    course.university,
-              course:        course.name,
-              course_number: course.course_number ?? null,
-              course_id:     courseId,
+              professor:     course?.professor ?? null,
+              university:    course?.university ?? null,
+              course:        course?.name ?? null,
+              course_number: course?.course_number ?? null,
+              course_id:     isGeneral ? null : courseId,
               user_id:       null,          // shared — no user restriction
               trust_level:   "student",     // sourced from student upload, unverified
               chunk_index:   i + j,
@@ -434,15 +440,15 @@ export async function POST(req: NextRequest) {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT DO NOTHING
        RETURNING id`,
-      [courseId, session.user.id, safeFilename, file_type_detected, course.professor ?? null, file.size, chunkCount, contentHash]
+      [isGeneral ? null : courseId, session.user.id, safeFilename, file_type_detected, course?.professor ?? null, file.size, chunkCount, contentHash]
     );
     documentId = docRows[0]?.id ?? null;
   } catch (err) {
     console.error("Document insert error:", err);
   }
 
-  // Upsert professor patterns if exam
-  if (patterns.length > 0) {
+  // Upsert professor patterns if exam (only for course-specific uploads)
+  if (patterns.length > 0 && !isGeneral) {
     try {
       await pool.query("DELETE FROM professor_patterns WHERE course_id = $1 AND user_id = $2", [courseId, session.user.id]);
       for (const p of patterns) {
