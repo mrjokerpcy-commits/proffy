@@ -156,6 +156,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           {/* Chat — takes all remaining space */}
           <div style={{ flex: 1, overflow: "hidden" }}>
             <ChatWindow
+              key={generalSessionId}
               hasCourses={courses.length > 0}
               userPlan={userPlan}
               initialUsedTokens={monthTokens}
