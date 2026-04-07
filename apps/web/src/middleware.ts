@@ -13,6 +13,15 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
+  // Redirect /login on subdomains to proffy.study/login so NextAuth CSRF works
+  const host = req.headers.get("host") ?? "";
+  if (req.nextUrl.pathname === "/login" && isProd && host !== "proffy.study" && host !== "www.proffy.study") {
+    const loginUrl = new URL(`${LOGIN_BASE}/login`);
+    const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
+    if (callbackUrl) loginUrl.searchParams.set("callbackUrl", callbackUrl);
+    return NextResponse.redirect(loginUrl);
+  }
+
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET ?? "dev-secret-change-in-prod",
@@ -31,6 +40,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/login",
     "/dashboard/:path*",
     "/chat/:path*",
     "/course/:path*",
