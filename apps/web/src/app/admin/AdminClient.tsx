@@ -434,9 +434,13 @@ export default function AdminClient({
 
   async function setPlan(userId: string, plan: string) {
     setUpdatingId(userId);
+    const adminSecret = (document.querySelector("meta[name=admin-secret]") as HTMLMetaElement)?.content ?? "";
     const res = await fetch("/api/admin/users", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-secret": adminSecret,
+      },
       body: JSON.stringify({ userId, plan }),
     });
     if (res.ok) {
