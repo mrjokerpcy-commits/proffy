@@ -24,6 +24,7 @@ function ProffyAvatar({ thinking = false }: { index: number; thinking?: boolean 
     <div
       className={thinking ? "thinking-avatar" : undefined}
       style={{
+        position: "relative",
         width: "36px", height: "36px", flexShrink: 0,
         borderRadius: "10px", overflow: "hidden",
         background: "var(--blue-dim)",
@@ -35,7 +36,10 @@ function ProffyAvatar({ thinking = false }: { index: number; thinking?: boolean 
       <img
         src="/logo-owl.png"
         alt="Proffy"
-        style={{ width: "64px", height: "64px", objectFit: "contain", marginTop: "-14px", marginLeft: "-14px" }}
+        style={{
+          position: "absolute", width: "56px", height: "56px", objectFit: "contain",
+          top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+        }}
         draggable={false}
       />
     </div>
