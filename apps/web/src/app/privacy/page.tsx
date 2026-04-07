@@ -28,11 +28,15 @@ export default function PrivacyPage() {
           },
           {
             title: "Cookies",
-            body: "We use cookies only for authentication (to keep you logged in) and for storing your theme and language preferences. We do not use tracking or advertising cookies."
+            body: "We use cookies for several purposes: (1) Essential cookies — required for authentication and keeping you logged in. (2) Preference cookies — storing your theme and language settings. (3) Analytics cookies — we use Google Analytics to understand how students use Proffy and improve the product. (4) Marketing cookies — we may use advertising pixels (e.g. Google Ads, Meta) to measure the effectiveness of our campaigns. Analytics and marketing cookies are only set after you give consent via the cookie banner."
+          },
+          {
+            title: "Your cookie choices",
+            body: "When you first visit Proffy, a cookie banner appears. You can accept all cookies or decline non-essential ones. If you decline, only essential cookies are set. You can change your choice at any time by clearing your browser's local storage for proffy.study. Declining analytics or marketing cookies does not affect the core functionality of the product."
           },
           {
             title: "Third-party services",
-            body: "Proffy uses Anthropic (Claude AI) and OpenAI (embeddings) to process your queries. Your messages may be processed by these services under their respective privacy policies. We do not share personally identifiable information with them beyond what is necessary to answer your query."
+            body: "Proffy uses Anthropic (Claude AI) and OpenAI (embeddings) to process your queries. Your messages may be processed by these services under their respective privacy policies. We also use Google Analytics and may use Google Ads or Meta Pixel for marketing measurement, subject to your cookie consent. We do not share personally identifiable information with advertisers."
           },
           {
             title: "Your rights",
