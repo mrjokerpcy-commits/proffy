@@ -6,6 +6,7 @@ import { Pool } from "pg";
 import AppShell from "@/components/layout/AppShell";
 import DashboardClient from "./DashboardClient";
 import PlatformHub from "./PlatformHub";
+import BetaGate from "./BetaGate";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
@@ -34,7 +35,7 @@ export default async function DashboardPage() {
       pool.query(
         "SELECT platform, plan, status FROM platform_subscriptions WHERE user_id = $1 AND status = 'active'",
         [uid]
-      ),
+      ).catch(() => ({ rows: [] })),
     ]);
 
     if (!userRes.rows[0]?.email_verified) redirect("/verify-email");
@@ -84,8 +85,6 @@ export default async function DashboardPage() {
   );
 
   if (accessRes.rows.length === 0) {
-    // Not activated — show beta gate on this subdomain
-    const { default: BetaGate } = await import("./BetaGate");
     return <BetaGate platform={platform} userId={uid} />;
   }
 
