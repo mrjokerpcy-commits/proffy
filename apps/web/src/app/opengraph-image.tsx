@@ -20,19 +20,19 @@ export default async function OGImage() {
       >
         {/* Green glow behind owl */}
         <div style={{
-          position: "absolute", width: "400px", height: "400px",
+          position: "absolute", width: "500px", height: "500px",
           background: "radial-gradient(circle, rgba(22,163,74,0.25) 0%, transparent 70%)",
-          borderRadius: "50%", top: "80px", left: "50%", transform: "translateX(-50%)",
+          borderRadius: "50%", top: "30px", left: "50%", transform: "translateX(-50%)",
           display: "flex",
         }} />
 
-        {/* Owl */}
+        {/* Owl — large so internal PNG padding doesn't show as whitespace */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://proffy.study/logo-owl.png"
-          width={220}
-          height={220}
-          style={{ objectFit: "contain", position: "relative" }}
+          src="https://proffy.study/og-owl.png"
+          width={340}
+          height={340}
+          style={{ objectFit: "contain", position: "relative", marginBottom: "-40px" }}
         />
 
         {/* Title */}
