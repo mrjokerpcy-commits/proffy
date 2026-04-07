@@ -44,6 +44,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://proffy.study"),
   title: "Proffy – AI Study Tools for Every Student",
   description: "AI-powered prep for university courses, psychometric, bagrut, and yael exams.",
   icons: {
