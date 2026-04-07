@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import LangToggle, { useLang } from "@/components/ui/LangToggle";
 
@@ -299,6 +301,51 @@ function AccessModal({ lang, onClose }: { lang: "en"|"he"|"ar"; onClose: () => v
   );
 }
 
+// ─── Nav Actions (session-aware) ─────────────────────────────────────────────
+function NavActions({ onGetAccess, getAccessLabel }: { onGetAccess: () => void; getAccessLabel: string }) {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") return null;
+
+  if (session?.user) {
+    return (
+      <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+        {session.user.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={session.user.image} alt={session.user.name ?? ""} style={{ width: "34px", height: "34px", borderRadius: "50%", objectFit: "cover" }} />
+        ) : (
+          <div style={{
+            width: "34px", height: "34px", borderRadius: "50%",
+            background: "linear-gradient(135deg, #16a34a, #22c55e)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "14px", fontWeight: 700, color: "#fff",
+          }}>
+            {(session.user.name ?? "U").charAt(0).toUpperCase()}
+          </div>
+        )}
+        <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>My Dashboard</span>
+      </Link>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <Link href="/login" style={{
+        padding: "8px 16px", borderRadius: "10px", fontSize: "13px", fontWeight: 600,
+        color: "var(--text-primary)", border: "1px solid var(--border)",
+        textDecoration: "none", whiteSpace: "nowrap" as const,
+      }}>
+        Login
+      </Link>
+      <button onClick={onGetAccess} style={{ padding: "8px 18px", borderRadius: "10px", fontSize: "13px", fontWeight: 600, background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "white", border: "none", cursor: "pointer", boxShadow: "0 2px 12px rgba(22,163,74,0.28)", transition: "opacity 0.12s,transform 0.12s", whiteSpace: "nowrap" as const }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = ""; }}>
+        {getAccessLabel}
+      </button>
+    </div>
+  );
+}
+
 // ─── Hub Page ─────────────────────────────────────────────────────────────────
 export default function HubPage() {
   const [mounted, setMounted] = useState(false);
@@ -333,11 +380,7 @@ export default function HubPage() {
         <div className="hub-nav-toggles">
           {mounted && <ThemeToggle />}
           {mounted && <LangToggle />}
-          <button onClick={() => setShowModal(true)} style={{ padding:"8px 18px", borderRadius:"10px", fontSize:"13px", fontWeight:600, background:"linear-gradient(135deg,#16a34a,#22c55e)", color:"white", border:"none", cursor:"pointer", boxShadow:"0 2px 12px rgba(22,163,74,0.28)", transition:"opacity 0.12s,transform 0.12s", whiteSpace:"nowrap" }}
-            onMouseEnter={e=>{e.currentTarget.style.opacity="0.85";e.currentTarget.style.transform="translateY(-1px)"}}
-            onMouseLeave={e=>{e.currentTarget.style.opacity="1";e.currentTarget.style.transform=""}}>
-            {t.getAccess}
-          </button>
+          <NavActions onGetAccess={() => setShowModal(true)} getAccessLabel={t.getAccess} />
         </div>
       </nav>
 
