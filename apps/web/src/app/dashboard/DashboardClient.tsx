@@ -103,17 +103,35 @@ export default function DashboardClient({
     <div style={{ height: "100%", overflowY: "auto", padding: "28px 32px", maxWidth: "1100px", margin: "0 auto" }}>
 
       {/* ── Header ── */}
-      <div style={{ marginBottom: "28px" }}>
-        <h1 style={{ fontSize: "22px", fontWeight: 800, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.03em" }}>
-          Hey, {firstName}
-        </h1>
-        <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: "4px 0 0" }}>
-          {nextExam
-            ? `Next exam: ${nextExam.name} in ${nextExam.days} day${nextExam.days !== 1 ? "s" : ""}`
-            : courses.length === 0
-            ? "Add your first course to get started"
-            : `${courses.length} course${courses.length !== 1 ? "s" : ""} this semester`}
-        </p>
+      <div style={{ marginBottom: "28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ fontSize: "22px", fontWeight: 800, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.03em" }}>
+            Hey, {firstName}
+          </h1>
+          <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: "4px 0 0" }}>
+            {nextExam
+              ? `Next exam: ${nextExam.name} in ${nextExam.days} day${nextExam.days !== 1 ? "s" : ""}`
+              : courses.length === 0
+              ? "Add your first course to get started"
+              : `${courses.length} course${courses.length !== 1 ? "s" : ""} this semester`}
+          </p>
+        </div>
+        <button
+          onClick={() => router.push("/chat")}
+          style={{
+            display: "flex", alignItems: "center", gap: "8px",
+            padding: "10px 20px", borderRadius: "12px",
+            background: "var(--blue)", border: "none",
+            color: "#fff", fontSize: "14px", fontWeight: 700,
+            cursor: "pointer", flexShrink: 0,
+            boxShadow: "0 2px 12px rgba(79,142,247,0.35)",
+          }}
+        >
+          Open chat
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
       </div>
 
       {/* ── Stat cards ── */}
