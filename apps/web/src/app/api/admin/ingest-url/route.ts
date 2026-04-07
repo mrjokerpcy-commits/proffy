@@ -144,51 +144,59 @@ ${slice}`,
       if (offset + CHUNK_SIZE < pastedText.length) await new Promise(r => setTimeout(r, 3000));
     }
   } else if (fileBuffer) {
-    // ── File mode: process uploaded PDF buffer ────────────────────────────────
-    const SLICE = 4_000_000;
-    for (let offset = 0; offset < fileBuffer.length; offset += SLICE) {
-      const slice  = fileBuffer.subarray(offset, offset + SLICE);
-      const base64 = slice.toString("base64");
-      try {
-        const res = await anthropic.messages.create({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 8192,
-          messages: [{ role: "user", content: [
-            { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } } as any,
-            { type: "text", text: `Extract all text from this document verbatim.\nIf this document contains course listings output them at the end:\n<courses>\n[{"number":"104136","name":"Calculus 2M","name_he":"מתמטיקה 2ח","faculty":"הנדסת חשמל ומחשבים","mandatory":true}]\n</courses>\nCourse numbers are exactly 6 digits. mandatory=true if marked חובה. Include EVERY course found.` },
-          ]}],
-        });
-        const full = res.content[0].type === "text" ? res.content[0].text : "";
-        const coursesMatch = full.match(/<courses>([\s\S]*?)<\/courses>/);
-        if (coursesMatch) {
-          try {
-            const courses = JSON.parse(coursesMatch[1].trim());
-            for (const c of courses) {
-              if (c.number && c.name && /^\d{5,8}$/.test(String(c.number))) {
-                await pool.query(
-                  `INSERT INTO technion_courses (course_number, name, name_hebrew, faculty, is_mandatory)
-                   VALUES ($1, $2, $3, $4, $5)
-                   ON CONFLICT (course_number) DO UPDATE
-                     SET name = EXCLUDED.name, name_hebrew = EXCLUDED.name_hebrew,
-                         faculty = EXCLUDED.faculty, is_mandatory = EXCLUDED.is_mandatory, updated_at = NOW()`,
-                  [String(c.number), String(c.name).slice(0, 200), c.name_he ? String(c.name_he).slice(0, 200) : null, c.faculty ? String(c.faculty).slice(0, 100) : null, c.mandatory === true]
-                );
-                courseCount++;
-              }
+    // ── File mode: send full PDF to Claude (must be < 32MB) ──────────────────
+    const MAX_PDF = 32 * 1024 * 1024;
+    if (fileBuffer.length > MAX_PDF) {
+      return NextResponse.json({ error: "PDF too large. Max 32 MB. Use Paste text instead." }, { status: 413 });
+    }
+    const base64 = fileBuffer.toString("base64");
+    try {
+      const res = await anthropic.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 8192,
+        messages: [{ role: "user", content: [
+          { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } } as any,
+          { type: "text", text: `Extract all text from this document verbatim.\nIf this document contains course listings output them at the end:\n<courses>\n[{"number":"104136","name":"Calculus 2M","name_he":"מתמטיקה 2ח","faculty":"הנדסת חשמל ומחשבים","mandatory":true}]\n</courses>\nCourse numbers are exactly 6 digits. mandatory=true if marked חובה. Include EVERY course found.` },
+        ]}],
+      });
+      const full = res.content[0].type === "text" ? res.content[0].text : "";
+      const coursesMatch = full.match(/<courses>([\s\S]*?)<\/courses>/);
+      if (coursesMatch) {
+        try {
+          const courses = JSON.parse(coursesMatch[1].trim());
+          for (const c of courses) {
+            if (c.number && c.name && /^\d{5,8}$/.test(String(c.number))) {
+              await pool.query(
+                `INSERT INTO technion_courses (course_number, name, name_hebrew, faculty, is_mandatory)
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT (course_number) DO UPDATE
+                   SET name = EXCLUDED.name, name_hebrew = EXCLUDED.name_hebrew,
+                       faculty = EXCLUDED.faculty, is_mandatory = EXCLUDED.is_mandatory, updated_at = NOW()`,
+                [String(c.number), String(c.name).slice(0, 200), c.name_he ? String(c.name_he).slice(0, 200) : null, c.faculty ? String(c.faculty).slice(0, 100) : null, c.mandatory === true]
+              );
+              courseCount++;
             }
-          } catch {}
-        }
-        allTextChunks.push(...smartChunk(full.replace(/<courses>[\s\S]*?<\/courses>/, "").trim()));
-      } catch (err: any) {
-        console.error(`File slice ${offset} error:`, err.message);
+          }
+        } catch {}
       }
-      if (offset + SLICE < fileBuffer.length) await new Promise(r => setTimeout(r, 5000));
+      allTextChunks.push(...smartChunk(full.replace(/<courses>[\s\S]*?<\/courses>/, "").trim()));
+    } catch (err: any) {
+      console.error("File PDF error:", err.message);
     }
   } else {
     // ── URL mode: fetch PDF ───────────────────────────────────────────────────
+    // Convert Google Docs/Sheets/Slides edit URLs to direct PDF export URLs
+    let fetchUrl = url;
+    const gdocsMatch = url.match(/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([^/]+)/);
+    if (gdocsMatch) {
+      const type = gdocsMatch[1];
+      const id   = gdocsMatch[2];
+      fetchUrl = `https://docs.google.com/${type}/d/${id}/export?format=pdf`;
+    }
+
     let buffer: Buffer;
     try {
-      const res = await fetch(url, {
+      const res = await fetch(fetchUrl, {
         signal: AbortSignal.timeout(90_000),
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -209,52 +217,46 @@ ${slice}`,
       return NextResponse.json({ error: `Fetch failed: ${err.message}` }, { status: 400 });
     }
 
-    const SLICE = 4_000_000;
-    for (let offset = 0; offset < buffer.length; offset += SLICE) {
-      const slice  = buffer.subarray(offset, offset + SLICE);
-      const base64 = slice.toString("base64");
-      try {
-        const res = await anthropic.messages.create({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 8192,
-          messages: [{
-            role: "user",
-            content: [
-              { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } } as any,
-              { type: "text", text: `Extract all text from this document verbatim.
-If this document contains course listings output them at the end:
-<courses>
-[{"number":"104136","name":"Calculus 2M","name_he":"מתמטיקה 2ח","faculty":"הנדסת חשמל ומחשבים","mandatory":true}]
-</courses>
-Course numbers are exactly 6 digits. mandatory=true if marked חובה. Include EVERY course found.` },
-            ],
-          }],
-        });
-        const full = res.content[0].type === "text" ? res.content[0].text : "";
-        const coursesMatch = full.match(/<courses>([\s\S]*?)<\/courses>/);
-        if (coursesMatch) {
-          try {
-            const courses = JSON.parse(coursesMatch[1].trim());
-            for (const c of courses) {
-              if (c.number && c.name && /^\d{5,8}$/.test(String(c.number))) {
-                await pool.query(
-                  `INSERT INTO technion_courses (course_number, name, name_hebrew, faculty, is_mandatory)
-                   VALUES ($1, $2, $3, $4, $5)
-                   ON CONFLICT (course_number) DO UPDATE
-                     SET name = EXCLUDED.name, name_hebrew = EXCLUDED.name_hebrew,
-                         faculty = EXCLUDED.faculty, is_mandatory = EXCLUDED.is_mandatory, updated_at = NOW()`,
-                  [String(c.number), String(c.name).slice(0, 200), c.name_he ? String(c.name_he).slice(0, 200) : null, c.faculty ? String(c.faculty).slice(0, 100) : null, c.mandatory === true]
-                );
-                courseCount++;
-              }
+    // Send full PDF — Claude supports up to 32MB
+    if (buffer.length > 32 * 1024 * 1024) {
+      return NextResponse.json({ error: "PDF too large (max 32 MB). Use Paste text instead." }, { status: 413 });
+    }
+    const base64 = buffer.toString("base64");
+    try {
+      const res = await anthropic.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 8192,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } } as any,
+            { type: "text", text: `Extract all text from this document verbatim.\nIf this document contains course listings output them at the end:\n<courses>\n[{"number":"104136","name":"Calculus 2M","name_he":"מתמטיקה 2ח","faculty":"הנדסת חשמל ומחשבים","mandatory":true}]\n</courses>\nCourse numbers are exactly 6 digits. mandatory=true if marked חובה. Include EVERY course found.` },
+          ],
+        }],
+      });
+      const full = res.content[0].type === "text" ? res.content[0].text : "";
+      const coursesMatch = full.match(/<courses>([\s\S]*?)<\/courses>/);
+      if (coursesMatch) {
+        try {
+          const courses = JSON.parse(coursesMatch[1].trim());
+          for (const c of courses) {
+            if (c.number && c.name && /^\d{5,8}$/.test(String(c.number))) {
+              await pool.query(
+                `INSERT INTO technion_courses (course_number, name, name_hebrew, faculty, is_mandatory)
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT (course_number) DO UPDATE
+                   SET name = EXCLUDED.name, name_hebrew = EXCLUDED.name_hebrew,
+                       faculty = EXCLUDED.faculty, is_mandatory = EXCLUDED.is_mandatory, updated_at = NOW()`,
+                [String(c.number), String(c.name).slice(0, 200), c.name_he ? String(c.name_he).slice(0, 200) : null, c.faculty ? String(c.faculty).slice(0, 100) : null, c.mandatory === true]
+              );
+              courseCount++;
             }
-          } catch {}
-        }
-        allTextChunks.push(...smartChunk(full.replace(/<courses>[\s\S]*?<\/courses>/, "").trim()));
-      } catch (err: any) {
-        console.error(`Slice ${offset} error:`, err.message);
+          }
+        } catch {}
       }
-      if (offset + SLICE < buffer.length) await new Promise(r => setTimeout(r, 5000));
+      allTextChunks.push(...smartChunk(full.replace(/<courses>[\s\S]*?<\/courses>/, "").trim()));
+    } catch (err: any) {
+      console.error("URL PDF error:", err.message);
     }
   }
 

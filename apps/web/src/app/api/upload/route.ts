@@ -158,9 +158,9 @@ async function extractFromImage(buffer: Buffer, mimeType: string, isHandwriting 
 
 // ── Extract text from PDF via Claude document API ──────────────────────────
 async function extractFromPdf(buffer: Buffer): Promise<{ text: string; pages: number }> {
-  const MAX_BYTES = 4_000_000;
-  const workingBuffer = buffer.length > MAX_BYTES ? buffer.subarray(0, MAX_BYTES) : buffer;
-  const base64 = workingBuffer.toString("base64");
+  // Claude supports PDFs up to 32MB. Student limit is 25MB so this always fits.
+  if (buffer.length > 32 * 1024 * 1024) throw new Error("PDF too large (max 32 MB)");
+  const base64 = buffer.toString("base64");
   const res = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 4096,
@@ -185,7 +185,10 @@ async function extractFromOffice(buffer: Buffer, filename: string): Promise<{ ch
   const processorUrl = process.env.PROCESSOR_URL || "http://localhost:8001";
   try {
     const formData = new FormData();
-    formData.append("file", new Blob([new Uint8Array(buffer)]), filename);
+    const mimeType = filename.toLowerCase().endsWith(".pptx")
+      ? "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    formData.append("file", new Blob([new Uint8Array(buffer)], { type: mimeType }), filename);
     const res = await fetch(`${processorUrl}/extract/pptx`, {
       method: "POST",
       body: formData,
@@ -297,17 +300,13 @@ export async function POST(req: NextRequest) {
       pages      = 1;
 
     } else if (fileKind === "office") {
-      // Try Python processor first (preserves slide numbers)
+      // Try Python processor (preserves slide numbers)
       const officeResult = await extractFromOffice(fileBuffer, file.name);
       if (officeResult) {
         rawChunks = officeResult.chunks;
         pages     = officeResult.pages;
       } else {
-        // Fallback: send as image/vision (less accurate but always works)
-        const { text, confidence: c } = await extractFromImage(fileBuffer, "image/png");
-        confidence = c;
-        rawChunks  = smartChunk(text);
-        pages      = 1;
+        return NextResponse.json({ error: "Could not extract this file. Please convert to PDF and upload again." }, { status: 422 });
       }
 
     } else {
@@ -315,9 +314,8 @@ export async function POST(req: NextRequest) {
       const isExam = rawDocType === "exam" || detectDocType(file.name) === "exam";
       if (isExam) {
         // Full extraction + pattern detection
-        const MAX_BYTES = 4_000_000;
-        const workingBuffer = fileBuffer.length > MAX_BYTES ? fileBuffer.subarray(0, MAX_BYTES) : fileBuffer;
-        const base64 = workingBuffer.toString("base64");
+        if (fileBuffer.length > 32 * 1024 * 1024) throw new Error("PDF too large (max 32 MB)");
+        const base64 = fileBuffer.toString("base64");
         const res = await anthropic.messages.create({
           model: "claude-sonnet-4-6",
           max_tokens: 4096,
