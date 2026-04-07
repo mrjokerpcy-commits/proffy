@@ -575,10 +575,11 @@ export async function POST(req: NextRequest) {
         if (text?.trim()) {
           extractedDocTexts.push(`[Attached file: ${doc.name} (${pages} pages)]\n${text.slice(0, 60_000)}`);
           // Save to Qdrant if we have a course context (background, non-blocking)
-          if (courseId) {
+          const _courseId = typeof body.courseId === "string" ? body.courseId : null;
+          if (_courseId) {
             (async () => {
               try {
-                const chunks = text.match(/.{1,1500}/gs) ?? [];
+                const chunks = text.match(/[\s\S]{1,1500}/g) ?? [];
                 const points: any[] = [];
                 for (let i = 0; i < chunks.length; i += 20) {
                   const batch = chunks.slice(i, i + 20);
@@ -586,7 +587,7 @@ export async function POST(req: NextRequest) {
                   batch.forEach((chunk, j) => points.push({
                     id: crypto.randomUUID(),
                     vector: embRes.data[j].embedding,
-                    payload: { text: chunk, filename: doc.name, type: "notes", course_id: courseId, user_id: userId, trust_level: "student", chunk_index: i + j, slide_number: null, helpful_count: 0, total_shown: 0, helpfulness_score: 0.5 },
+                    payload: { text: chunk, filename: doc.name, type: "notes", course_id: _courseId, user_id: userId, trust_level: "student", chunk_index: i + j, slide_number: null, helpful_count: 0, total_shown: 0, helpfulness_score: 0.5 },
                   }));
                 }
                 if (points.length > 0) await qdrant.upsert("studyai_chunks", { points });
