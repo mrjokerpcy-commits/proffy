@@ -12,10 +12,10 @@ export default function CalendarButton() {
         style={{
           display: "flex", alignItems: "center", gap: "6px",
           padding: "6px 12px", borderRadius: "9px",
-          background: open ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.06)",
-          border: `1px solid ${open ? "rgba(167,139,250,0.4)" : "rgba(255,255,255,0.12)"}`,
+          background: open ? "rgba(167,139,250,0.15)" : "var(--bg-elevated)",
+          border: `1px solid ${open ? "rgba(167,139,250,0.4)" : "var(--border-light)"}`,
           cursor: "pointer", flexShrink: 0, transition: "all 0.15s",
-          color: open ? "#a78bfa" : "rgba(255,255,255,0.6)",
+          color: open ? "#a78bfa" : "var(--text-secondary)",
           fontSize: "12px", fontWeight: 600,
         }}
       >
