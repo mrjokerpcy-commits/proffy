@@ -26,9 +26,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs && \
-    apk add --no-cache vips-dev || apk add --no-cache libc6-compat && \
-    npm install -g sharp
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
 COPY --from=builder /app/apps/web/public ./apps/web/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./

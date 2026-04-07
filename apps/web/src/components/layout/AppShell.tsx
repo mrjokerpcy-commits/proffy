@@ -17,11 +17,10 @@ interface Props {
   activeCourse?: Course;
   flashcardsDue?: number;
   professorPatterns?: { topic: string; pct: number }[];
-  studentInsights?: { topic: string; status: string; note: string }[];
   userPlan?: "free" | "pro" | "max";
 }
 
-export default function AppShell({ children, courses, activeCourse, flashcardsDue, professorPatterns, studentInsights, userPlan = "free" }: Props) {
+export default function AppShell({ children, courses, activeCourse, flashcardsDue, professorPatterns, userPlan = "free" }: Props) {
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
