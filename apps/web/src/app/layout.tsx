@@ -49,12 +49,11 @@ export const metadata: Metadata = {
   description: "AI-powered prep for university courses, psychometric, bagrut, and yael exams.",
   icons: {
     icon: [
-      { url: "/logo-owl.png", type: "image/png" },
+      { url: "/logo-tab.png", type: "image/png" },
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
     ],
-    shortcut: "/logo-owl.png",
-    apple: "/logo-owl.png",
+    shortcut: "/logo-tab.png",
+    apple: "/logo-tab.png",
   },
 };
 

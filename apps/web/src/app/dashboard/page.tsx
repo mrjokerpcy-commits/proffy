@@ -84,10 +84,9 @@ export default async function DashboardPage() {
   );
 
   if (accessRes.rows.length === 0) {
-    // Not activated — redirect to main dashboard to activate
-    const isProd = process.env.NODE_ENV === "production";
-    const hubUrl = isProd ? "https://proffy.study/dashboard" : "http://localhost:3000/dashboard";
-    redirect(hubUrl);
+    // Not activated — show beta gate on this subdomain
+    const { default: BetaGate } = await import("./BetaGate");
+    return <BetaGate platform={platform} userId={uid} />;
   }
 
   // ── Uni dashboard (existing) ───────────────────────────────────────────────

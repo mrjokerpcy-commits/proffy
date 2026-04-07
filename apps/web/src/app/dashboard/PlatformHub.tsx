@@ -76,17 +76,31 @@ function PlanBadge({ plan }: { plan: string }) {
 }
 
 export default function PlatformHub({ firstName, userName, userEmail, userImage, platformPlans, uniStats }: Props) {
+  const [codeInputs, setCodeInputs] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [activating, setActivating] = useState<string | null>(null);
+  const [showCodeFor, setShowCodeFor] = useState<string | null>(null);
 
   async function activate(platformId: string) {
+    const code = codeInputs[platformId] ?? "";
+    if (!code.trim()) {
+      setErrors(e => ({ ...e, [platformId]: "Enter your access code" }));
+      return;
+    }
     setActivating(platformId);
+    setErrors(e => ({ ...e, [platformId]: "" }));
     try {
-      await fetch("/api/platform/activate", {
+      const res = await fetch("/api/platform/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform: platformId }),
+        body: JSON.stringify({ platform: platformId, code: code.trim() }),
       });
-      window.location.reload();
+      const data = await res.json();
+      if (!res.ok) {
+        setErrors(e => ({ ...e, [platformId]: data.error ?? "Invalid code" }));
+      } else {
+        window.location.reload();
+      }
     } finally {
       setActivating(null);
     }
@@ -247,35 +261,20 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                   )}
 
                   {/* CTA */}
-                  {isActivated ? (
-                    <a
-                      href={p.url}
-                      style={{
-                        display: "block", textAlign: "center" as const,
-                        padding: "10px", borderRadius: "8px",
-                        background: p.gradient,
-                        color: "#fff", fontWeight: 700, fontSize: "14px",
-                        textDecoration: "none",
-                      }}
-                    >
-                      Open {p.name}
-                    </a>
-                  ) : (
-                    <button
-                      onClick={() => activate(p.id)}
-                      disabled={activating === p.id}
-                      style={{
-                        width: "100%", padding: "10px", borderRadius: "8px",
-                        background: "var(--bg-elevated)",
-                        border: "1px solid var(--border)",
-                        color: "var(--text-secondary)", fontWeight: 600, fontSize: "14px",
-                        cursor: activating === p.id ? "not-allowed" : "pointer",
-                        opacity: activating === p.id ? 0.6 : 1,
-                      }}
-                    >
-                      {activating === p.id ? "Activating..." : "Get Started Free"}
-                    </button>
-                  )}
+                  <a
+                    href={p.url}
+                    style={{
+                      display: "block", textAlign: "center" as const,
+                      padding: "10px", borderRadius: "8px",
+                      background: isActivated ? p.gradient : "var(--bg-elevated)",
+                      border: isActivated ? "none" : "1px solid var(--border)",
+                      color: isActivated ? "#fff" : "var(--text-secondary)",
+                      fontWeight: 700, fontSize: "14px",
+                      textDecoration: "none",
+                    }}
+                  >
+                    {isActivated ? `Open ${p.name}` : "Get Started Free"}
+                  </a>
                 </div>
               </motion.div>
             );
