@@ -548,12 +548,16 @@ export async function POST(req: NextRequest) {
   // subdomain: "app" | "psycho" | "yael" | "bagrut" — sent by client, used to adjust system prompt persona
   // image: { base64: string, mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" }
   const imageAttachment = image && typeof image.base64 === "string" && typeof image.mediaType === "string" ? image : null;
-  // documents: Array<{ base64: string, mediaType: string, name: string }> — PDFs attached via upload modal
-  // Limit PDF attachments: Claude allows max 100 pages per PDF.
-  // ~5MB base64 ≈ 3.7MB raw ≈ ~40 pages — safe upper bound.
-  const docAttachments: { base64: string; mediaType: string; name: string }[] = Array.isArray(body.documents)
-    ? body.documents.filter((d: any) => typeof d.base64 === "string" && d.base64.length < 5_000_000).slice(0, 3)
+  // documents: Array<{ base64: string, mediaType: string, name: string }> — PDFs attached in chat
+  // Claude's limit: 100 pages per PDF. ~4MB base64 ≈ 3MB raw ≈ safe upper bound for most PDFs.
+  // PDFs over the limit are excluded from direct attachment but noted in context so Claude
+  // tells the user to upload the file to a course for full RAG access.
+  const MAX_PDF_BASE64 = 4_000_000;
+  const allDocs: { base64: string; mediaType: string; name: string }[] = Array.isArray(body.documents)
+    ? body.documents.filter((d: any) => typeof d.base64 === "string").slice(0, 3)
     : [];
+  const docAttachments = allDocs.filter(d => d.base64.length <= MAX_PDF_BASE64);
+  const oversizedDocs  = allDocs.filter(d => d.base64.length > MAX_PDF_BASE64).map(d => d.name);
   // These can be overridden by authoritative DB values below
   let university: string | undefined = body.university;
   let course: string | undefined     = body.course;
@@ -1354,8 +1358,12 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
                   source: { type: "base64" as const, media_type: "application/pdf" as const, data: d.base64 },
                 })),
                 ...(imageAttachment ? [{ type: "image" as const, source: { type: "base64" as const, media_type: imageAttachment.mediaType, data: imageAttachment.base64 } }] : []),
-                { type: "text" as const, text: message },
+                { type: "text" as const, text: oversizedDocs.length > 0
+                  ? `${message}\n\n[Note: ${oversizedDocs.join(", ")} could not be attached directly — too large (>100 pages). Tell the user to upload it to a course so you can access it via search.]`
+                  : message },
               ]
+            : oversizedDocs.length > 0
+            ? `${message}\n\n[Note: ${oversizedDocs.join(", ")} could not be attached directly — too large (>100 pages). Tell the user to upload it to a course so you can access it via search.]`
             : message;
 
         let msgs: Anthropic.MessageParam[] = btwResume && partialResponse
