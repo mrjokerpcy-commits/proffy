@@ -119,3 +119,32 @@ async def extract_pptx(file: UploadFile = File(...)):
         return slides
     finally:
         os.unlink(tmp_path)
+
+
+@app.post("/extract/pdf")
+async def extract_pdf_text(file: UploadFile = File(...)):
+    """Extract raw text from a PDF using pdfplumber. No page limit. Returns text + page count."""
+    try:
+        import pdfplumber
+    except ImportError:
+        raise HTTPException(status_code=501, detail="pdfplumber not installed")
+
+    content = await file.read()
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        with pdfplumber.open(tmp_path) as pdf:
+            pages_text = []
+            for i, page in enumerate(pdf.pages):
+                text = page.extract_text()
+                if text and text.strip():
+                    pages_text.append(f"[Page {i + 1}]\n{text.strip()}")
+            full_text = "\n\n".join(pages_text)
+            page_count = len(pdf.pages)
+        return {"text": full_text, "pages": page_count}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"PDF extraction failed: {str(e)}")
+    finally:
+        os.unlink(tmp_path)

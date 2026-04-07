@@ -549,15 +549,54 @@ export async function POST(req: NextRequest) {
   // image: { base64: string, mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" }
   const imageAttachment = image && typeof image.base64 === "string" && typeof image.mediaType === "string" ? image : null;
   // documents: Array<{ base64: string, mediaType: string, name: string }> — PDFs attached in chat
-  // Claude's limit: 100 pages per PDF. ~4MB base64 ≈ 3MB raw ≈ safe upper bound for most PDFs.
-  // PDFs over the limit are excluded from direct attachment but noted in context so Claude
-  // tells the user to upload the file to a course for full RAG access.
+  // Claude's limit: 100 pages. Small PDFs (<4MB base64) are attached directly.
+  // Large PDFs are extracted via processor (pdfplumber, no page limit) and injected as text.
+  // New content is saved to Qdrant so future chats have RAG access.
   const MAX_PDF_BASE64 = 4_000_000;
   const allDocs: { base64: string; mediaType: string; name: string }[] = Array.isArray(body.documents)
     ? body.documents.filter((d: any) => typeof d.base64 === "string").slice(0, 3)
     : [];
   const docAttachments = allDocs.filter(d => d.base64.length <= MAX_PDF_BASE64);
-  const oversizedDocs  = allDocs.filter(d => d.base64.length > MAX_PDF_BASE64).map(d => d.name);
+  const oversizedDocs  = allDocs.filter(d => d.base64.length > MAX_PDF_BASE64);
+
+  // Extract text from oversized PDFs via processor
+  const extractedDocTexts: string[] = [];
+  for (const doc of oversizedDocs) {
+    try {
+      const processorUrl = process.env.PROCESSOR_URL || "http://localhost:8001";
+      const buf = Buffer.from(doc.base64, "base64");
+      const fd = new FormData();
+      fd.append("file", new Blob([new Uint8Array(buf)], { type: "application/pdf" }), doc.name);
+      const res = await fetch(`${processorUrl}/extract/pdf`, {
+        method: "POST", body: fd, signal: AbortSignal.timeout(60_000),
+      });
+      if (res.ok) {
+        const { text, pages } = await res.json() as { text: string; pages: number };
+        if (text?.trim()) {
+          extractedDocTexts.push(`[Attached file: ${doc.name} (${pages} pages)]\n${text.slice(0, 60_000)}`);
+          // Save to Qdrant if we have a course context (background, non-blocking)
+          if (courseId) {
+            (async () => {
+              try {
+                const chunks = text.match(/.{1,1500}/gs) ?? [];
+                const points: any[] = [];
+                for (let i = 0; i < chunks.length; i += 20) {
+                  const batch = chunks.slice(i, i + 20);
+                  const embRes = await openai.embeddings.create({ model: "text-embedding-3-small", input: batch });
+                  batch.forEach((chunk, j) => points.push({
+                    id: crypto.randomUUID(),
+                    vector: embRes.data[j].embedding,
+                    payload: { text: chunk, filename: doc.name, type: "notes", course_id: courseId, user_id: userId, trust_level: "student", chunk_index: i + j, slide_number: null, helpful_count: 0, total_shown: 0, helpfulness_score: 0.5 },
+                  }));
+                }
+                if (points.length > 0) await qdrant.upsert("studyai_chunks", { points });
+              } catch {}
+            })();
+          }
+        }
+      }
+    } catch {}
+  }
   // These can be overridden by authoritative DB values below
   let university: string | undefined = body.university;
   let course: string | undefined     = body.course;
@@ -1358,12 +1397,12 @@ ${knowledgeSection}${platformSection}${context ? `\n\nRetrieved course material:
                   source: { type: "base64" as const, media_type: "application/pdf" as const, data: d.base64 },
                 })),
                 ...(imageAttachment ? [{ type: "image" as const, source: { type: "base64" as const, media_type: imageAttachment.mediaType, data: imageAttachment.base64 } }] : []),
-                { type: "text" as const, text: oversizedDocs.length > 0
-                  ? `${message}\n\n[Note: ${oversizedDocs.join(", ")} could not be attached directly — too large (>100 pages). Tell the user to upload it to a course so you can access it via search.]`
+                { type: "text" as const, text: extractedDocTexts.length > 0
+                  ? `${message}\n\n${extractedDocTexts.join("\n\n---\n\n")}`
                   : message },
               ]
-            : oversizedDocs.length > 0
-            ? `${message}\n\n[Note: ${oversizedDocs.join(", ")} could not be attached directly — too large (>100 pages). Tell the user to upload it to a course so you can access it via search.]`
+            : extractedDocTexts.length > 0
+            ? `${message}\n\n${extractedDocTexts.join("\n\n---\n\n")}`
             : message;
 
         let msgs: Anthropic.MessageParam[] = btwResume && partialResponse
