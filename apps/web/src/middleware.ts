@@ -1,22 +1,33 @@
-import { withAuth } from "next-auth/middleware";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export default withAuth(
-  function middleware(req: NextRequest) {
-    // Add X-Robots-Tag to all API responses to prevent indexing
+const isProd = process.env.NODE_ENV === "production";
+const LOGIN_BASE = isProd ? "https://proffy.study" : "http://localhost:3000";
+
+export async function middleware(req: NextRequest) {
+  // X-Robots-Tag on all API routes
+  if (req.nextUrl.pathname.startsWith("/api/")) {
     const res = NextResponse.next();
-    if (req.nextUrl.pathname.startsWith("/api/")) {
-      res.headers.set("X-Robots-Tag", "noindex, nofollow");
-    }
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
     return res;
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
   }
-);
+
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET ?? "dev-secret-change-in-prod",
+    cookieName: isProd ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+  });
+
+  if (!token) {
+    const callbackUrl = req.nextUrl.href;
+    const loginUrl = new URL(`${LOGIN_BASE}/login`);
+    loginUrl.searchParams.set("callbackUrl", callbackUrl);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

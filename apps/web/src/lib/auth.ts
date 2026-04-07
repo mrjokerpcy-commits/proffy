@@ -76,6 +76,19 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allow redirects to any *.proffy.study subdomain (cross-subdomain login)
+      try {
+        const parsed = new URL(url);
+        if (parsed.hostname === "proffy.study" || parsed.hostname.endsWith(".proffy.study")) {
+          return url;
+        }
+      } catch {}
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
+    },
+
     async jwt({ token, user, account }) {
       if (user && account?.provider !== "google") {
         token.id = user.id;
