@@ -26,7 +26,7 @@ export default async function DashboardPage() {
     // Per-course: materials + message counts
     pool.query(`
       SELECT
-        c.id, c.name, c.color, c.professor, c.exam_date, c.number,
+        c.id, c.name, c.professor, c.exam_date, c.number,
         COALESCE(m.cnt, 0)::int AS material_count,
         COALESCE(msg.cnt, 0)::int AS message_count,
         msg.last_chat
@@ -46,7 +46,7 @@ export default async function DashboardPage() {
     `, [uid]).catch(() => ({ rows: [] })),
     // Recent chat sessions (last 5)
     pool.query(`
-      SELECT cs.id, cs.course_id, cs.created_at, c.name AS course_name, c.color,
+      SELECT cs.id, cs.course_id, cs.created_at, c.name AS course_name,
         COUNT(cm.id)::int AS message_count
       FROM chat_sessions cs
       LEFT JOIN courses c ON c.id = cs.course_id
