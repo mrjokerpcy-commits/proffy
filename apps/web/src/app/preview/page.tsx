@@ -12,198 +12,129 @@ import Image from "next/image";
 import { useRef, useState, useEffect, useCallback } from "react";
 
 /* ── Tokens ──────────────────────────────────────────────────────────────── */
-const DESK      = "#07080f";
-const PARCH     = "#f0e8d4";
-const INK       = "#1a1208";
-const INK2      = "#4a3f2f";
-const INK3      = "#8c7455";
-const LIME      = "#c8f135";
-const LIME_G    = "linear-gradient(135deg,#c8f135,#a3d90e)";
-const SPINE_G   = "linear-gradient(90deg,#0a3d0a,#1a6b1a,#0a3d0a)";
-const COVER_BG  = "linear-gradient(135deg,#0a0d1c 0%,#101528 55%,#080b16 100%)";
-const TURN_EASE: [number, number, number, number] = [0.645, 0.045, 0.355, 1.0];
-const DISP = "var(--font-cormorant),'Georgia',serif";
-const BODY = "var(--font-dm-sans),'Inter',system-ui,sans-serif";
-const MONO = "'JetBrains Mono','Fira Code',monospace";
-const SPP  = 300; // scroll pixels per page spread
+const DESK    = "#05070e";
+const PARCH   = "#ece3cc";
+const INK     = "#140e07";
+const INK2    = "#3a2d1c";
+const INK3    = "#75613e";
+const LIME    = "#c8f135";
+const LIME_G  = "linear-gradient(135deg,#c8f135,#9fce00)";
+const SPINE_G = "linear-gradient(90deg,#071407,#0e2d0e,#071407)";
+const COVER_G = "linear-gradient(160deg,#0e1428 0%,#141c36 55%,#090c1e 100%)";
+const DISP    = "var(--font-cormorant),'Georgia',serif";
+const BODY    = "var(--font-dm-sans),'Inter',system-ui,sans-serif";
+const MONO    = "'JetBrains Mono','Fira Code',monospace";
+const SPP     = 400;
 
-/* ── Parchment page shell ────────────────────────────────────────────────── */
-function Page({
-  children,
-  side,
-  num,
-  style,
-}: {
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+function Page({ children, side, num, style }: {
   children: React.ReactNode;
   side: "left" | "right";
   num?: string;
   style?: React.CSSProperties;
 }) {
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        background: PARCH,
-        backgroundImage: `repeating-linear-gradient(transparent,transparent 27px,rgba(0,0,0,0.04) 27px,rgba(0,0,0,0.04) 28px)`,
-        backgroundSize: "100% 28px",
-        position: "relative",
-        overflow: "hidden",
-        padding: side === "left" ? "1.75rem 1.5rem 2rem 2.25rem" : "1.75rem 2.25rem 2rem 1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        boxShadow:
-          side === "left"
-            ? "inset -8px 0 20px rgba(0,0,0,0.12)"
-            : "inset 8px 0 20px rgba(0,0,0,0.12)",
-        ...style,
-      }}
-    >
-      {/* Red margin line */}
-      <div
-        style={{
-          position: "absolute",
-          [side === "left" ? "right" : "left"]: "2rem",
-          top: 0,
-          bottom: 0,
-          width: 1,
-          background: "rgba(180,60,60,0.32)",
-          pointerEvents: "none",
-        }}
-      />
+    <div style={{
+      width: "100%", height: "100%",
+      background: PARCH,
+      backgroundImage: `
+        repeating-linear-gradient(transparent,transparent 31px,rgba(0,0,0,0.04) 31px,rgba(0,0,0,0.04) 32px),
+        radial-gradient(ellipse 55% 38% at ${side === "left" ? "72% 14%" : "28% 14%"}, rgba(255,252,235,0.52) 0%,transparent 60%)
+      `,
+      backgroundSize: "100% 32px,100% 100%",
+      position: "relative", overflow: "hidden",
+      padding: side === "left"
+        ? "clamp(1.25rem,2.5vh,2.5rem) clamp(1.25rem,2vw,2.5rem) clamp(1.25rem,2.5vh,2.5rem) clamp(1.75rem,3vw,3.5rem)"
+        : "clamp(1.25rem,2.5vh,2.5rem) clamp(1.75rem,3vw,3.5rem) clamp(1.25rem,2.5vh,2.5rem) clamp(1.25rem,2vw,2.5rem)",
+      display: "flex", flexDirection: "column",
+      boxShadow: side === "left"
+        ? "inset -20px 0 40px rgba(0,0,0,0.09)"
+        : "inset 20px 0 40px rgba(0,0,0,0.09)",
+      ...style,
+    }}>
+      <div style={{
+        position: "absolute",
+        [side === "left" ? "right" : "left"]: "clamp(1.25rem,2vw,2.5rem)",
+        top: 0, bottom: 0, width: 1,
+        background: "rgba(148,42,42,0.22)", pointerEvents: "none",
+      }} />
       {children}
       {num && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: "0.6rem",
-            [side === "left" ? "left" : "right"]: "50%",
-            transform: "translateX(50%)",
-            fontFamily: DISP,
-            fontSize: 10,
-            color: INK3,
-            letterSpacing: "0.1em",
-          }}
-        >
-          {num}
-        </div>
+        <div style={{
+          position: "absolute", bottom: "0.7rem", left: "50%", transform: "translateX(-50%)",
+          fontFamily: DISP, fontSize: 11, color: INK3, letterSpacing: "0.12em",
+        }}>{num}</div>
       )}
     </div>
   );
 }
 
-/* ── Typography helpers ──────────────────────────────────────────────────── */
+/* ── Typography ──────────────────────────────────────────────────────────── */
 function H1({ children }: { children: React.ReactNode }) {
-  return (
-    <h1 style={{ fontFamily: DISP, fontSize: "clamp(2.2rem,4.5vw,4.5rem)", fontWeight: 300, lineHeight: 1.06, color: INK, letterSpacing: "-0.02em", margin: 0 }}>
-      {children}
-    </h1>
-  );
+  return <h1 style={{ fontFamily: DISP, fontSize: "clamp(2.8rem,5vw,6rem)", fontWeight: 300, lineHeight: 0.95, color: INK, letterSpacing: "-0.02em", margin: 0 }}>{children}</h1>;
 }
-function H2({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
-  return (
-    <h2
-      style={{
-        fontFamily: DISP,
-        fontSize: "clamp(1.4rem,2.5vw,3rem)",
-        fontWeight: 300,
-        lineHeight: 1.15,
-        letterSpacing: "-0.01em",
-        color: accent ? LIME : INK,
-        margin: 0,
-      }}
-    >
-      {children}
-    </h2>
-  );
+function H2({ children }: { children: React.ReactNode }) {
+  return <h2 style={{ fontFamily: DISP, fontSize: "clamp(1.6rem,2.8vw,3.5rem)", fontWeight: 300, lineHeight: 1.1, color: INK, letterSpacing: "-0.015em", margin: 0 }}>{children}</h2>;
 }
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontFamily: MONO, fontSize: "0.68rem", letterSpacing: "0.14em", textTransform: "uppercase", color: INK3, marginBottom: "0.5rem" }}>
-      {children}
-    </div>
-  );
+function Lbl({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontFamily: MONO, fontSize: "clamp(0.58rem,0.72vw,0.72rem)", letterSpacing: "0.2em", textTransform: "uppercase", color: INK3, marginBottom: "0.65rem" }}>{children}</div>;
 }
 function Rule() {
-  return <div style={{ width: "3rem", height: 1, background: `linear-gradient(90deg,${INK3},transparent)`, margin: "0.7rem 0" }} />;
+  return <div style={{ width: "4rem", height: "1.5px", background: `linear-gradient(90deg,${INK3},transparent)`, margin: "0.75rem 0 1rem" }} />;
 }
-function BodyText({ children, small }: { children: React.ReactNode; small?: boolean }) {
-  return (
-    <p style={{ fontFamily: BODY, fontSize: small ? "0.875rem" : "1.05rem", fontWeight: 300, lineHeight: 1.72, color: INK2, margin: 0 }}>
-      {children}
-    </p>
-  );
+function Txt({ children, sm }: { children: React.ReactNode; sm?: boolean }) {
+  return <p style={{ fontFamily: BODY, fontSize: sm ? "clamp(0.8rem,0.95vw,0.95rem)" : "clamp(0.95rem,1.25vw,1.18rem)", fontWeight: 300, lineHeight: 1.78, color: INK2, margin: 0 }}>{children}</p>;
 }
 
-/* ── In-page flip cards ──────────────────────────────────────────────────── */
+/* ── Flip cards ──────────────────────────────────────────────────────────── */
 const NETWORK = [
-  { letter: "B", name: "Proffy Bagrut",  tagline: "High school",  badge: "Soon", live: false, short: "Every bagrut subject — ask, practice, get clear explanations.", full: "Every bagrut subject covered. Practice with past Ministry of Education exam patterns, get explanations in Hebrew and English.", href: "#",        color: "#a78bfa" },
-  { letter: "Y", name: "Proffy Yael",    tagline: "Hebrew writing",badge: "Soon", live: false, short: "Master Hebrew spelling, grammar and academic writing.",           full: "Master Hebrew spelling, grammar, and academic writing for the Yael section of the Israeli psychometric exam. Every rule explained.",  href: "#",        color: "#fbbf24" },
-  { letter: "P", name: "Proffy Psycho",  tagline: "Psychometric",  badge: "Beta", live: false, short: "Replace a ₪3,000 prep course. Full AI psychometric prep.",         full: "Replace expensive prep courses. Full AI-powered prep for verbal, quantitative, and English sections. Practice until you hit your target.", href: "#",        color: "#f87171" },
-  { letter: "U", name: "Proffy Uni",     tagline: "University",    badge: "Live", live: true,  short: "Upload slides, ask anything, ace the exam.",                      full: "Upload your course slides and past exams. Proffy learns your professor's style and answers like a top student who aced this exact class.", href: "/register", color: "#4f8ef7" },
+  { letter: "B", name: "Proffy Bagrut",  tagline: "High school",   badge: "Soon", live: false, short: "Every bagrut subject. Ask, practice, get clear explanations.", full: "Every bagrut subject covered. Practice with past Ministry of Education exam patterns, get explanations in Hebrew and English.", href: "#",         color: "#a78bfa" },
+  { letter: "Y", name: "Proffy Yael",    tagline: "Hebrew writing", badge: "Soon", live: false, short: "Master Hebrew spelling, grammar and academic writing.",          full: "Master Hebrew spelling, grammar, and academic writing for the Yael section of the Israeli psychometric exam.", href: "#",         color: "#fbbf24" },
+  { letter: "P", name: "Proffy Psycho",  tagline: "Psychometric",   badge: "Beta", live: false, short: "Replace a ₪3,000 prep course with full AI preparation.",        full: "Replace expensive prep courses. Full AI-powered prep for verbal, quantitative, and English sections.", href: "#",         color: "#f87171" },
+  { letter: "U", name: "Proffy Uni",     tagline: "University",     badge: "Live", live: true,  short: "Upload slides, ask anything, ace the exam.",                     full: "Upload your course slides and past exams. Proffy learns your professor's style and answers like a top student.", href: "/register", color: "#4f8ef7" },
 ] as const;
 
-function MiniFlip({ p }: { p: (typeof NETWORK)[number] }) {
-  const [flipped, setFlipped] = useState(false);
+function FlipCard({ p }: { p: (typeof NETWORK)[number] }) {
+  const [fl, setFl] = useState(false);
   return (
-    <div
-      style={{ perspective: "800px", flex: 1, minHeight: 100, cursor: "pointer" }}
-      onMouseEnter={() => setFlipped(true)}
-      onMouseLeave={() => setFlipped(false)}
-    >
-      <motion.div
-        animate={{ rotateY: flipped ? 180 : 0 }}
-        transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-        style={{ width: "100%", height: "100%", transformStyle: "preserve-3d", position: "relative" }}
-      >
+    <div style={{ perspective: 900, flex: 1, minHeight: 0, cursor: "pointer" }}
+      onMouseEnter={() => setFl(true)} onMouseLeave={() => setFl(false)}>
+      <motion.div animate={{ rotateY: fl ? 180 : 0 }} transition={{ duration: 0.65, ease: [0.4,0,0.2,1] }}
+        style={{ width: "100%", height: "100%", transformStyle: "preserve-3d", position: "relative" }}>
         {/* Front */}
-        <div
-          style={{
-            position: "absolute", inset: 0,
-            backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-            borderRadius: 10,
-            background: "rgba(255,255,255,0.5)",
-            border: p.live ? `1px solid rgba(200,241,53,0.5)` : "1px solid rgba(42,31,14,0.14)",
-            boxShadow: p.live ? `0 0 0 2px ${LIME}` : "none",
-            padding: "0.75rem",
-            display: "flex", flexDirection: "column", justifyContent: "space-between",
-          }}
-        >
-          {p.live && (
-            <motion.div
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              style={{ position: "absolute", inset: -1, borderRadius: 10, border: `1px solid ${LIME}`, pointerEvents: "none" }}
-            />
-          )}
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 6 }}>
-            <span style={{ fontFamily: DISP, fontSize: "1.4rem", fontWeight: 700, color: p.color, lineHeight: 1 }}>{p.letter}</span>
-            <span style={{ fontFamily: MONO, fontSize: "0.5rem", letterSpacing: "0.1em", padding: "2px 6px", borderRadius: 999, background: p.live ? "rgba(200,241,53,0.18)" : "rgba(42,31,14,0.07)", color: p.live ? "#3a5000" : INK3, border: `1px solid ${p.live ? "rgba(200,241,53,0.4)" : "rgba(42,31,14,0.15)"}` }}>
-              {p.live && <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: LIME, marginRight: 4, verticalAlign: "middle" }} />}
+        <div style={{
+          position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+          borderRadius: 12, background: "rgba(255,255,255,0.58)",
+          border: p.live ? "1.5px solid rgba(200,241,53,0.55)" : "1.5px solid rgba(42,31,14,0.14)",
+          boxShadow: p.live ? "0 0 0 2px rgba(200,241,53,0.18),0 4px 18px rgba(0,0,0,0.07)" : "0 4px 18px rgba(0,0,0,0.05)",
+          padding: "clamp(0.65rem,1.4vh,1.1rem)",
+          display: "flex", flexDirection: "column", justifyContent: "space-between",
+        }}>
+          {p.live && <motion.div animate={{ opacity: [0.4,1,0.4] }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: -1, borderRadius: 12, border: `1.5px solid ${LIME}`, pointerEvents: "none" }} />}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <span style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2rem)", fontWeight: 700, color: p.color, lineHeight: 1 }}>{p.letter}</span>
+            <span style={{ fontFamily: MONO, fontSize: "0.5rem", letterSpacing: "0.1em", padding: "2px 7px", borderRadius: 999, background: p.live ? "rgba(200,241,53,0.18)" : "rgba(42,31,14,0.07)", color: p.live ? "#3a5000" : INK3, border: `1px solid ${p.live ? "rgba(200,241,53,0.38)" : "rgba(42,31,14,0.14)"}` }}>
+              {p.live && <motion.span animate={{ opacity: [1,0.3,1] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: LIME, marginRight: 4, verticalAlign: "middle" }} />}
               {p.badge}
             </span>
           </div>
           <div>
-            <div style={{ fontFamily: MONO, fontSize: "0.52rem", color: INK3, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>{p.tagline}</div>
-            <div style={{ fontFamily: DISP, fontSize: "0.88rem", fontWeight: 700, color: INK, lineHeight: 1.25 }}>{p.name}</div>
-            <div style={{ fontFamily: BODY, fontSize: "0.62rem", color: INK2, lineHeight: 1.55, marginTop: 3 }}>{p.short}</div>
+            <div style={{ fontFamily: MONO, fontSize: "0.5rem", color: INK3, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>{p.tagline}</div>
+            <div style={{ fontFamily: DISP, fontSize: "clamp(0.88rem,1.2vw,1.1rem)", fontWeight: 700, color: INK, lineHeight: 1.2 }}>{p.name}</div>
+            <div style={{ fontFamily: BODY, fontSize: "clamp(0.62rem,0.8vw,0.76rem)", color: INK2, lineHeight: 1.6, marginTop: 4 }}>{p.short}</div>
           </div>
         </div>
         {/* Back */}
-        <div
-          style={{
-            position: "absolute", inset: 0,
-            backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-            borderRadius: 10,
-            background: p.live ? "linear-gradient(135deg,#0d1f00,#1a3d00)" : "linear-gradient(135deg,#0a0d1c,#101528)",
-            border: p.live ? "1px solid rgba(200,241,53,0.22)" : "1px solid rgba(79,142,247,0.2)",
-            padding: "0.75rem",
-            display: "flex", flexDirection: "column", justifyContent: "space-between",
-          }}
-        >
-          <p style={{ fontFamily: BODY, fontSize: "0.65rem", lineHeight: 1.65, color: p.live ? "rgba(200,241,53,0.85)" : "rgba(200,210,240,0.85)", margin: 0 }}>{p.full}</p>
-          <Link href={p.href} style={{ fontFamily: BODY, fontSize: "0.62rem", fontWeight: 700, padding: "4px 10px", borderRadius: 999, textDecoration: "none", background: p.live ? LIME_G : "linear-gradient(135deg,#4f8ef7,#a78bfa)", color: p.live ? "#0a0f00" : "#fff", alignSelf: "flex-start", display: "inline-flex" }}>
+        <div style={{
+          position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+          transform: "rotateY(180deg)", borderRadius: 12,
+          background: p.live ? "linear-gradient(135deg,#0c2000,#193b00)" : "linear-gradient(135deg,#090c1b,#101528)",
+          border: p.live ? "1.5px solid rgba(200,241,53,0.2)" : "1.5px solid rgba(79,142,247,0.2)",
+          padding: "clamp(0.65rem,1.4vh,1.1rem)",
+          display: "flex", flexDirection: "column", justifyContent: "space-between",
+        }}>
+          <p style={{ fontFamily: BODY, fontSize: "clamp(0.65rem,0.82vw,0.78rem)", lineHeight: 1.7, color: p.live ? "rgba(200,241,53,0.85)" : "rgba(200,210,240,0.85)", margin: 0 }}>{p.full}</p>
+          <Link href={p.href} style={{ fontFamily: BODY, fontSize: "clamp(0.65rem,0.82vw,0.78rem)", fontWeight: 700, padding: "5px 12px", borderRadius: 999, textDecoration: "none", background: p.live ? LIME_G : "linear-gradient(135deg,#4f8ef7,#a78bfa)", color: p.live ? "#0a0f00" : "#fff", alignSelf: "flex-start", display: "inline-flex" }}>
             {p.live ? "Start now →" : "Get notified →"}
           </Link>
         </div>
@@ -214,28 +145,19 @@ function MiniFlip({ p }: { p: (typeof NETWORK)[number] }) {
 
 /* ── Confetti ────────────────────────────────────────────────────────────── */
 function Confetti({ active }: { active: boolean }) {
-  const pieces = useRef(
-    Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      x: (Math.random() - 0.5) * 320,
-      y: -(80 + Math.random() * 140),
-      rot: Math.random() * 720 - 360,
-      color: [LIME, "#fff", "#4ade80", "#fbbf24", "#a78bfa"][i % 5],
-      w: 5 + Math.random() * 7,
-      h: 3 + Math.random() * 5,
-      delay: Math.random() * 0.4,
-    }))
-  ).current;
-
+  const p = useRef(Array.from({ length: 50 }, (_, i) => ({
+    id: i, x: (Math.random() - 0.5) * 450, y: -(100 + Math.random() * 180), rot: Math.random() * 720 - 360,
+    color: [LIME,"#fff","#4ade80","#fbbf24","#a78bfa"][i % 5],
+    w: 6 + Math.random() * 9, h: 3 + Math.random() * 6, delay: Math.random() * 0.45,
+  }))).current;
   if (!active) return null;
   return (
     <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 15, overflow: "hidden" }}>
-      {pieces.map((c) => (
-        <motion.div
-          key={c.id}
-          initial={{ x: "50%", y: "60%", scale: 0, rotate: 0, opacity: 1 }}
-          animate={{ x: `calc(50% + ${c.x}px)`, y: `calc(60% + ${c.y}px)`, scale: [0, 1, 0.8], rotate: c.rot, opacity: [1, 1, 0] }}
-          transition={{ duration: 1.3, delay: c.delay, ease: "easeOut" }}
+      {p.map((c) => (
+        <motion.div key={c.id}
+          initial={{ x: "50%", y: "65%", scale: 0, rotate: 0, opacity: 1 }}
+          animate={{ x: `calc(50% + ${c.x}px)`, y: `calc(65% + ${c.y}px)`, scale: [0,1,0.8], rotate: c.rot, opacity: [1,1,0] }}
+          transition={{ duration: 1.4, delay: c.delay, ease: "easeOut" }}
           style={{ position: "absolute", top: 0, left: 0, width: c.w, height: c.h, background: c.color, borderRadius: 2 }}
         />
       ))}
@@ -243,23 +165,22 @@ function Confetti({ active }: { active: boolean }) {
   );
 }
 
-/* ── Spread content ──────────────────────────────────────────────────────── */
-// Spread 0 — Title
+/* ── Spreads ─────────────────────────────────────────────────────────────── */
 function S0L() {
   return (
     <Page side="left">
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.25rem" }}>
-        <Image src="/logo-owl.png" alt="" width={48} height={48} style={{ objectFit: "contain", opacity: 0.12, filter: "sepia(1)" }} />
-        <div style={{ width: "55%", height: 1, background: `linear-gradient(90deg,transparent,${INK3},transparent)` }} />
-        <div style={{ fontFamily: DISP, fontSize: "0.65rem", color: INK3, letterSpacing: "0.28em", textTransform: "uppercase", textAlign: "center" }}>Academic Intelligence</div>
-        <div style={{ width: "55%", height: 1, background: `linear-gradient(90deg,transparent,${INK3},transparent)` }} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "clamp(0.6rem,1.6vh,1.25rem)" }}>
+        <Image src="/logo-owl.png" alt="" width={56} height={56} style={{ objectFit: "contain", opacity: 0.1, filter: "sepia(1)" }} />
+        <div style={{ width: "58%", height: "1.5px", background: `linear-gradient(90deg,transparent,${INK3},transparent)` }} />
+        <div style={{ fontFamily: DISP, fontSize: "clamp(0.58rem,0.78vw,0.74rem)", color: INK3, letterSpacing: "0.28em", textTransform: "uppercase", textAlign: "center" }}>Academic Intelligence</div>
+        <div style={{ width: "58%", height: "1.5px", background: `linear-gradient(90deg,transparent,${INK3},transparent)` }} />
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5, justifyContent: "center" }}>
           {["TAU","Technion","HUJI","BGU","Bar Ilan","Ariel"].map((u) => (
-            <span key={u} style={{ fontFamily: BODY, fontSize: "0.58rem", color: INK3, padding: "2px 8px", border: "1px solid rgba(42,31,14,0.2)", borderRadius: 4 }}>{u}</span>
+            <span key={u} style={{ fontFamily: BODY, fontSize: "clamp(0.58rem,0.7vw,0.66rem)", color: INK3, padding: "2px 9px", border: "1px solid rgba(42,31,14,0.2)", borderRadius: 4 }}>{u}</span>
           ))}
         </div>
-        <div style={{ fontFamily: DISP, fontSize: "0.62rem", color: INK3, letterSpacing: "0.12em", marginTop: "0.5rem", fontStyle: "italic" }}>
-          Use arrow keys or scroll to turn pages
+        <div style={{ fontFamily: DISP, fontSize: "clamp(0.56rem,0.7vw,0.66rem)", color: INK3, letterSpacing: "0.1em", fontStyle: "italic", marginTop: "0.3rem" }}>
+          Scroll or use arrow keys to turn pages
         </div>
       </div>
     </Page>
@@ -271,48 +192,37 @@ function S0R() {
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
   const [entered, setEntered] = useState(false);
   useEffect(() => { setTimeout(() => setEntered(true), 200); }, []);
-
-  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    setTilt({ rx: y * -8, ry: x * 8 });
-  };
-
   return (
     <Page side="right" num="i">
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "1rem", position: "relative" }}>
-        <Label>proffy.study</Label>
+      <div ref={ref}
+        onMouseMove={(e) => {
+          if (!ref.current) return;
+          const r = ref.current.getBoundingClientRect();
+          setTilt({ rx: ((e.clientY - r.top) / r.height - 0.5) * -8, ry: ((e.clientX - r.left) / r.width - 0.5) * 8 });
+        }}
+        onMouseLeave={() => setTilt({ rx: 0, ry: 0 })}
+        style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "clamp(0.4rem,1vh,0.85rem)", position: "relative" }}
+      >
+        <Lbl>proffy.study</Lbl>
         <H1>PROFFY</H1>
         <Rule />
-        <div style={{ fontFamily: DISP, fontSize: "clamp(0.9rem,1.6vw,1.2rem)", color: INK2, fontStyle: "italic", lineHeight: 1.45 }}>
+        <div style={{ fontFamily: DISP, fontSize: "clamp(0.95rem,1.6vw,1.5rem)", color: INK2, fontStyle: "italic", lineHeight: 1.38 }}>
           The AI tutor that knows your exam.
         </div>
-        <BodyText small>
-          From bagrut to university, AI that understands your course, your professor, and your exam.
-        </BodyText>
-        <div style={{ marginTop: "0.5rem" }}>
-          <Link href="/register" style={{ fontFamily: BODY, fontSize: "0.8rem", fontWeight: 700, padding: "0.55rem 1.4rem", borderRadius: 999, background: LIME_G, color: "#0a0f00", textDecoration: "none", display: "inline-flex" }}>
+        <Txt sm>From bagrut to university — AI that understands your course, your professor, and your exam date.</Txt>
+        <div style={{ marginTop: "clamp(0.4rem,1.2vh,1rem)" }}>
+          <Link href="/register" style={{ fontFamily: BODY, fontSize: "clamp(0.78rem,0.92vw,0.9rem)", fontWeight: 700, padding: "0.6rem 1.6rem", borderRadius: 999, background: LIME_G, color: "#0a0f00", textDecoration: "none", display: "inline-flex" }}>
             Start with Proffy Uni →
           </Link>
         </div>
-        {/* Hero owl — spring entrance, mouse tilt */}
         <motion.div
-          ref={ref}
-          onMouseMove={onMove}
-          onMouseLeave={() => setTilt({ rx: 0, ry: 0 })}
-          initial={{ opacity: 0, y: 40, scale: 0.9 }}
+          initial={{ opacity: 0, y: 50, scale: 0.85 }}
           animate={entered ? { opacity: 1, y: 0, scale: 1 } : {}}
           transition={{ type: "spring", stiffness: 120, damping: 14 }}
-          style={{
-            position: "absolute", right: 0, bottom: 0,
-            rotateX: tilt.rx, rotateY: tilt.ry,
-            transformPerspective: 600,
-          }}
+          style={{ position: "absolute", right: 0, bottom: 0, rotateX: tilt.rx, rotateY: tilt.ry, transformPerspective: 600 }}
         >
-          <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
-            <Image src="/mascot/hero.png" alt="Proffy" width={160} height={160} style={{ objectFit: "contain", opacity: 0.72, filter: "sepia(0.25)" }} />
+          <motion.div animate={{ y: [0,-14,0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
+            <Image src="/mascot/hero.png" alt="Proffy" width={200} height={200} style={{ objectFit: "contain", opacity: 0.72, filter: "sepia(0.18)", width: "min(200px,18vw)", height: "auto" }} />
           </motion.div>
         </motion.div>
       </div>
@@ -320,29 +230,26 @@ function S0R() {
   );
 }
 
-// Spread 1 — Mission
 function S1L() {
   return (
     <Page side="left" num="1">
-      <Label>Chapter I</Label>
+      <Lbl>Chapter I</Lbl>
       <H2>Our Mission</H2>
       <Rule />
-      <BodyText>
-        Proffy gives every student the same advantage a private tutor provides — except it knows your exact professor, your slides, and your exam date.
-      </BodyText>
-      <div style={{ marginTop: "1rem", padding: "1rem", background: "rgba(255,255,255,0.5)", borderRadius: 8, border: "1px solid rgba(42,31,14,0.12)" }}>
-        <div style={{ display: "flex", gap: 3, marginBottom: "0.5rem" }}>
+      <Txt>Proffy gives every student the same advantage a private tutor provides — it knows your exact professor, your slides, and your exam date.</Txt>
+      <div style={{ marginTop: "clamp(0.75rem,1.8vh,1.4rem)", padding: "clamp(0.85rem,1.6vh,1.3rem)", background: "rgba(255,255,255,0.55)", borderRadius: 10, border: "1px solid rgba(42,31,14,0.1)" }}>
+        <div style={{ display: "flex", gap: 3, marginBottom: "0.45rem" }}>
           {Array.from({ length: 5 }).map((_, j) => (
-            <svg key={j} width="11" height="11" viewBox="0 0 24 24" fill="#c8a040"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+            <svg key={j} width="11" height="11" viewBox="0 0 24 24" fill="#c8a040"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           ))}
         </div>
-        <div style={{ fontFamily: DISP, fontSize: "0.9rem", fontStyle: "italic", color: INK, lineHeight: 1.65 }}>
+        <div style={{ fontFamily: DISP, fontSize: "clamp(0.88rem,1.15vw,1.08rem)", fontStyle: "italic", color: INK, lineHeight: 1.65 }}>
           &ldquo;We built the tool we wished we had when we were students.&rdquo;
         </div>
-        <div style={{ fontFamily: BODY, fontSize: "0.62rem", color: INK3, marginTop: "0.4rem" }}>Proffy Team, Israel</div>
+        <div style={{ fontFamily: BODY, fontSize: "clamp(0.58rem,0.72vw,0.68rem)", color: INK3, marginTop: "0.35rem" }}>Proffy Team, Israel</div>
       </div>
       <div style={{ marginTop: "auto" }}>
-        <Image src="/mascot/reading.png" alt="" width={65} height={65} style={{ objectFit: "contain", opacity: 0.4, filter: "sepia(0.5)", float: "right" }} />
+        <Image src="/mascot/reading.png" alt="" width={90} height={90} style={{ objectFit: "contain", opacity: 0.36, filter: "sepia(0.5)", float: "right", width: "min(90px,8vw)", height: "auto" }} />
       </div>
     </Page>
   );
@@ -351,18 +258,18 @@ function S1L() {
 function S1R() {
   const items = [
     { title: "Study smarter", desc: "AI that reads your actual material and understands what matters for your exam." },
-    { title: "Save time", desc: "Instant answers from your slides. No more searching for hours." },
-    { title: "Source-cited", desc: "Every answer cites the exact slide and page. No hallucinations." },
-    { title: "Available 24/7", desc: "Study at 3am the night before. Proffy never sleeps." },
+    { title: "Save time",     desc: "Instant answers from your slides. No more searching for hours." },
+    { title: "Source-cited",  desc: "Every answer cites the exact slide and page. No hallucinations." },
+    { title: "Available 24/7",desc: "Study at 3am the night before. Proffy never sleeps." },
   ];
   return (
     <Page side="right" num="2">
-      <Label>Four principles</Label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.625rem", flex: 1 }}>
+      <Lbl>Four principles</Lbl>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(0.5rem,1.1vh,0.85rem)", flex: 1 }}>
         {items.map((item) => (
-          <div key={item.title} style={{ padding: "0.875rem", background: "rgba(255,255,255,0.5)", borderRadius: 8, border: "1px solid rgba(42,31,14,0.12)", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            <div style={{ fontFamily: DISP, fontSize: "0.95rem", fontWeight: 700, color: INK }}>{item.title}</div>
-            <div style={{ fontFamily: BODY, fontSize: "0.7rem", color: INK2, lineHeight: 1.65 }}>{item.desc}</div>
+          <div key={item.title} style={{ padding: "clamp(0.7rem,1.4vh,1.15rem)", background: "rgba(255,255,255,0.52)", borderRadius: 10, border: "1px solid rgba(42,31,14,0.1)", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <div style={{ fontFamily: DISP, fontSize: "clamp(0.95rem,1.3vw,1.2rem)", fontWeight: 700, color: INK }}>{item.title}</div>
+            <div style={{ fontFamily: BODY, fontSize: "clamp(0.7rem,0.85vw,0.8rem)", color: INK2, lineHeight: 1.68 }}>{item.desc}</div>
           </div>
         ))}
       </div>
@@ -370,7 +277,6 @@ function S1R() {
   );
 }
 
-// Spread 2 — How It Works
 const STEPS = [
   { n: "I",   title: "Upload your material", desc: "Drop lecture slides, past exams, or a Google Drive link. Proffy indexes everything and learns your course inside out." },
   { n: "II",  title: "Ask anything",          desc: "Every answer cites the exact slide or page from your material. No hallucinations, no generic advice." },
@@ -380,22 +286,22 @@ const STEPS = [
 function S2L() {
   return (
     <Page side="left" num="3">
-      <Label>Chapter II</Label>
+      <Lbl>Chapter II</Lbl>
       <H2>How It Works</H2>
       <Rule />
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem", flex: 1 }}>
-        {STEPS.slice(0, 2).map((s) => (
-          <div key={s.n} style={{ display: "flex", gap: "0.75rem" }}>
-            <span style={{ fontFamily: DISP, fontSize: "1rem", fontWeight: 700, color: INK3, flexShrink: 0, width: 26 }}>{s.n}.</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(0.7rem,1.6vh,1.3rem)", flex: 1 }}>
+        {STEPS.slice(0,2).map((s) => (
+          <div key={s.n} style={{ display: "flex", gap: "clamp(0.5rem,0.9vw,0.9rem)" }}>
+            <span style={{ fontFamily: DISP, fontSize: "clamp(0.88rem,1.1vw,1rem)", fontWeight: 700, color: INK3, flexShrink: 0, width: 26 }}>{s.n}.</span>
             <div>
-              <div style={{ fontFamily: DISP, fontSize: "0.95rem", fontWeight: 700, color: INK, marginBottom: 2 }}>{s.title}</div>
-              <div style={{ fontFamily: BODY, fontSize: "0.7rem", color: INK2, lineHeight: 1.7 }}>{s.desc}</div>
+              <div style={{ fontFamily: DISP, fontSize: "clamp(0.95rem,1.2vw,1.15rem)", fontWeight: 700, color: INK, marginBottom: 3 }}>{s.title}</div>
+              <div style={{ fontFamily: BODY, fontSize: "clamp(0.7rem,0.85vw,0.8rem)", color: INK2, lineHeight: 1.72 }}>{s.desc}</div>
             </div>
           </div>
         ))}
       </div>
       <div style={{ marginTop: "auto" }}>
-        <Image src="/mascot/thinking.png" alt="" width={68} height={68} style={{ objectFit: "contain", opacity: 0.4, filter: "sepia(0.5)", float: "right" }} />
+        <Image src="/mascot/thinking.png" alt="" width={90} height={90} style={{ objectFit: "contain", opacity: 0.36, filter: "sepia(0.45)", float: "right", width: "min(90px,8vw)", height: "auto" }} />
       </div>
     </Page>
   );
@@ -404,39 +310,38 @@ function S2L() {
 function S2R() {
   return (
     <Page side="right" num="4">
-      <div style={{ paddingTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.875rem", flex: 1 }}>
+      <div style={{ paddingTop: "clamp(1rem,2.2vh,1.8rem)", display: "flex", flexDirection: "column", gap: "clamp(0.7rem,1.6vh,1.3rem)", flex: 1 }}>
         {STEPS.slice(2).map((s) => (
-          <div key={s.n} style={{ display: "flex", gap: "0.75rem" }}>
-            <span style={{ fontFamily: DISP, fontSize: "1rem", fontWeight: 700, color: INK3, flexShrink: 0, width: 26 }}>{s.n}.</span>
+          <div key={s.n} style={{ display: "flex", gap: "clamp(0.5rem,0.9vw,0.9rem)" }}>
+            <span style={{ fontFamily: DISP, fontSize: "clamp(0.88rem,1.1vw,1rem)", fontWeight: 700, color: INK3, flexShrink: 0, width: 26 }}>{s.n}.</span>
             <div>
-              <div style={{ fontFamily: DISP, fontSize: "0.95rem", fontWeight: 700, color: INK, marginBottom: 2 }}>{s.title}</div>
-              <div style={{ fontFamily: BODY, fontSize: "0.7rem", color: INK2, lineHeight: 1.7 }}>{s.desc}</div>
+              <div style={{ fontFamily: DISP, fontSize: "clamp(0.95rem,1.2vw,1.15rem)", fontWeight: 700, color: INK, marginBottom: 3 }}>{s.title}</div>
+              <div style={{ fontFamily: BODY, fontSize: "clamp(0.7rem,0.85vw,0.8rem)", color: INK2, lineHeight: 1.72 }}>{s.desc}</div>
             </div>
           </div>
         ))}
-        <div style={{ marginTop: "1rem", padding: "1rem", background: "rgba(79,142,247,0.07)", borderRadius: 8, border: "1px solid rgba(79,142,247,0.16)" }}>
-          <div style={{ fontFamily: DISP, fontSize: "1rem", fontStyle: "italic", color: INK, marginBottom: "0.4rem" }}>
+        <div style={{ marginTop: "clamp(0.7rem,1.6vh,1.3rem)", padding: "clamp(0.85rem,1.6vh,1.25rem)", background: "rgba(79,142,247,0.07)", borderRadius: 10, border: "1px solid rgba(79,142,247,0.14)" }}>
+          <div style={{ fontFamily: DISP, fontSize: "clamp(0.95rem,1.2vw,1.1rem)", fontStyle: "italic", color: INK, marginBottom: "0.35rem" }}>
             &ldquo;From slides to exam-ready in minutes.&rdquo;
           </div>
-          <div style={{ fontFamily: BODY, fontSize: "0.7rem", color: INK2, lineHeight: 1.7 }}>Upload your material, ask questions, and let Proffy do the heavy lifting.</div>
+          <div style={{ fontFamily: BODY, fontSize: "clamp(0.7rem,0.85vw,0.8rem)", color: INK2, lineHeight: 1.7 }}>Upload your material, ask questions, and let Proffy do the heavy lifting.</div>
         </div>
       </div>
     </Page>
   );
 }
 
-// Spread 3 — Network (B + Y)
 function S3L() {
   return (
     <Page side="left" num="5">
-      <Label>Chapter III — The Network</Label>
+      <Lbl>Chapter III — The Network</Lbl>
       <H2>One AI, every stage of education.</H2>
       <Rule />
-      <div style={{ fontFamily: BODY, fontSize: "0.7rem", color: INK2, marginBottom: "0.75rem", lineHeight: 1.7 }}>
+      <div style={{ fontFamily: BODY, fontSize: "clamp(0.7rem,0.85vw,0.8rem)", color: INK2, marginBottom: "clamp(0.4rem,1vh,0.8rem)", lineHeight: 1.7 }}>
         Hover each card to flip it and see what&apos;s coming.
       </div>
-      <div style={{ display: "flex", gap: "0.625rem", flex: 1 }}>
-        {NETWORK.slice(0, 2).map((p) => <MiniFlip key={p.name} p={p} />)}
+      <div style={{ display: "flex", gap: "clamp(0.45rem,0.9vw,0.82rem)", flex: 1 }}>
+        {NETWORK.slice(0,2).map((p) => <FlipCard key={p.name} p={p} />)}
       </div>
     </Page>
   );
@@ -445,27 +350,25 @@ function S3L() {
 function S3R() {
   return (
     <Page side="right" num="6">
-      <div style={{ display: "flex", gap: "0.625rem", paddingTop: "2rem", flex: 1 }}>
-        {NETWORK.slice(2).map((p) => <MiniFlip key={p.name} p={p} />)}
+      <div style={{ display: "flex", gap: "clamp(0.45rem,0.9vw,0.82rem)", paddingTop: "clamp(0.9rem,2.2vh,1.8rem)", flex: 1 }}>
+        {NETWORK.slice(2).map((p) => <FlipCard key={p.name} p={p} />)}
       </div>
-      <div style={{ marginTop: "0.875rem", padding: "0.875rem", background: "rgba(200,241,53,0.1)", borderRadius: 8, border: "1px solid rgba(200,241,53,0.3)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "0.35rem" }}>
-          <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ width: 6, height: 6, borderRadius: "50%", background: LIME, boxShadow: `0 0 5px ${LIME}`, flexShrink: 0 }} />
-          <span style={{ fontFamily: MONO, fontSize: "0.58rem", color: "#3a5000", letterSpacing: "0.1em" }}>PROFFY UNI IS LIVE</span>
+      <div style={{ marginTop: "clamp(0.7rem,1.6vh,1.2rem)", padding: "clamp(0.7rem,1.4vh,1.1rem)", background: "rgba(200,241,53,0.1)", borderRadius: 10, border: "1px solid rgba(200,241,53,0.26)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: "0.28rem" }}>
+          <motion.div animate={{ opacity: [1,0.3,1] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ width: 7, height: 7, borderRadius: "50%", background: LIME, boxShadow: `0 0 6px ${LIME}`, flexShrink: 0 }} />
+          <span style={{ fontFamily: MONO, fontSize: "0.58rem", color: "#3a5000", letterSpacing: "0.12em" }}>PROFFY UNI IS LIVE</span>
         </div>
-        <div style={{ fontFamily: BODY, fontSize: "0.68rem", color: INK2, lineHeight: 1.6 }}>Upload slides, ask anything, ace the exam.</div>
+        <div style={{ fontFamily: BODY, fontSize: "clamp(0.68rem,0.84vw,0.78rem)", color: INK2, lineHeight: 1.6 }}>Upload slides, ask anything, ace the exam.</div>
       </div>
-      {/* Thinking owl with head tilt */}
       <div style={{ marginTop: "auto", display: "flex", justifyContent: "flex-end" }}>
-        <motion.div animate={{ rotateZ: [-8, 8, -8] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
-          <Image src="/mascot/thinking.png" alt="" width={70} height={70} style={{ objectFit: "contain", opacity: 0.45, filter: "sepia(0.4)" }} />
+        <motion.div animate={{ rotateZ: [-8,8,-8] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
+          <Image src="/mascot/thinking.png" alt="" width={90} height={90} style={{ objectFit: "contain", opacity: 0.4, filter: "sepia(0.4)", width: "min(90px,8vw)", height: "auto" }} />
         </motion.div>
       </div>
     </Page>
   );
 }
 
-// Spread 4 — Meet Proffy
 const BULLETS = [
   "Knows your course, professor, and exam date",
   "Answers with sources from your own material",
@@ -476,17 +379,15 @@ const BULLETS = [
 function S4L() {
   return (
     <Page side="left" num="7">
-      <Label>Chapter IV — Meet Proffy</Label>
+      <Lbl>Chapter IV — Meet Proffy</Lbl>
       <H2>Your AI study companion.</H2>
       <Rule />
-      <BodyText small>
-        Proffy is not a search engine. It reads your actual course material, learns your professor&apos;s style, and answers like a top student who aced this exact class last semester.
-      </BodyText>
-      <BodyText small>
-        No hallucinations. No generic advice. Just what you need to pass.
-      </BodyText>
+      <Txt sm>Proffy is not a search engine. It reads your actual course material, learns your professor&apos;s style, and answers like a top student who aced this exact class last semester.</Txt>
+      <div style={{ marginTop: "clamp(0.4rem,1vh,0.8rem)" }}>
+        <Txt sm>No hallucinations. No generic advice. Just what you need to pass.</Txt>
+      </div>
       <div style={{ marginTop: "auto" }}>
-        <Image src="/mascot/thumbsup.png" alt="" width={85} height={85} style={{ objectFit: "contain", opacity: 0.5, filter: "sepia(0.35)", float: "right" }} />
+        <Image src="/mascot/thumbsup.png" alt="" width={110} height={110} style={{ objectFit: "contain", opacity: 0.42, filter: "sepia(0.3)", float: "right", width: "min(110px,9.5vw)", height: "auto" }} />
       </div>
     </Page>
   );
@@ -495,17 +396,17 @@ function S4L() {
 function S4R() {
   return (
     <Page side="right" num="8">
-      <Label>What Proffy does</Label>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem", flex: 1 }}>
+      <Lbl>What Proffy does</Lbl>
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(0.45rem,1.1vh,0.82rem)", flex: 1 }}>
         {BULLETS.map((b) => (
-          <div key={b} style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem", padding: "0.6rem 0.75rem", background: "rgba(255,255,255,0.5)", borderRadius: 7, border: "1px solid rgba(42,31,14,0.1)" }}>
-            <span style={{ fontFamily: BODY, fontSize: "0.75rem", fontWeight: 700, color: "#3a5000", flexShrink: 0, marginTop: 1 }}>✓</span>
-            <span style={{ fontFamily: BODY, fontSize: "0.73rem", color: INK2, lineHeight: 1.55 }}>{b}</span>
+          <div key={b} style={{ display: "flex", alignItems: "flex-start", gap: "clamp(0.45rem,0.75vw,0.7rem)", padding: "clamp(0.55rem,1.1vh,0.88rem) clamp(0.7rem,1.1vw,0.95rem)", background: "rgba(255,255,255,0.52)", borderRadius: 9, border: "1px solid rgba(42,31,14,0.09)" }}>
+            <span style={{ fontFamily: BODY, fontSize: "clamp(0.72rem,0.88vw,0.82rem)", fontWeight: 700, color: "#3a5000", flexShrink: 0, marginTop: 1 }}>✓</span>
+            <span style={{ fontFamily: BODY, fontSize: "clamp(0.75rem,0.92vw,0.86rem)", color: INK2, lineHeight: 1.56 }}>{b}</span>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: "1.25rem" }}>
-        <Link href="/register" style={{ fontFamily: BODY, fontSize: "0.82rem", fontWeight: 700, padding: "0.6rem 1.4rem", borderRadius: 999, background: LIME_G, color: "#0a0f00", textDecoration: "none", display: "inline-flex" }}>
+      <div style={{ marginTop: "clamp(0.9rem,2vh,1.6rem)" }}>
+        <Link href="/register" style={{ fontFamily: BODY, fontSize: "clamp(0.8rem,0.95vw,0.9rem)", fontWeight: 700, padding: "0.6rem 1.6rem", borderRadius: 999, background: LIME_G, color: "#0a0f00", textDecoration: "none", display: "inline-flex" }}>
           Start with Proffy Uni →
         </Link>
       </div>
@@ -513,14 +414,12 @@ function S4R() {
   );
 }
 
-// Spread 5 — CTA
 function S5L() {
   const [confetti, setConfetti] = useState(false);
   return (
     <Page side="left" num="9">
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.25rem", textAlign: "center", position: "relative" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "clamp(0.7rem,1.6vh,1.3rem)", textAlign: "center", position: "relative" }}>
         <Confetti active={confetti} />
-        {/* Celebrate owl — overshoot spring + jump loop */}
         <motion.div
           initial={{ scale: 0.3, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
@@ -528,13 +427,13 @@ function S5L() {
           transition={{ type: "spring", stiffness: 180, damping: 10 }}
           onAnimationComplete={() => setConfetti(true)}
         >
-          <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}>
-            <Image src="/mascot/celebrate.png" alt="" width={95} height={95} style={{ objectFit: "contain", opacity: 0.75, filter: "sepia(0.15)" }} />
+          <motion.div animate={{ y: [0,-20,0] }} transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}>
+            <Image src="/mascot/celebrate.png" alt="" width={120} height={120} style={{ objectFit: "contain", opacity: 0.75, filter: "sepia(0.12)", width: "min(120px,10.5vw)", height: "auto" }} />
           </motion.div>
         </motion.div>
         <H2>Ready to study smarter?</H2>
-        <BodyText small>Join thousands of students worldwide.</BodyText>
-        <Link href="/register" style={{ fontFamily: BODY, fontSize: "0.85rem", fontWeight: 700, padding: "0.65rem 1.75rem", borderRadius: 999, background: LIME_G, color: "#0a0f00", textDecoration: "none", display: "inline-flex" }}>
+        <Txt sm>Join thousands of students worldwide.</Txt>
+        <Link href="/register" style={{ fontFamily: BODY, fontSize: "clamp(0.82rem,0.98vw,0.92rem)", fontWeight: 700, padding: "0.68rem 1.9rem", borderRadius: 999, background: LIME_G, color: "#0a0f00", textDecoration: "none", display: "inline-flex" }}>
           Get Early Access →
         </Link>
       </div>
@@ -545,13 +444,13 @@ function S5L() {
 function S5R() {
   return (
     <Page side="right">
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.25rem", textAlign: "center" }}>
-        <Image src="/logo-header-dark.png" alt="Proffy" width={110} height={34} style={{ objectFit: "contain", opacity: 0.25, filter: "sepia(1)" }} />
-        <div style={{ width: "50%", height: 1, background: `linear-gradient(90deg,transparent,${INK3},transparent)` }} />
-        <div style={{ fontFamily: DISP, fontSize: "0.7rem", color: INK3, letterSpacing: "0.2em", textTransform: "uppercase" }}>Built for every student</div>
-        <div style={{ fontFamily: DISP, fontSize: "0.65rem", color: INK3 }}>&copy; 2026 Proffy</div>
-        <motion.div animate={{ rotate: [0, -5, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }} style={{ marginTop: "0.75rem" }}>
-          <Image src="/mascot/sleeping.png" alt="" width={68} height={68} style={{ objectFit: "contain", opacity: 0.4, filter: "sepia(0.5)" }} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "clamp(0.7rem,1.6vh,1.3rem)", textAlign: "center" }}>
+        <Image src="/logo-header-dark.png" alt="Proffy" width={130} height={40} style={{ objectFit: "contain", opacity: 0.2, filter: "sepia(1)", width: "min(130px,11vw)", height: "auto" }} />
+        <div style={{ width: "52%", height: "1.5px", background: `linear-gradient(90deg,transparent,${INK3},transparent)` }} />
+        <div style={{ fontFamily: DISP, fontSize: "clamp(0.62rem,0.78vw,0.74rem)", color: INK3, letterSpacing: "0.22em", textTransform: "uppercase" }}>Built for every student</div>
+        <div style={{ fontFamily: DISP, fontSize: "clamp(0.58rem,0.72vw,0.68rem)", color: INK3 }}>&copy; 2026 Proffy</div>
+        <motion.div animate={{ rotate: [0,-5,0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }} style={{ marginTop: "clamp(0.4rem,1vh,0.8rem)" }}>
+          <Image src="/mascot/sleeping.png" alt="" width={90} height={90} style={{ objectFit: "contain", opacity: 0.36, filter: "sepia(0.48)", width: "min(90px,8vw)", height: "auto" }} />
         </motion.div>
       </div>
     </Page>
@@ -570,118 +469,52 @@ const SPREADS = [
 const TOTAL = SPREADS.length;
 
 /* ── Turning page ────────────────────────────────────────────────────────── */
-function TurningPage({
-  front,
-  back,
-  rotateY,
-}: {
-  front: React.ReactNode;
-  back: React.ReactNode;
-  rotateY: MotionValue<number>;
-}) {
+function TurningPage({ front, back, rotateY }: { front: React.ReactNode; back: React.ReactNode; rotateY: MotionValue<number> }) {
   return (
-    <motion.div
-      style={{
-        position: "absolute", top: 0, left: "50%",
-        width: "50%", height: "100%",
-        transformStyle: "preserve-3d",
-        transformOrigin: "left center",
-        rotateY,
-        zIndex: 20,
-      }}
-    >
-      <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
-        {front}
-      </div>
-      <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-        {back}
-      </div>
+    <motion.div style={{
+      position: "absolute", top: 0, left: "50%",
+      width: "50%", height: "100%",
+      transformStyle: "preserve-3d",
+      transformOrigin: "left center",
+      rotateY, zIndex: 20,
+    }}>
+      <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>{front}</div>
+      <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>{back}</div>
     </motion.div>
   );
 }
 
-/* ── Bookmark ribbons ────────────────────────────────────────────────────── */
-function Bookmarks({ spread, onGo }: { spread: number; onGo: (s: number) => void }) {
-  const bms = SPREADS.map((s, i) => ({ label: s.bookmark, index: i })).filter((b) => b.label);
-  return (
-    <div style={{ position: "absolute", right: -38, top: "12%", display: "flex", flexDirection: "column", gap: 6, zIndex: 30 }}>
-      {bms.map((b) => (
-        <button
-          key={b.label}
-          onClick={() => onGo(b.index)}
-          title={b.label!}
-          style={{
-            width: 28, height: 58,
-            background: b.index === spread ? LIME : "rgba(255,255,255,0.08)",
-            border: "none",
-            borderRadius: "0 4px 4px 0",
-            cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: b.index === spread ? `0 0 12px rgba(200,241,53,0.4)` : "none",
-            transition: "all 0.2s",
-            padding: 0,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: "0.42rem",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: b.index === spread ? "#0a0f00" : "rgba(255,255,255,0.35)",
-              transform: "rotate(90deg)",
-              whiteSpace: "nowrap",
-              display: "block",
-            }}
-          >
-            {b.label}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* ── Canvas particles ────────────────────────────────────────────────────── */
+/* ── Particles ───────────────────────────────────────────────────────────── */
 function DeskParticles() {
   const ref = useRef<HTMLCanvasElement>(null);
   const raf = useRef(0);
-
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     resize();
     window.addEventListener("resize", resize);
-
     const SYMS = ["∑","π","∫","α","β","Δ","∇","∞","λ","θ","מ","ל","ת","ש","×","÷","≠","≈"];
     type P = { x:number; y:number; vy:number; vxPhase:number; sym:string; op:number; sz:number };
     const ps: P[] = Array.from({ length: 80 }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      vy: -(0.15 + Math.random() * 0.4),
-      vxPhase: Math.random() * Math.PI * 2,
+      x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
+      vy: -(0.14 + Math.random() * 0.38), vxPhase: Math.random() * Math.PI * 2,
       sym: SYMS[Math.floor(Math.random() * SYMS.length)],
-      op: 0.06 + Math.random() * 0.12,
-      sz: 12 + Math.floor(Math.random() * 8),
+      op: 0.045 + Math.random() * 0.09, sz: 11 + Math.floor(Math.random() * 10),
     }));
-
     let frame = 0;
     const draw = () => {
       frame++;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ps.forEach((p) => {
-        ctx.save();
-        ctx.globalAlpha = p.op;
-        ctx.fillStyle = `rgba(200,241,53,1)`;
+        ctx.save(); ctx.globalAlpha = p.op;
+        ctx.fillStyle = "rgba(200,241,53,1)";
         ctx.font = `${p.sz}px ${MONO}`;
         ctx.fillText(p.sym, p.x, p.y);
         ctx.restore();
-        p.y += p.vy;
-        p.x += Math.sin(frame * 0.01 + p.vxPhase) * 0.3;
+        p.y += p.vy; p.x += Math.sin(frame * 0.01 + p.vxPhase) * 0.3;
         if (p.y < -20) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
       });
       raf.current = requestAnimationFrame(draw);
@@ -689,8 +522,7 @@ function DeskParticles() {
     draw();
     return () => { cancelAnimationFrame(raf.current); window.removeEventListener("resize", resize); };
   }, []);
-
-  return <canvas ref={ref} style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }} />;
+  return <canvas ref={ref} style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }} />;
 }
 
 /* ── Book ────────────────────────────────────────────────────────────────── */
@@ -700,8 +532,7 @@ function Book({ scrollY }: { scrollY: MotionValue<number> }) {
   const turnRotation = useTransform(scrollY, (y) => {
     const maxY = (TOTAL - 1) * SPP;
     const cy = Math.max(0, Math.min(y, maxY));
-    const progress = (cy % SPP) / SPP;
-    return -progress * 180;
+    return -((cy % SPP) / SPP) * 180;
   });
 
   useMotionValueEvent(scrollY, "change", (y) => {
@@ -710,165 +541,147 @@ function Book({ scrollY }: { scrollY: MotionValue<number> }) {
     setSpread(Math.floor(cy / SPP));
   });
 
-  const goTo = useCallback((s: number) => {
-    window.scrollTo({ top: s * SPP, behavior: "smooth" });
-  }, []);
-
+  const goTo   = useCallback((s: number) => { window.scrollTo({ top: s * SPP, behavior: "smooth" }); }, []);
   const goNext = useCallback(() => { if (spread < TOTAL - 1) goTo(spread + 1); }, [spread, goTo]);
   const goPrev = useCallback(() => { if (spread > 0) goTo(spread - 1); }, [spread, goTo]);
 
   useEffect(() => {
-    const kh = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") goNext();
-      if (e.key === "ArrowLeft") goPrev();
-    };
+    const kh = (e: KeyboardEvent) => { if (e.key === "ArrowRight") goNext(); if (e.key === "ArrowLeft") goPrev(); };
     let tx = 0;
     const ts = (e: TouchEvent) => { tx = e.touches[0].clientX; };
-    const te = (e: TouchEvent) => {
-      const dx = tx - e.changedTouches[0].clientX;
-      if (dx > 50) goNext();
-      if (dx < -50) goPrev();
-    };
+    const te = (e: TouchEvent) => { const dx = tx - e.changedTouches[0].clientX; if (dx > 50) goNext(); if (dx < -50) goPrev(); };
     window.addEventListener("keydown", kh);
     window.addEventListener("touchstart", ts, { passive: true });
     window.addEventListener("touchend", te, { passive: true });
     return () => { window.removeEventListener("keydown", kh); window.removeEventListener("touchstart", ts); window.removeEventListener("touchend", te); };
   }, [goNext, goPrev]);
 
-  const visLeft  = SPREADS[spread].left;
-  const visRight = spread < TOTAL - 1 ? SPREADS[spread + 1]?.right ?? SPREADS[TOTAL-1].right : SPREADS[spread].right;
+  const visLeft   = SPREADS[spread].left;
+  const visRight  = spread < TOTAL - 1 ? SPREADS[spread + 1]?.right ?? SPREADS[TOTAL-1].right : SPREADS[spread].right;
   const turnFront = SPREADS[spread].right;
   const turnBack  = SPREADS[spread + 1]?.left ?? SPREADS[TOTAL-1].left;
 
+  /* Bookmark tabs */
+  const bms = SPREADS.map((s, i) => ({ label: s.bookmark, index: i })).filter((b) => b.label);
+
   return (
-    <div style={{ width: "100%", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.25rem", padding: "0 1rem" }}>
-      {/* Book frame */}
-      <div style={{ perspective: "2200px", width: "100%", position: "relative" }}>
+    <>
+      {/* ── Book frame — fills viewport minus logo/nav strip ── */}
+      <div style={{
+        position: "absolute",
+        top: "2.6rem", left: "1.25rem", right: "2.75rem", bottom: "2.6rem",
+        perspective: "2600px", zIndex: 10,
+      }}>
         <motion.div
-          animate={{ rotateX: 3 }}
+          animate={{ rotateX: 2 }}
           style={{
-            width: "100%",
-            aspectRatio: "16/10",
-            position: "relative",
-            transformStyle: "preserve-3d",
+            width: "100%", height: "100%",
+            position: "relative", transformStyle: "preserve-3d",
             display: "flex",
-            boxShadow: "0 40px 120px rgba(0,0,0,0.95), 0 10px 40px rgba(0,0,0,0.7)",
+            boxShadow: "0 80px 200px rgba(0,0,0,0.98), 0 30px 80px rgba(0,0,0,0.82), 0 0 0 1px rgba(255,255,255,0.02)",
           }}
         >
           {/* Left leather cover edge */}
-          <div style={{ position: "absolute", left: -12, top: "3%", bottom: "3%", width: 14, background: COVER_BG, borderRadius: "4px 0 0 4px", border: "1px solid rgba(200,241,53,0.12)", boxShadow: "inset -2px 0 4px rgba(0,0,0,0.4)", zIndex: 30 }} />
+          <div style={{ position: "absolute", left: -14, top: "2%", bottom: "2%", width: 16, background: COVER_G, borderRadius: "5px 0 0 5px", border: "1px solid rgba(200,241,53,0.08)", boxShadow: "inset -2px 0 6px rgba(0,0,0,0.55)", zIndex: 30 }} />
 
           {/* Left page */}
-          <div style={{ width: "calc(50% - 9px)", height: "100%", overflow: "hidden", flexShrink: 0 }}>
+          <div style={{ width: "calc(50% - 11px)", height: "100%", overflow: "hidden", flexShrink: 0 }}>
             {visLeft}
           </div>
 
           {/* Spine */}
-          <div style={{ width: 18, flexShrink: 0, background: SPINE_G, zIndex: 25, position: "relative", boxShadow: "2px 0 8px rgba(0,0,0,0.4), -2px 0 8px rgba(0,0,0,0.4)" }}>
-            <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "rgba(0,0,0,0.25)" }} />
+          <div style={{ width: 22, flexShrink: 0, background: SPINE_G, zIndex: 25, position: "relative", boxShadow: "3px 0 12px rgba(0,0,0,0.55), -3px 0 12px rgba(0,0,0,0.55)" }}>
+            <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "rgba(0,0,0,0.35)" }} />
+            <div style={{ position: "absolute", left: 4, top: 0, bottom: 0, width: 1, background: "rgba(200,241,53,0.12)" }} />
+            <div style={{ position: "absolute", right: 4, top: 0, bottom: 0, width: 1, background: "rgba(200,241,53,0.12)" }} />
           </div>
 
           {/* Right page */}
-          <div style={{ width: "calc(50% - 9px)", height: "100%", overflow: "hidden", flexShrink: 0, position: "relative" }}>
+          <div style={{ width: "calc(50% - 11px)", height: "100%", overflow: "hidden", flexShrink: 0, position: "relative" }}>
             {visRight}
-            {/* Corner fold hint */}
             {spread < TOTAL - 1 && (
-              <div
-                onClick={goNext}
-                style={{
-                  position: "absolute", bottom: 0, right: 0, cursor: "pointer",
-                  width: 0, height: 0,
-                  borderLeft: "28px solid transparent",
-                  borderBottom: `28px solid rgba(139,107,66,0.22)`,
-                  transition: "transform 0.2s",
-                  zIndex: 10,
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-5px)"; }}
+              <div onClick={goNext} style={{
+                position: "absolute", bottom: 0, right: 0, cursor: "pointer",
+                width: 0, height: 0,
+                borderLeft: "34px solid transparent",
+                borderBottom: "34px solid rgba(110,78,38,0.22)",
+                zIndex: 10, transition: "transform 0.18s",
+              }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-6px)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = ""; }}
               />
             )}
           </div>
 
-          {/* Page edges */}
-          <div style={{ position: "absolute", bottom: -6, left: "2%", right: "2%", height: 8, background: `repeating-linear-gradient(to right,${PARCH},#e8dcc4 2.5px)`, borderRadius: "0 0 3px 3px", zIndex: 5 }} />
+          {/* Stacked page edges */}
+          <div style={{ position: "absolute", bottom: -6, left: "1.5%", right: "1.5%", height: 8, background: `repeating-linear-gradient(to right,${PARCH},#d8cdb0 2px)`, borderRadius: "0 0 3px 3px", zIndex: 5 }} />
 
           {/* Turning page */}
-          {spread < TOTAL - 1 && (
-            <TurningPage front={turnFront} back={turnBack} rotateY={turnRotation} />
-          )}
-
-          {/* Bookmarks */}
-          <Bookmarks spread={spread} onGo={goTo} />
+          {spread < TOTAL - 1 && <TurningPage front={turnFront} back={turnBack} rotateY={turnRotation} />}
 
           {/* Right leather cover edge */}
-          <div style={{ position: "absolute", right: -12, top: "3%", bottom: "3%", width: 14, background: COVER_BG, borderRadius: "0 4px 4px 0", border: "1px solid rgba(200,241,53,0.12)", boxShadow: "inset 2px 0 4px rgba(0,0,0,0.4)", zIndex: 30 }} />
+          <div style={{ position: "absolute", right: -14, top: "2%", bottom: "2%", width: 16, background: COVER_G, borderRadius: "0 5px 5px 0", border: "1px solid rgba(200,241,53,0.08)", boxShadow: "inset 2px 0 6px rgba(0,0,0,0.55)", zIndex: 30 }} />
         </motion.div>
 
         {/* Desk shadow */}
-        <div style={{ position: "absolute", bottom: -30, left: "5%", right: "5%", height: 40, background: "radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.7) 0%, transparent 70%)", filter: "blur(10px)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -35, left: "4%", right: "4%", height: 45, background: "radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.72) 0%,transparent 70%)", filter: "blur(14px)", pointerEvents: "none" }} />
       </div>
 
-      {/* Nav */}
-      <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
-        <button onClick={goPrev} disabled={spread === 0} style={{ width: 38, height: 38, borderRadius: "50%", background: spread === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", border: `1px solid rgba(255,255,255,${spread === 0 ? "0.05" : "0.13"})`, color: spread === 0 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.65)", cursor: spread === 0 ? "not-allowed" : "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>←</button>
-        <div style={{ display: "flex", gap: 6 }}>
+      {/* ── Bookmarks — right edge of viewport ── */}
+      <div style={{ position: "absolute", right: "0.35rem", top: "14%", display: "flex", flexDirection: "column", gap: 7, zIndex: 40 }}>
+        {bms.map((b) => (
+          <button key={b.label} onClick={() => goTo(b.index)} title={b.label!} style={{
+            width: 26, height: 58,
+            background: b.index === spread ? LIME : "rgba(255,255,255,0.07)",
+            border: "none", borderRadius: "0 5px 5px 0", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: b.index === spread ? `0 0 14px rgba(200,241,53,0.45)` : "none",
+            transition: "all 0.22s", padding: 0,
+          }}>
+            <span style={{
+              fontFamily: MONO, fontSize: "0.38rem", letterSpacing: "0.1em", textTransform: "uppercase",
+              color: b.index === spread ? "#0a0f00" : "rgba(255,255,255,0.28)",
+              transform: "rotate(90deg)", whiteSpace: "nowrap", display: "block",
+            }}>{b.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Logo — top center ── */}
+      <div style={{ position: "absolute", top: "0.55rem", left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+        <Link href="/" style={{ textDecoration: "none" }}>
+          <Image src="/logo-header-dark.png" alt="Proffy" width={88} height={26} style={{ objectFit: "contain", opacity: 0.42 }} />
+        </Link>
+      </div>
+
+      {/* ── Nav — bottom center ── */}
+      <div style={{ position: "absolute", bottom: "0.55rem", left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: "0.9rem" }}>
+        <button onClick={goPrev} disabled={spread === 0} style={{ width: 34, height: 34, borderRadius: "50%", background: spread === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.09)", border: `1px solid rgba(255,255,255,${spread === 0 ? "0.04" : "0.14"})`, color: spread === 0 ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.65)", cursor: spread === 0 ? "not-allowed" : "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>←</button>
+        <div style={{ display: "flex", gap: 5 }}>
           {Array.from({ length: TOTAL }).map((_, i) => (
-            <button key={i} onClick={() => goTo(i)} style={{ width: i === spread ? 20 : 6, height: 6, borderRadius: 999, background: i === spread ? LIME : "rgba(255,255,255,0.18)", border: "none", cursor: "pointer", padding: 0, transition: "all 0.3s" }} />
+            <button key={i} onClick={() => goTo(i)} style={{ width: i === spread ? 20 : 6, height: 6, borderRadius: 999, background: i === spread ? LIME : "rgba(255,255,255,0.18)", border: "none", cursor: "pointer", padding: 0, transition: "all 0.28s" }} />
           ))}
         </div>
-        <button onClick={goNext} disabled={spread === TOTAL - 1} style={{ width: 38, height: 38, borderRadius: "50%", background: spread === TOTAL - 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", border: `1px solid rgba(255,255,255,${spread === TOTAL - 1 ? "0.05" : "0.13"})`, color: spread === TOTAL - 1 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.65)", cursor: spread === TOTAL - 1 ? "not-allowed" : "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>→</button>
+        <button onClick={goNext} disabled={spread === TOTAL - 1} style={{ width: 34, height: 34, borderRadius: "50%", background: spread === TOTAL - 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.09)", border: `1px solid rgba(255,255,255,${spread === TOTAL - 1 ? "0.04" : "0.14"})`, color: spread === TOTAL - 1 ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.65)", cursor: spread === TOTAL - 1 ? "not-allowed" : "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>→</button>
       </div>
-      <div style={{ fontFamily: MONO, fontSize: "0.62rem", color: "rgba(255,255,255,0.18)", letterSpacing: "0.08em" }}>
-        scroll · arrow keys · swipe
-      </div>
-    </div>
+    </>
   );
 }
 
-/* ── Page ────────────────────────────────────────────────────────────────── */
+/* ── Export ──────────────────────────────────────────────────────────────── */
 export default function PreviewPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
-
   return (
-    <div
-      ref={containerRef}
-      style={{ background: DESK, fontFamily: BODY, position: "relative" }}
-    >
-      {/* Scroll height creates the turns */}
+    <div style={{ background: DESK }}>
       <div style={{ height: `calc(100vh + ${(TOTAL - 1) * SPP}px)` }}>
-        {/* Sticky book viewport */}
-        <div
-          style={{
-            position: "sticky",
-            top: 0,
-            height: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "1.5rem 0 1rem",
-            overflow: "hidden",
-          }}
-        >
-          {/* Desk background glow */}
-          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "40%", background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(200,241,53,0.04) 0%, transparent 60%)" }} />
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, top: "60%", background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,0,0,0.5) 0%, transparent 70%)" }} />
-          </div>
-
+        <div style={{
+          position: "sticky", top: 0,
+          width: "100%", height: "100vh",
+          overflow: "hidden",
+          background: `radial-gradient(ellipse 70% 50% at 50% -5%,rgba(200,241,53,0.032) 0%,transparent 60%),${DESK}`,
+        }}>
           <DeskParticles />
-
-          {/* Logo mark */}
-          <div style={{ position: "absolute", top: "0.875rem", left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
-            <Link href="/" style={{ textDecoration: "none" }}>
-              <Image src="/logo-header-dark.png" alt="Proffy" width={88} height={26} style={{ objectFit: "contain", opacity: 0.5 }} />
-            </Link>
-          </div>
-
-          <div style={{ position: "relative", zIndex: 10, width: "100%" }}>
-            <Book scrollY={scrollY} />
-          </div>
+          <Book scrollY={scrollY} />
         </div>
       </div>
     </div>
