@@ -7,6 +7,8 @@ import {
   DM_Serif_Display,
   Noto_Sans_Hebrew,
   Plus_Jakarta_Sans,
+  Cormorant_Garamond,
+  DM_Sans,
 } from "next/font/google";
 
 // ─── Fonts ───────────────────────────────────────────────────────────────────
@@ -43,6 +45,23 @@ const plusJakarta = Plus_Jakarta_Sans({
   preload: false,
 });
 
+// Cormorant Garamond: academic display font for Spellbook/preview page
+const cormorant = Cormorant_Garamond({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-cormorant",
+  display: "swap",
+  preload: false,
+});
+
+// DM Sans: clean body font for Spellbook/preview page
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://proffy.study"),
   title: "Proffy – AI Study Tools for Every Student",
@@ -66,7 +85,7 @@ export default function RootLayout({
     <html
       lang="en"
       dir="ltr"
-      className={`min-h-full antialiased ${inter.variable} ${dmSerif.variable} ${notoHebrew.variable} ${plusJakarta.variable}`}
+      className={`min-h-full antialiased ${inter.variable} ${dmSerif.variable} ${notoHebrew.variable} ${plusJakarta.variable} ${cormorant.variable} ${dmSans.variable}`}
       suppressHydrationWarning
     >
       <body
