@@ -100,6 +100,25 @@ function extractFolderId(url: string): string | null {
   return null;
 }
 
+// ── Detect Google Workspace document URL (Docs, Slides, Sheets) ──────────────
+function extractDocumentInfo(url: string): { id: string; mimeType: string; name: string } | null {
+  const docsMatch = url.match(/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([a-zA-Z0-9_-]+)/);
+  if (!docsMatch) return null;
+  const type = docsMatch[1];
+  const id   = docsMatch[2];
+  const mimeTypes: Record<string, string> = {
+    document:      "application/vnd.google-apps.document",
+    presentation:  "application/vnd.google-apps.presentation",
+    spreadsheets:  "application/vnd.google-apps.spreadsheet",
+  };
+  const names: Record<string, string> = {
+    document:     "Google Doc",
+    presentation: "Google Slides",
+    spreadsheets: "Google Sheets",
+  };
+  return { id, mimeType: mimeTypes[type] ?? "application/vnd.google-apps.document", name: names[type] ?? "Google Doc" };
+}
+
 // ── List all files in a Drive folder (recursive, tracks full path) ────────────
 async function listDriveFiles(
   drive: ReturnType<typeof google.drive>,
@@ -660,11 +679,74 @@ export async function GET(req: NextRequest) {
 
   const results = await Promise.allSettled(
     pending.map(async (row: any) => {
+      // ── Single Google Workspace document (Docs / Slides / Sheets) ────────────
+      const docInfo = extractDocumentInfo(row.url);
+      if (docInfo) {
+        await pool.query(`UPDATE material_queue SET log = '' WHERE id = $1`, [row.id]).catch(() => {});
+        await appendLog(row.id, `Detected Google Workspace document: ${docInfo.name} (${docInfo.id})`);
+        try {
+          const { buffer, exportedMime } = await downloadDriveFile(drive, docInfo.id, docInfo.mimeType);
+          await appendLog(row.id, `Downloaded (${(buffer.length / 1024).toFixed(0)} KB, exported as ${exportedMime})`);
+
+          let rawChunks: Chunk[] = [];
+          if (exportedMime === "text/plain") {
+            rawChunks = smartChunk(buffer.toString("utf-8"));
+          } else if (exportedMime === "application/pdf") {
+            const text = await extractFromPdf(buffer);
+            rawChunks = smartChunk(text);
+          } else {
+            rawChunks = smartChunk(buffer.toString("utf-8"));
+          }
+
+          const chunks = qualityFilter(rawChunks);
+          await appendLog(row.id, `Extracted ${chunks.length} chunks`);
+
+          const label = row.course_name || row.note || docInfo.name;
+          const docType = detectDocType(label) ?? "notes";
+          const sampleText = chunks.slice(0, 4).map((c: Chunk) => c.text).join(" ");
+          const { course: effectiveCourseName, courseNumber: effectiveCourseNumber } = await identifyCourse(
+            [], label, sampleText, label
+          );
+
+          let chunkCount = 0;
+          if (chunks.length > 0) {
+            chunkCount = await embedAndUpsert(chunks, {
+              filename:      label.slice(0, 200),
+              folder_path:   row.url,
+              type:          docType,
+              professor:     row.professor ?? null,
+              university:    row.university ?? "Technion",
+              course:        effectiveCourseName,
+              course_number: effectiveCourseNumber ?? row.course_number ?? null,
+              course_id:     null,
+              user_id:       null,
+              semester:      row.semester ?? null,
+              is_shared:     true,
+              trust_level:   "verified",
+            }, docInfo.id);
+          }
+
+          await pool.query(
+            `UPDATE material_queue SET status = 'done', processed_at = NOW(), files_found = 1, chunks_created = $1 WHERE id = $2`,
+            [chunkCount, row.id]
+          );
+          await appendLog(row.id, `Done. ${chunkCount} chunks created.`);
+        } catch (err: any) {
+          const msg = err.message?.slice(0, 500) ?? "Unknown error";
+          await appendLog(row.id, `ERROR: ${msg}`);
+          await pool.query(
+            `UPDATE material_queue SET status = 'failed', error_msg = $1, processed_at = NOW() WHERE id = $2`,
+            [msg, row.id]
+          );
+        }
+        return;
+      }
+
       const folderId = extractFolderId(row.url);
       if (!folderId) {
         await pool.query(
           `UPDATE material_queue SET status = 'failed', error_msg = $1, processed_at = NOW() WHERE id = $2`,
-          ["Could not extract folder ID from URL", row.id]
+          ["Could not extract folder ID from URL. Supported: Drive folders and Google Docs/Slides/Sheets URLs.", row.id]
         );
         return;
       }

@@ -117,6 +117,7 @@ export default async function AdminPage() {
 
   return (
     <AdminClient
+      adminSecret={process.env.ADMIN_SECRET ?? ""}
       stats={{
         totalUsers: Number(totalUsers.rows[0].count),
         paidUsers: Number(paidUsers.rows[0].count),

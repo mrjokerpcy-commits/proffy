@@ -86,11 +86,18 @@ export default function AdminClient({
   stats,
   users: initialUsers,
   queue,
+  adminSecret,
 }: {
   stats: Stats;
   users: User[];
   queue: QueueItem[];
+  adminSecret: string;
 }) {
+  const adminHeaders = (extra?: Record<string, string>) => ({
+    ...(adminSecret ? { "x-admin-secret": adminSecret } : {}),
+    ...extra,
+  });
+
   const [tab, setTab] = useState<"overview" | "users" | "usage" | "queue" | "knowledge" | "simulate" | "notes">("overview");
   const [selectedSite, setSelectedSite] = useState<"platform" | "uni" | "psycho" | "yael" | "bagrut">("platform");
   const [siteSubTab, setSiteSubTab] = useState<"ingest" | "chat" | "knowledge" | "features">("ingest");
@@ -185,14 +192,14 @@ export default function AdminClient({
 
   async function cancelItem(id: string) {
     setActioningId(id);
-    await fetch("/api/admin/queue-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action: "cancel" }) }).catch(() => {});
+    await fetch("/api/admin/queue-action", { method: "POST", headers: adminHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ id, action: "cancel" }) }).catch(() => {});
     setQueueItems(prev => prev.map(q => q.id === id ? { ...q, status: "pending" } : q));
     setActioningId(null);
   }
 
   async function deleteItem(id: string) {
     setActioningId(id);
-    await fetch("/api/admin/queue-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action: "delete" }) }).catch(() => {});
+    await fetch("/api/admin/queue-action", { method: "POST", headers: adminHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ id, action: "delete" }) }).catch(() => {});
     setQueueItems(prev => prev.filter(q => q.id !== id));
     if (openLogId === id) setOpenLogId(null);
     setActioningId(null);
@@ -214,7 +221,7 @@ export default function AdminClient({
     try {
       const r = await fetch("/api/admin/simulate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: adminHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ question: simQuestion, university: simUniversity || undefined, withAnswer: simWithAnswer }),
       });
       const d = await r.json();
@@ -283,7 +290,7 @@ export default function AdminClient({
     if (chunkFilterUni) params.set("university", chunkFilterUni);
     if (chunkFilterCourse) params.set("course", chunkFilterCourse);
     try {
-      const r = await fetch(`/api/admin/chunks?${params}`);
+      const r = await fetch(`/api/admin/chunks?${params}`, { headers: adminHeaders() });
       const d = await r.json();
       setChunks(d.points ?? []);
       setChunksTotal(d.total ?? 0);
