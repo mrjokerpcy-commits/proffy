@@ -1,4 +1,4 @@
-import { getServerSession } from "next-auth";
+import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -143,19 +143,20 @@ export default async function HomePage() {
   const isApp = host.startsWith("uni.") || host.includes("localhost") || host.startsWith("127.");
   if (!isApp) return <HubPage />;
 
-  let session = null;
+  let session: Session | null = null;
   try { session = await getServerSession(authOptions); } catch {}
 
   // Logged-in → personal home screen
   if (session?.user?.id) {
-    const uid = session.user.id;
+    const s   = session!;
+    const uid = s.user!.id as string;
     const [coursesRes, fcRes, notesRes, planRes] = await Promise.all([
       pool.query("SELECT id, name, exam_date, color, created_at FROM courses WHERE user_id = $1 ORDER BY created_at DESC", [uid]),
       pool.query("SELECT COUNT(*) as c FROM flashcards WHERE user_id = $1 AND next_review_at <= NOW()", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
       pool.query("SELECT COUNT(*) as c FROM course_notes WHERE user_id = $1", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
       pool.query("SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active'", [uid]).catch(() => ({ rows: [] })),
     ]);
-    const firstName = (session.user.name ?? "").split(" ")[0] || "there";
+    const firstName = (s.user!.name ?? "").split(" ")[0] || "there";
     return (
       <UniHome
         firstName={firstName}
