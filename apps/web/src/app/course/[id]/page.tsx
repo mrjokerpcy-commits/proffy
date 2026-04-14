@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { Pool } from "pg";
 import AppShell from "@/components/layout/AppShell";
-import CourseWorkspace from "./CourseWorkspace";
+import ChatWindow from "@/components/chat/ChatWindow";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
@@ -96,27 +96,13 @@ export default async function CoursePage({ params }: { params: { id: string } })
     sources: m.sources,
   }));
 
-  const [{ rows: docsRows }, { rows: chunksRows }] = await Promise.all([
-    pool
-      .query("SELECT id, filename, type FROM materials WHERE course_id = $1 ORDER BY created_at DESC LIMIT 20", [course.id])
-      .catch(() => ({ rows: [] })),
-    pool
-      .query("SELECT COUNT(*)::int AS count FROM chunks WHERE course_id = $1", [course.id])
-      .catch(() => ({ rows: [{ count: 0 }] })),
-  ]);
-  const chunksCount = Number(chunksRows[0]?.count ?? 0);
-
   return (
     <AppShell courses={courses} activeCourse={course} flashcardsDue={flashcardsDue} professorPatterns={professorPatterns} studentInsights={studentInsights} userPlan={userPlan}>
-      <CourseWorkspace
+      <ChatWindow
         course={course}
         sessionId={chatSessionId}
         initialMessages={initialMessages}
         userPlan={userPlan}
-        flashcardsDue={flashcardsDue}
-        professorPatterns={professorPatterns}
-        chunksCount={chunksCount}
-        docs={docsRows}
       />
     </AppShell>
   );

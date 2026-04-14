@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { Pool } from "pg";
 import AppShell from "@/components/layout/AppShell";
-import DashboardWorkspace from "./DashboardWorkspace";
+import DashboardClient from "./DashboardClient";
 import PlatformHub from "./PlatformHub";
 import BetaGate from "./BetaGate";
 
@@ -141,6 +141,9 @@ export default async function DashboardPage() {
     const fcDue = parseInt(fcRes.rows[0]?.c ?? "0", 10);
     const notesCount = parseInt(notesRes.rows[0]?.c ?? "0", 10);
     const firstName = (session.user.name ?? "").split(" ")[0] || "there";
+    const courseStats = courseStatsRes.rows;
+    const recentSessions = recentRes.rows;
+
     const nextExam = courses
       .filter((c: any) => c.exam_date)
       .map((c: any) => ({ name: c.name, days: Math.ceil((new Date(c.exam_date).getTime() - Date.now()) / 86400000) }))
@@ -149,9 +152,11 @@ export default async function DashboardPage() {
 
     return (
       <AppShell courses={courses} flashcardsDue={fcDue} userPlan={userPlan as "free" | "pro" | "max"}>
-        <DashboardWorkspace
+        <DashboardClient
           firstName={firstName}
           courses={courses}
+          courseStats={courseStats}
+          recentSessions={recentSessions}
           monthTokens={monthTokens}
           tokenLimit={tokenLimit}
           userPlan={userPlan}

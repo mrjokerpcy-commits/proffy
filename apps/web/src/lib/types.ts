@@ -12,7 +12,6 @@ export interface Course {
   user_level: string | null;
   goal: string | null;
   hours_per_week: number | null;
-  color?: string | null;
 }
 
 export interface ChatMessage {

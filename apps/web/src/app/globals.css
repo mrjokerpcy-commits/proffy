@@ -4,36 +4,35 @@
 
 /* ─── Design tokens — Dark mode (default) ──────────────────────────────────── */
 :root {
-  /* ── Background layers — premium dark SaaS ── */
-  --bg-base:       #05070e;
-  --bg-surface:    #0c1220;
-  --bg-elevated:   #111827;
-  --bg-hover:      #151d2f;
+  /* ── Background layers — near-black with green warmth ── */
+  --bg-base:       #060d06;
+  --bg-surface:    #0b160b;
+  --bg-elevated:   #101e10;
+  --bg-hover:      #182418;
   --bg-card:       rgba(255,255,255,0.04);
 
   /* ── Borders ── */
-  --border:        rgba(255,255,255,0.08);
-  --border-light:  rgba(255,255,255,0.14);
-  --border-focus:  rgba(79,142,247,0.5);
+  --border:        rgba(22,163,74,0.15);
+  --border-light:  rgba(22,163,74,0.25);
+  --border-focus:  rgba(22,163,74,0.55);
 
   /* ── Text hierarchy ── */
-  --text-primary:   rgba(255,255,255,0.9);
-  --text-secondary: rgba(255,255,255,0.55);
-  --text-muted:     rgba(255,255,255,0.3);
-  --text-disabled:  rgba(255,255,255,0.2);
+  --text-primary:   #edfaed;
+  --text-secondary: #96b896;
+  --text-muted:     #507050;
+  --text-disabled:  #243624;
 
   /* ── Brand — green ── */
-  --blue:          #4f8ef7;
-  --blue-hover:    #75a6f8;
-  --blue-dim:      rgba(79,142,247,0.12);
-  --blue-glow:     rgba(79,142,247,0.32);
-  --purple:        #a78bfa;
-  --purple-glow:   rgba(167,139,250,0.2);
-  --lime:          #c8f135;
+  --blue:          #16a34a;
+  --blue-hover:    #22c55e;
+  --blue-dim:      rgba(22,163,74,0.12);
+  --blue-glow:     rgba(22,163,74,0.32);
+  --purple:        #4ade80;
+  --purple-glow:   rgba(74,222,128,0.18);
 
   /* ── Accent spectrum ── */
-  --accent-cyan:   #4f8ef7;
-  --accent-pink:   #a78bfa;
+  --accent-cyan:   #22d3ee;
+  --accent-pink:   #f472b6;
 
   /* ── Semantic status ── */
   --red:    #f87171;
@@ -45,12 +44,9 @@
   --font-body:    inherit;
 
   /* ── Component tokens ── */
-  --nav-bg:       rgba(5,7,14,0.9);
-  --nav-border:   rgba(255,255,255,0.08);
+  --nav-bg:       rgba(6,13,6,0.90);
+  --nav-border:   rgba(22,163,74,0.20);
   --card-shadow:  none;
-  --radius-card: 12px;
-  --radius-input: 8px;
-  --radius-pill: 999px;
 }
 
 /* ─── Light mode — warm cream/beige with green accent ───────────────────────── */
@@ -635,12 +631,11 @@ html, body { overflow-x: hidden; }
 
 /* ─── Button base ───────────────────────────────────────────────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, #4f8ef7, #a78bfa);
+  background: var(--blue);
   color: #fff;
   font-weight: 600;
   box-shadow: 0 1px 4px rgba(0,0,0,0.3), 0 0 28px var(--blue-dim);
   transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
-  border-radius: var(--radius-input);
 }
 .btn-primary:hover { opacity: 0.9; box-shadow: 0 4px 24px var(--blue-glow); }
 .btn-primary:active { transform: scale(0.98); }
@@ -650,20 +645,8 @@ html, body { overflow-x: hidden; }
   color: var(--text-secondary);
   border: 1px solid var(--border);
   transition: border-color 0.15s, color 0.15s, background 0.15s;
-  border-radius: var(--radius-input);
 }
 .btn-ghost:hover { border-color: var(--border-light); color: var(--text-primary); background: var(--bg-hover); }
-
-.btn-lime {
-  background: #c8f135;
-  color: #111827;
-  border: 1px solid rgba(200,241,53,0.7);
-  border-radius: var(--radius-input);
-  font-weight: 700;
-  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-}
-.btn-lime:hover { box-shadow: 0 6px 24px rgba(200,241,53,0.25); }
-.btn-lime:active { transform: scale(0.98); }
 
 /* ─── PayPal button cursor override ─────────────────────────────────────────── */
 div[data-funding-source],

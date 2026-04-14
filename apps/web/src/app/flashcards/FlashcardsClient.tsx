@@ -20,7 +20,7 @@ interface Props {
 }
 
 const RATINGS = [
-  { q: 0, label: "Again",  bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   color: "var(--red)" },
+  { q: 0, label: "Blackout",  bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   color: "var(--red)" },
   { q: 2, label: "Hard",      bg: "rgba(251,191,36,0.10)",  border: "rgba(251,191,36,0.3)",  color: "var(--amber)" },
   { q: 4, label: "Good",      bg: "rgba(79,142,247,0.10)",  border: "rgba(79,142,247,0.3)",  color: "var(--blue)" },
   { q: 5, label: "Easy",      bg: "rgba(52,211,153,0.10)",  border: "rgba(52,211,153,0.3)",  color: "var(--green)" },
@@ -215,60 +215,31 @@ export default function FlashcardsClient({ courses, initialCards, courseId, tota
             </div>
 
             {/* Card */}
-            <div style={{ perspective: "1400px", marginBottom: "1rem" }}>
-              <motion.div
-                onClick={() => setFlipped(f => !f)}
-                animate={{ rotateY: flipped ? 180 : 0 }}
-                transition={{ duration: 0.45, ease: "easeInOut" }}
-                style={{
-                  position: "relative",
-                  minHeight: "260px",
-                  cursor: "pointer",
-                  transformStyle: "preserve-3d",
-                  userSelect: "none",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    backfaceVisibility: "hidden",
-                    background: "var(--bg-surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "1.25rem",
-                    padding: "2.5rem",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    textAlign: "center",
-                  }}
-                >
-                  <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue)", marginBottom: "1rem" }}>Question</p>
-                  <p style={{ fontSize: "1.125rem", fontWeight: 600, lineHeight: 1.6, color: "var(--text-primary)" }}>{card?.front}</p>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1.5rem" }}>Click to reveal answer</p>
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    transform: "rotateY(180deg)",
-                    backfaceVisibility: "hidden",
-                    background: "var(--bg-surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "1.25rem",
-                    padding: "2.5rem",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    textAlign: "center",
-                  }}
-                >
-                  <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--purple)", marginBottom: "1rem" }}>Answer</p>
-                  <p style={{ fontSize: "1rem", lineHeight: 1.7, color: "var(--text-primary)" }}>{card?.back}</p>
-                </div>
-              </motion.div>
+            <div
+              onClick={() => setFlipped(f => !f)}
+              style={{
+                background: "var(--bg-surface)", border: "1px solid var(--border)",
+                borderRadius: "1.25rem", padding: "2.5rem",
+                minHeight: "240px", cursor: "pointer",
+                display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
+                textAlign: "center", marginBottom: "1rem", position: "relative",
+                userSelect: "none",
+              }}
+            >
+              <AnimatePresence mode="wait">
+                {!flipped ? (
+                  <motion.div key="front" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue)", marginBottom: "1rem" }}>Question</p>
+                    <p style={{ fontSize: "1.125rem", fontWeight: 600, lineHeight: 1.6, color: "var(--text-primary)" }}>{card?.front}</p>
+                    <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1.5rem" }}>Click to reveal answer</p>
+                  </motion.div>
+                ) : (
+                  <motion.div key="back" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--purple)", marginBottom: "1rem" }}>Answer</p>
+                    <p style={{ fontSize: "1rem", lineHeight: 1.7, color: "var(--text-primary)" }}>{card?.back}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Rating buttons — only after flip */}

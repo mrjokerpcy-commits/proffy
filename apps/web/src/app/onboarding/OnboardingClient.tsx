@@ -470,17 +470,6 @@ export default function OnboardingClient({ userName }: { userName: string }) {
               animate={{ opacity: 1, y: 0 }}
               style={{ textAlign: "center" }}
             >
-              <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "10px" }}>
-                {["#4f8ef7", "#a78bfa", "#34d399", "#fbbf24", "#c8f135"].map((c, i) => (
-                  <motion.span
-                    key={c + i}
-                    initial={{ y: -10, opacity: 0 }}
-                    animate={{ y: [0, -8, 0], opacity: 1 }}
-                    transition={{ delay: i * 0.06, duration: 0.9, repeat: 1 }}
-                    style={{ width: 8, height: 8, borderRadius: 999, background: c, display: "inline-block" }}
-                  />
-                ))}
-              </div>
               <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
