@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Sidebar from "./Sidebar";
 import RightPanel from "./RightPanel";
 import PanelDrawer from "./PanelDrawer";
@@ -22,6 +24,8 @@ interface Props {
 }
 
 export default function AppShell({ children, courses, activeCourse, flashcardsDue, professorPatterns, studentInsights, userPlan = "free" }: Props) {
+  const pathname = usePathname();
+  const { data: session } = useSession();
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
@@ -111,11 +115,21 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
         {/* ── Global tool bar ── */}
         <div style={{
-          flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-end",
+          flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between",
           gap: "6px", padding: "8px 14px",
           borderBottom: "1px solid var(--border)",
           background: "var(--bg-surface)",
         }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)", textTransform: "capitalize", whiteSpace: "nowrap" }}>
+              {pathname?.replace("/", "") || "dashboard"}
+            </span>
+            <span style={{ fontSize: "11px", color: "var(--text-disabled)" }}>/</span>
+            <span style={{ fontSize: "12px", color: "var(--text-secondary)", whiteSpace: "nowrap" }}>
+              {(activeCourse?.name ?? "workspace").slice(0, 30)}
+            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {/* Hamburger on mobile */}
           {isMobile && (
             <button
@@ -136,6 +150,13 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
           <CalcButton />
           <CalendarButton />
           <OpenUploadButton />
+            <span style={{ fontSize: "11px", fontWeight: 700, borderRadius: 999, padding: "4px 8px", border: "1px solid var(--border)", color: "var(--text-secondary)", textTransform: "uppercase" }}>
+              {userPlan}
+            </span>
+            <span style={{ width: 24, height: 24, borderRadius: 999, background: "linear-gradient(135deg,#4f8ef7,#a78bfa)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 700 }}>
+              {session?.user?.name?.[0]?.toUpperCase() ?? "U"}
+            </span>
+          </div>
         </div>
         {children}
       </main>

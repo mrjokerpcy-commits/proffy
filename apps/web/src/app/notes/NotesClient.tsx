@@ -20,18 +20,18 @@ interface Props {
 }
 
 const NOTE_TYPES = [
-  { value: "all",       label: "All",         icon: "📋", color: "var(--text-muted)" },
-  { value: "note",      label: "Note",        icon: "📝", color: "var(--text-secondary)" },
-  { value: "trick",     label: "Trick",       icon: "💡", color: "var(--amber)" },
-  { value: "prof_said", label: "Prof. said",  icon: "🎓", color: "var(--blue)" },
-  { value: "formula",   label: "Formula",     icon: "⚡", color: "var(--purple)" },
+  { value: "all",       label: "All",         icon: "•", color: "var(--text-muted)" },
+  { value: "note",      label: "Note",        icon: "N", color: "var(--text-secondary)" },
+  { value: "trick",     label: "Trick",       icon: "T", color: "var(--amber)" },
+  { value: "prof_said", label: "Prof Said",   icon: "P", color: "var(--blue)" },
+  { value: "formula",   label: "Formula",     icon: "F", color: "var(--purple)" },
 ];
 
 const TYPE_META: Record<string, { icon: string; color: string; bg: string; border: string }> = {
-  note:      { icon: "📝", color: "var(--text-secondary)", bg: "var(--bg-elevated)",       border: "var(--border)" },
-  trick:     { icon: "💡", color: "var(--amber)",          bg: "rgba(251,191,36,0.06)",    border: "rgba(251,191,36,0.2)" },
-  prof_said: { icon: "🎓", color: "var(--blue)",           bg: "rgba(79,142,247,0.06)",    border: "rgba(79,142,247,0.2)" },
-  formula:   { icon: "⚡", color: "var(--purple)",         bg: "rgba(167,139,250,0.06)",   border: "rgba(167,139,250,0.2)" },
+  note:      { icon: "N", color: "var(--text-secondary)", bg: "var(--bg-elevated)",       border: "var(--border)" },
+  trick:     { icon: "T", color: "var(--amber)",          bg: "rgba(251,191,36,0.06)",    border: "rgba(251,191,36,0.2)" },
+  prof_said: { icon: "P", color: "var(--blue)",           bg: "rgba(79,142,247,0.06)",    border: "rgba(79,142,247,0.2)" },
+  formula:   { icon: "F", color: "var(--purple)",         bg: "rgba(167,139,250,0.06)",   border: "rgba(167,139,250,0.2)" },
 };
 
 function timeAgo(dateStr: string) {

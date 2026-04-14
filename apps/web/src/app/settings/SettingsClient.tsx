@@ -96,6 +96,11 @@ export default function SettingsClient({ user }: Props) {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [notifications, setNotifications] = useState({
+    examReminders: true,
+    flashcardReminders: true,
+    weeklyDigest: false,
+  });
 
   async function deleteAccount() {
     if (!deletePassword.trim()) { setDeleteError("Enter your password to confirm."); return; }
@@ -312,6 +317,26 @@ export default function SettingsClient({ user }: Props) {
               {saving ? "Saving…" : saved ? "✓ Saved" : "Save changes"}
             </button>
           </div>
+        </motion.div>
+
+        {/* ── Notification preferences ── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={card}>
+          <h2 style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "4px" }}>Notifications</h2>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "14px" }}>Choose what Proffy should remind you about.</p>
+          {[
+            { key: "examReminders", label: "Exam countdown reminders" },
+            { key: "flashcardReminders", label: "Flashcards due reminders" },
+            { key: "weeklyDigest", label: "Weekly study digest" },
+          ].map((item) => (
+            <label key={item.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderTop: "1px solid var(--border)" }}>
+              <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>{item.label}</span>
+              <input
+                type="checkbox"
+                checked={Boolean(notifications[item.key as keyof typeof notifications])}
+                onChange={(e) => setNotifications((n) => ({ ...n, [item.key]: e.target.checked }))}
+              />
+            </label>
+          ))}
         </motion.div>
 
         {/* ── Account ── */}

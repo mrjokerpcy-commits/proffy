@@ -22,9 +22,27 @@ export default function NewCourseClient({ userUniversity = "" }: { userUniversit
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [suggestions, setSuggestions] = useState<Array<{ name: string; course_number?: string; lecturer?: string }>>([]);
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }));
+  }
+
+  async function fetchTechnionSuggestions(query: string) {
+    if (!query.trim() || form.university !== "Technion") {
+      setSuggestions([]);
+      return;
+    }
+    const res = await fetch(`/api/courses/technion?semester=2025b`).catch(() => null);
+    if (!res?.ok) return;
+    const data = await res.json().catch(() => ({}));
+    const rows = Array.isArray(data?.courses) ? data.courses : [];
+    const q = query.toLowerCase();
+    const matched = rows
+      .filter((r: any) => `${r.name ?? ""} ${r.course_number ?? ""}`.toLowerCase().includes(q))
+      .slice(0, 6)
+      .map((r: any) => ({ name: r.name, course_number: r.course_number, lecturer: r.lecturer }));
+    setSuggestions(matched);
   }
 
   async function submit(e: React.FormEvent) {
@@ -94,12 +112,31 @@ export default function NewCourseClient({ userUniversity = "" }: { userUniversit
               type="text"
               placeholder="e.g. Algorithms, Linear Algebra, Data Structures"
               value={form.name}
-              onChange={e => set("name", e.target.value)}
+              onChange={e => { set("name", e.target.value); fetchTechnionSuggestions(e.target.value); }}
               maxLength={200}
               style={inputStyle}
               onFocus={e => (e.target.style.borderColor = "rgba(79,142,247,0.5)")}
               onBlur={e => (e.target.style.borderColor = "var(--border)")}
             />
+            {form.university === "Technion" && suggestions.length > 0 && (
+              <div style={{ marginTop: "8px", display: "grid", gap: "6px" }}>
+                {suggestions.map((s) => (
+                  <button
+                    key={`${s.course_number}-${s.name}`}
+                    type="button"
+                    onClick={() => {
+                      set("name", s.name ?? "");
+                      if (s.course_number) set("course_number", s.course_number);
+                      if (s.lecturer && !form.professor) set("professor", s.lecturer);
+                      setSuggestions([]);
+                    }}
+                    style={{ ...optBtn(false), textAlign: "left" }}
+                  >
+                    {(s.course_number ? `${s.course_number} — ` : "") + s.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* University — pre-filled from profile, show selector only if not set */}

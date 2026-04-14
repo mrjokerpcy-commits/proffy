@@ -55,7 +55,21 @@ export default function RegisterClient() {
   } as const;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-base)", padding: "2rem 1.5rem" }}>
+    <div style={{ minHeight: "100vh", display: "flex", background: "var(--bg-base)" }}>
+      <div style={{ display: "none", width: "42%", minWidth: 360, borderLeft: "1px solid var(--border)", background: "var(--bg-surface)", padding: "28px" }} className="lg:block">
+        <h3 style={{ fontSize: 24, fontWeight: 800, color: "var(--text-primary)", marginTop: 8 }}>Study smarter from day one</h3>
+        <p style={{ marginTop: 8, color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6 }}>
+          Upload your course material and get sourced answers, professor patterns, and exam-focused study flow.
+        </p>
+        <div style={{ marginTop: 18, display: "grid", gap: 10 }}>
+          {["Answers from your own slides", "Exam-style pattern detection", "Flashcards with spaced repetition"].map((line) => (
+            <div key={line} style={{ border: "1px solid var(--border)", background: "var(--bg-elevated)", borderRadius: 10, padding: "10px 12px", color: "var(--text-secondary)", fontSize: 13 }}>
+              {line}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1.5rem" }}>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -163,6 +177,7 @@ export default function RegisterClient() {
           </Link>
         </p>
       </motion.div>
+      </div>
     </div>
   );
 }

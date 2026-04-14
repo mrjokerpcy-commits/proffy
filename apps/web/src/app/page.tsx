@@ -134,6 +134,9 @@ function StudyIllustration() {
 // ─── Main page ─────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
+  // Temporary default route while the new frontend is being rolled out.
+  redirect("/frontend");
+
   // proffy.study root domain → hub landing page
   const host = (await headers()).get("host") ?? "";
   // uni.proffy.study = chat app, everything else (including app.) = hub

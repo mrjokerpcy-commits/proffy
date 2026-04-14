@@ -317,7 +317,7 @@ export default function UploadClient({ courses, userPlan = "free", serviceAccoun
                     />
                   </div>
                   <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center" }}>
-                    Extracting text and indexing… {progress}%
+                    Proffy is reading your material... extracting and indexing ({progress}%)
                   </p>
                 </motion.div>
               ) : status === "success" && result ? (
