@@ -6,10 +6,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 
+const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 const FADE = (delay = 0) => ({
   initial: { opacity: 0, y: 12, filter: "blur(4px)" },
   animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-  transition: { duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] },
+  transition: { duration: 0.4, delay, ease: EASE },
 });
 
 function GlassInput({
