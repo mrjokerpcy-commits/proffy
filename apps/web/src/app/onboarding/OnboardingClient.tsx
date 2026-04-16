@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import WeeklyTimetable from "@/components/ui/WeeklyTimetable";
+import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 
 const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"];
 const FIELDS = [
@@ -249,8 +250,13 @@ export default function OnboardingClient({ userName }: { userName: string }) {
     }}>
       <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
 
-      {/* Ambient glow */}
-      <div style={{ position: "fixed", top: "10%", left: "50%", transform: "translateX(-50%)", width: "700px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(79,142,247,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <InfiniteGrid revealRadius={350} speed={0.3} />
+
+      {/* Ambient glows */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+        <div style={{ position: "absolute", top: "10%", left: "50%", transform: "translateX(-50%)", width: "700px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(79,142,247,0.08) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "-15%", right: "-10%", width: "45%", height: "45%", borderRadius: "50%", background: "radial-gradient(circle, rgba(167,139,250,0.07) 0%, transparent 70%)" }} />
+      </div>
 
       {/* Progress bar */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "3px", background: "rgba(255,255,255,0.06)", zIndex: 10 }}>
@@ -289,7 +295,7 @@ export default function OnboardingClient({ userName }: { userName: string }) {
         </button>
       )}
 
-      <div style={{ width: "100%", maxWidth: "520px", position: "relative", zIndex: 1 }}>
+      <div style={{ width: "100%", maxWidth: "520px", position: "relative", zIndex: 2 }}>
 
         {/* Question */}
         {!isDone && (
@@ -474,9 +480,26 @@ export default function OnboardingClient({ userName }: { userName: string }) {
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 200, damping: 12 }}
-                style={{ fontSize: "4rem", marginBottom: "1.25rem" }}
+                style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}
               >
-                🎓
+                <div style={{
+                  width: "72px", height: "72px", borderRadius: "20px",
+                  background: "linear-gradient(135deg, rgba(79,142,247,0.15), rgba(167,139,250,0.15))",
+                  border: "1px solid rgba(79,142,247,0.25)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 8px 32px rgba(79,142,247,0.2)",
+                }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="url(#grad-cap)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <defs>
+                      <linearGradient id="grad-cap" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#4f8ef7" />
+                        <stop offset="100%" stopColor="#a78bfa" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c0 1.657 2.686 3 6 3s6-1.343 6-3v-5" />
+                  </svg>
+                </div>
               </motion.div>
               <h1 style={{ fontSize: "clamp(1.75rem,4vw,2.25rem)", fontWeight: 800, letterSpacing: "-0.025em", color: "var(--text-primary)", marginBottom: "0.625rem" }}>
                 {answers.name ? `You're all set, ${answers.name.split(" ")[0]}!` : "You're all set!"}
