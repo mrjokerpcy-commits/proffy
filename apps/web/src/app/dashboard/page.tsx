@@ -82,7 +82,7 @@ export default async function DashboardPage() {
   const accessRes = await pool.query(
     "SELECT plan FROM platform_subscriptions WHERE user_id = $1 AND platform = $2 AND status = 'active'",
     [uid, platform]
-  );
+  ).catch(() => ({ rows: [{ plan: "free" }] })); // table may not exist yet — treat as active
 
   if (accessRes.rows.length === 0) {
     return <BetaGate platform={platform} userId={uid} />;
@@ -92,8 +92,8 @@ export default async function DashboardPage() {
   if (isUni) {
     const [coursesRes, usageRes, planRes, fcRes, notesRes, userRes, courseStatsRes, recentRes] = await Promise.all([
       pool.query("SELECT * FROM courses WHERE user_id = $1 ORDER BY created_at DESC", [uid]),
-      pool.query("SELECT SUM(tokens_input) AS tokens_input, SUM(tokens_output) AS tokens_output FROM usage WHERE user_id = $1 AND date >= DATE_TRUNC('month', CURRENT_DATE)", [uid]),
-      pool.query("SELECT plan FROM platform_subscriptions WHERE user_id = $1 AND platform = 'uni' AND status = 'active'", [uid]),
+      pool.query("SELECT SUM(tokens_input) AS tokens_input, SUM(tokens_output) AS tokens_output FROM usage WHERE user_id = $1 AND date >= DATE_TRUNC('month', CURRENT_DATE)", [uid]).catch(() => ({ rows: [{ tokens_input: 0, tokens_output: 0 }] })),
+      pool.query("SELECT plan FROM platform_subscriptions WHERE user_id = $1 AND platform = 'uni' AND status = 'active'", [uid]).catch(() => ({ rows: [] })),
       pool.query("SELECT COUNT(*) as c FROM flashcards WHERE user_id = $1 AND next_review_at <= NOW()", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
       pool.query("SELECT COUNT(*) as c FROM course_notes WHERE user_id = $1", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
       pool.query("SELECT onboarding_done, email_verified FROM users WHERE id = $1", [uid]).catch(() => ({ rows: [{ onboarding_done: true, email_verified: true }] })),
