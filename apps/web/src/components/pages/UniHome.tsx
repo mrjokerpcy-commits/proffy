@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 
 interface Course {
   id: string;
@@ -110,9 +109,7 @@ export default function UniHome({ firstName, courses, fcDue, notesCount, plan }:
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)", position: "relative", overflow: "hidden" }}>
-
-      <InfiniteGrid revealRadius={380} speed={0.3} />
+    <div style={{ minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)" }}>
 
       {/* ── Nav ── */}
       <nav style={{
@@ -139,7 +136,7 @@ export default function UniHome({ firstName, courses, fcDue, notesCount, plan }:
       </nav>
 
       {/* ── Main ── */}
-      <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "88px max(28px,3vw) 80px", position: "relative", zIndex: 1 }}>
+      <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "88px max(28px,3vw) 80px" }}>
 
         {/* ── Greeting ── */}
         <div style={{ marginBottom: "40px" }}>

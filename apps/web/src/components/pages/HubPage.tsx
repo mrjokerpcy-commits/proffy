@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import LangToggle, { useLang } from "@/components/ui/LangToggle";
+import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 
 // ─── Constellation canvas ─────────────────────────────────────────────────────
 function ConstellationBg() {
@@ -361,7 +362,7 @@ export default function HubPage() {
 
   return (
     <div data-hub style={{ minHeight:"100vh", background:"var(--bg-base)", color:"var(--text-primary)", position:"relative", overflowX:"hidden", fontFamily:ff, direction:dir }}>
-      <ConstellationBg />
+      <InfiniteGrid revealRadius={420} speed={0.3} />
 
       {/* ── Ambient glow — fixed so it covers all sections while scrolling ── */}
       <div aria-hidden="true" style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, background:"radial-gradient(ellipse 140% 140% at 50% 40%, rgba(22,163,74,0.18) 0%, rgba(22,163,74,0.06) 45%, transparent 70%)" }} />
