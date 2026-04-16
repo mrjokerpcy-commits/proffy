@@ -3,7 +3,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import WeeklyTimetable from "@/components/ui/WeeklyTimetable";
-import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 
 const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"];
 const FIELDS = [
@@ -249,8 +248,6 @@ export default function OnboardingClient({ userName }: { userName: string }) {
       padding: "5rem 1.5rem 2rem", position: "relative", overflow: "hidden",
     }}>
       <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
-
-      <InfiniteGrid revealRadius={350} speed={0.3} />
 
       {/* Ambient glows */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
-import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 
 const FADE = (delay = 0) => ({
   initial: { opacity: 0, y: 12, filter: "blur(4px)" },
@@ -82,9 +81,6 @@ export default function LoginPage() {
       minHeight: "100dvh", display: "flex", flexDirection: "row",
       background: "var(--bg-base)", position: "relative", overflow: "hidden",
     }}>
-
-      {/* ── Infinite grid background ── */}
-      <InfiniteGrid revealRadius={400} speed={0.35} />
 
       {/* ── Ambient glows ── */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>

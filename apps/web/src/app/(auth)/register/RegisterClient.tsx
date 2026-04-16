@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
-import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 
 const FADE = (delay = 0) => ({
   initial: { opacity: 0, y: 12, filter: "blur(4px)" },
@@ -89,8 +88,6 @@ export default function RegisterClient() {
       minHeight: "100dvh", display: "flex", background: "var(--bg-base)",
       position: "relative", overflow: "hidden",
     }}>
-      <InfiniteGrid revealRadius={400} speed={0.35} />
-
       {/* Ambient glows */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <div style={{ position: "absolute", top: "-10%", left: "-10%", width: "50%", height: "50%", borderRadius: "50%", background: "radial-gradient(circle, rgba(22,163,74,0.1) 0%, transparent 70%)" }} />
