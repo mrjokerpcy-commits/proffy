@@ -15,11 +15,15 @@ export async function middleware(req: NextRequest) {
 
   // Redirect /login on subdomains to proffy.study/login so NextAuth CSRF works
   const host = req.headers.get("host") ?? "";
-  if (req.nextUrl.pathname === "/login" && isProd && host !== "proffy.study" && host !== "www.proffy.study") {
-    const loginUrl = new URL(`${LOGIN_BASE}/login`);
-    const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
-    if (callbackUrl) loginUrl.searchParams.set("callbackUrl", callbackUrl);
-    return NextResponse.redirect(loginUrl);
+  if (req.nextUrl.pathname === "/login") {
+    if (isProd && host !== "proffy.study" && host !== "www.proffy.study") {
+      const loginUrl = new URL(`${LOGIN_BASE}/login`);
+      const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
+      if (callbackUrl) loginUrl.searchParams.set("callbackUrl", callbackUrl);
+      return NextResponse.redirect(loginUrl);
+    }
+    // Already on proffy.study/login — let it through regardless of auth state
+    return NextResponse.next();
   }
 
   const token = await getToken({

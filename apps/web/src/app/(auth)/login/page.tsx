@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
@@ -60,6 +60,8 @@ function GlassInput({
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [show,     setShow]     = useState(false);
@@ -73,7 +75,7 @@ export default function LoginPage() {
     const res = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
     if (res?.error) setError("Invalid email or password");
-    else router.push("/dashboard");
+    else window.location.href = callbackUrl;
   }
 
   return (
@@ -161,7 +163,7 @@ export default function LoginPage() {
             <motion.button
               {...FADE(0.1)}
               type="button"
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              onClick={() => signIn("google", { callbackUrl })}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
