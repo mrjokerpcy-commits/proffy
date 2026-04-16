@@ -686,3 +686,130 @@ html[data-subdomain="yael"] textarea {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ─── Premium UI upgrades ────────────────────────────────────────────────────── */
+
+/* Deeper, richer dark mode backgrounds */
+:root {
+  --bg-base:       #05090a;
+  --bg-surface:    #090f10;
+  --bg-elevated:   #0e1719;
+  --bg-hover:      #141f22;
+
+  /* Crisper borders */
+  --border:        rgba(255,255,255,0.07);
+  --border-light:  rgba(255,255,255,0.11);
+
+  /* Richer text hierarchy */
+  --text-primary:   #f0f6f6;
+  --text-secondary: #7fa8b0;
+  --text-muted:     #445a60;
+
+  /* Component tokens */
+  --nav-bg:        rgba(5,9,10,0.88);
+  --nav-border:    rgba(255,255,255,0.08);
+}
+
+html.light :root { /* don't override light mode */ }
+
+/* Better scrollbar */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Premium sidebar items */
+.sidebar-item {
+  transition: background 0.15s, border-color 0.15s, transform 0.1s !important;
+  border: 1px solid transparent !important;
+}
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  transform: translateX(2px);
+}
+.sidebar-item:active { transform: scale(0.99) !important; }
+
+/* All dashboard buttons — premium transitions */
+button {
+  transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s, border-color 0.15s, background 0.15s;
+}
+button:active { transform: scale(0.97) !important; }
+
+/* Premium card glow — applied via JS whileHover, but CSS fallback */
+.card-hover {
+  transition: transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.2s;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+
+/* Glassmorphism cards — richer */
+.glass {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.glass-elevated {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+/* Premium input */
+.input-ring {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.input-ring:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--blue-dim), 0 1px 8px rgba(0,0,0,0.2);
+  background: var(--bg-surface);
+}
+
+/* Badge shimmer on hover */
+@keyframes badge-glow {
+  0%,100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+/* Gradient border utility */
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.03));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Premium glow effects */
+.glow-blue    { box-shadow: 0 0 24px var(--blue-glow), 0 0 64px rgba(22,163,74,0.06); }
+.glow-blue-sm { box-shadow: 0 2px 12px var(--blue-glow); }
+
+/* Better btn-primary */
+.btn-primary {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 20px var(--blue-dim);
+  transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+  opacity: 0.92;
+  box-shadow: 0 4px 20px var(--blue-glow), 0 0 40px var(--blue-dim);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: scale(0.97) translateY(0); }
