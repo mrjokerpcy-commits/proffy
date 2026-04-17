@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import LangToggle from "@/components/ui/LangToggle";
 
 const PLATFORM_META: Record<string, { name: string; icon: string; gradient: string; description: string }> = {
   uni:    { name: "Proffy Uni",   icon: "🎓", gradient: "linear-gradient(135deg, #4f8ef7, #6366f1)", description: "AI study tools for university courses" },
@@ -72,6 +74,10 @@ export default function BetaGate({ platform }: Props) {
       fontFamily: "system-ui, sans-serif",
       padding: "24px",
     }}>
+      <div style={{ position: "fixed", top: "14px", right: "16px", zIndex: 50, display: "flex", alignItems: "center", gap: "8px" }}>
+        <LangToggle />
+        <ThemeToggle />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

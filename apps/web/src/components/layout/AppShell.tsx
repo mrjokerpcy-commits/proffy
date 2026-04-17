@@ -9,6 +9,7 @@ import CalcButton from "@/components/ui/CalcButton";
 import CalendarButton from "@/components/ui/CalendarButton";
 import OpenUploadButton from "@/components/ui/OpenUploadButton";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import LangToggle from "@/components/ui/LangToggle";
 import type { Course } from "@/lib/types";
 
 interface Props {
@@ -131,6 +132,7 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
               </svg>
             </button>
           )}
+          <LangToggle />
           <ThemeToggle />
           <TimerButton />
           <CalcButton />

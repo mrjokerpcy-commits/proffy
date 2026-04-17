@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import WeeklyTimetable from "@/components/ui/WeeklyTimetable";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import LangToggle from "@/components/ui/LangToggle";
 
 const UNIVERSITIES = ["TAU", "Technion", "HUJI", "BGU", "Bar Ilan", "Ariel", "Other"];
 const FIELDS = [
@@ -268,17 +270,20 @@ export default function OnboardingClient({ userName }: { userName: string }) {
       <div style={{ position: "fixed", top: "1.4rem", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: "10px", zIndex: 10 }}>
         <AnimatedLogo active={!waiting && !isDone} />
         <span style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-          Proffy{" "}
-          <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--accent)", background: "rgba(99,102,241,0.13)", border: "1px solid rgba(99,102,241,0.28)", borderRadius: "4px", padding: "1px 5px" }}>BETA</span>
+          Proffy
         </span>
       </div>
 
-      {/* Step counter */}
-      {!isDone && (
-        <div style={{ position: "fixed", top: "1.6rem", right: "2rem", fontSize: "12px", color: "var(--text-muted)", fontWeight: 500, zIndex: 10 }}>
-          {step + 1} / {STEPS.length}
-        </div>
-      )}
+      {/* Top-right: step counter + toggles */}
+      <div style={{ position: "fixed", top: "1.2rem", right: "1.5rem", display: "flex", alignItems: "center", gap: "8px", zIndex: 10 }}>
+        <LangToggle />
+        <ThemeToggle />
+        {!isDone && (
+          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500, marginLeft: "4px" }}>
+            {step + 1} / {STEPS.length}
+          </span>
+        )}
+      </div>
 
       {/* Skip setup (top left) */}
       {!isDone && (

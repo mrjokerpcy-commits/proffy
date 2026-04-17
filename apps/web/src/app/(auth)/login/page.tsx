@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import LangToggle from "@/components/ui/LangToggle";
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
 const FADE = (delay = 0) => ({
@@ -21,8 +23,8 @@ function GlassInput({
 }) {
   return (
     <div style={{
-      borderRadius: "14px", border: "1px solid rgba(255,255,255,0.1)",
-      background: "rgba(255,255,255,0.04)", backdropFilter: "blur(8px)",
+      borderRadius: "14px", border: "1px solid var(--border)",
+      background: "var(--bg-elevated)",
       transition: "border-color 0.15s, background 0.15s",
       position: "relative",
     }}
@@ -33,8 +35,8 @@ function GlassInput({
       }}
       onBlurCapture={e => {
         const el = e.currentTarget as HTMLDivElement;
-        el.style.borderColor = "rgba(255,255,255,0.1)";
-        el.style.background = "rgba(255,255,255,0.04)";
+        el.style.borderColor = "var(--border)";
+        el.style.background = "var(--bg-elevated)";
       }}
     >
       <input
@@ -86,6 +88,12 @@ export default function LoginPage() {
       background: "var(--bg-base)", position: "relative", overflow: "hidden",
     }}>
 
+      {/* ── Theme / Lang toggles ── */}
+      <div style={{ position: "fixed", top: "14px", right: "16px", zIndex: 50, display: "flex", alignItems: "center", gap: "8px" }}>
+        <LangToggle />
+        <ThemeToggle />
+      </div>
+
       {/* ── Ambient glows ── */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <div style={{ position: "absolute", top: "-15%", right: "-10%", width: "50%", height: "50%", borderRadius: "50%", background: "radial-gradient(circle, rgba(22,163,74,0.12) 0%, transparent 70%)" }} />
@@ -112,7 +120,6 @@ export default function LoginPage() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span style={{ fontWeight: 800, fontSize: "1.15rem", letterSpacing: "-0.02em", color: "var(--text-primary)" }}>Proffy</span>
-              <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--blue)", background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.3)", borderRadius: "4px", padding: "1px 5px" }}>BETA</span>
             </div>
             <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>AI study assistant</div>
           </div>

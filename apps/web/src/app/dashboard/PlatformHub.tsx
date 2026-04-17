@@ -3,6 +3,8 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import LangToggle from "@/components/ui/LangToggle";
 
 const PLATFORMS = [
   {
@@ -131,8 +133,9 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
             Proffy
           </span>
         </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <LangToggle />
+          <ThemeToggle />
           {userImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={userImage} alt={userName} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} />

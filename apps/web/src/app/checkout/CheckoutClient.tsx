@@ -225,7 +225,7 @@ export default function CheckoutClient({ plan: initialPlan, userEmail }: Props) 
             gap: "2rem", flexWrap: "wrap",
           }}
         >
-          {["🔒 256-bit SSL", "🌍 Secure infrastructure", "✕ Cancel any time", "🎓 TAU · Technion · HUJI · BGU · Bar Ilan · Ariel"].map(t => (
+          {["🔒 256-bit SSL", "🌍 Secure infrastructure", "✕ Cancel any time"].map(t => (
             <span key={t} style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t}</span>
           ))}
         </motion.div>

@@ -12,7 +12,7 @@ import UpgradeModal from "./UpgradeModal";
 function detectSubdomain(): string {
   if (typeof window === "undefined") return "root";
   const host = window.location.hostname;
-  if (host.startsWith("app.")) return "app";
+  if (host.startsWith("uni.") || host.startsWith("app.")) return "app";
   if (host.startsWith("psycho.")) return "psycho";
   if (host.startsWith("yael.")) return "yael";
   if (host.startsWith("bagrut.")) return "bagrut";
@@ -96,6 +96,36 @@ const SEMESTERS = [
   { key: "s", label: "Summer" },
 ];
 
+const TIPS = [
+  { emoji: "🧠", text: "Spaced repetition beats cramming every time. Review yesterday's cards before adding new ones." },
+  { emoji: "⏱️", text: "25-minute focused blocks with 5-minute breaks outperform marathon sessions." },
+  { emoji: "📝", text: "Writing a summary in your own words locks it in better than re-reading." },
+  { emoji: "🎯", text: "Know the professor's exam pattern. Past exams are your best study guide." },
+  { emoji: "💤", text: "Sleep is when memory consolidates. Don't pull all-nighters before exams." },
+  { emoji: "🔍", text: "Ask 'why does this work?' not just 'what is this?' Deep understanding sticks." },
+  { emoji: "📊", text: "Start with the hardest topic when energy is high, not the easiest." },
+  { emoji: "🗣️", text: "Explaining a concept out loud — even to yourself — reveals what you don't know." },
+];
+
+function DailyTip() {
+  const tip = TIPS[new Date().getDate() % TIPS.length];
+  return (
+    <div style={{
+      margin: "8px 10px",
+      padding: "12px 14px",
+      background: "rgba(79,142,247,0.06)",
+      border: "1px solid rgba(79,142,247,0.14)",
+      borderRadius: "12px",
+      display: "flex", gap: "10px", alignItems: "flex-start",
+    }}>
+      <span style={{ fontSize: "18px", lineHeight: 1.3, flexShrink: 0 }}>{tip.emoji}</span>
+      <div>
+        <div style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue)", marginBottom: "4px" }}>Daily tip</div>
+        <p style={{ fontSize: "11px", color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>{tip.text}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function Sidebar({ courses, activeCourseId, flashcardsDue: initialFcDue = 0, userPlan = "free", onOpenFlashcards, onOpenNotes }: Props) {
   const pathname = usePathname();
@@ -173,11 +203,8 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       {/* ── Brand ── */}
       <div style={{ padding: "0.875rem 1rem", display: "flex", alignItems: "center", gap: "0.625rem", flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
         <SidebarLogo />
-        <span style={{ fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.01em", color: "var(--text-primary)", flex: 1, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+        <span style={{ fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.01em", color: "var(--text-primary)", flex: 1 }}>
           {SUBDOMAIN_SITES[subdomain as keyof typeof SUBDOMAIN_SITES]?.label ?? "Proffy"}
-          <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--blue)", background: "var(--blue-dim)", border: "1px solid var(--blue-glow)", borderRadius: "4px", padding: "1px 5px", lineHeight: 1.5 }}>
-            {PROFFY_VERSION}
-          </span>
         </span>
         <button
           onClick={() => router.push(`/chat?new=${Date.now()}&semester=${selectedSemester}`)}
@@ -703,6 +730,9 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           </div>
         </div>
       )}
+
+      {/* ── Daily tip ── */}
+      <DailyTip />
 
       {/* ── Bottom user menu ── */}
       <div ref={menuRef} style={{ flexShrink: 0, borderTop: "1px solid var(--border)", position: "relative" }}>
