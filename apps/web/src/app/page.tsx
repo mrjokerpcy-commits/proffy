@@ -252,7 +252,7 @@ export default async function HomePage() {
           <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", justifyContent: "center" }}>
             {[
               { name: "TAU", full: "Tel Aviv University", color: "#4f8ef7" },
-              { name: "Technion", full: "Israel Institute of Technology", color: "#a78bfa" },
+              { name: "Technion", full: "Technion", color: "#a78bfa" },
               { name: "HUJI", full: "Hebrew University", color: "#f87171" },
               { name: "BGU", full: "Ben-Gurion University", color: "#34d399" },
               { name: "Bar Ilan", full: "Bar-Ilan University", color: "#fbbf24" },

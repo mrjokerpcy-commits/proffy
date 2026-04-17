@@ -497,7 +497,7 @@ export default function HubPage() {
               <div>
                 <p style={{ fontSize:"13px", fontWeight:700, color:"var(--text-primary)" }}>Proffy Team</p>
                 <p style={{ fontSize:"12px", color:"var(--text-muted)" }}>
-                  {lang === "he" ? "מייסדים, ישראל" : "Founders, Israel"}
+                  {lang === "he" ? "צוות פרופי" : "Proffy Team"}
                 </p>
               </div>
             </div>

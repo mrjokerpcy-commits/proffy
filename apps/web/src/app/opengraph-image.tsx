@@ -47,7 +47,7 @@ export default async function OGImage() {
           </div>
 
           <div style={{ fontSize: "20px", color: "rgba(255,255,255,0.5)", lineHeight: 1.4, fontWeight: 400 }}>
-            AI study tools for Israeli university students
+            AI study tools for university students
           </div>
 
           {/* Feature pills */}

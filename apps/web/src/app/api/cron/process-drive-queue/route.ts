@@ -178,7 +178,7 @@ const coursePathCache = new Map<string, CourseTag>();
 
 // Hebrew course abbreviation knowledge baked in so AI doesn't need to guess
 const COURSE_ABBREV_HINT = `
-Common Israeli university course names and abbreviations:
+Common university course names and abbreviations:
 - מדר / מד"ר / משוואות דיפרנציאליות רגילות = ODE (Ordinary Differential Equations)
 - חדו"א / חדווא / חשבון אינפיניטסימלי = Calculus / Mathematical Analysis
 - אלגברה לינארית / אל"ל = Linear Algebra

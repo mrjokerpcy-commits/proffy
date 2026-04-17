@@ -80,7 +80,7 @@ function Txt({ children, sm }: { children: React.ReactNode; sm?: boolean }) {
 /* ── Flip cards ──────────────────────────────────────────────────────────── */
 const NETWORK = [
   { letter: "B", name: "Proffy Bagrut",  tagline: "High school",   badge: "Soon", live: false, short: "Every bagrut subject. Ask, practice, get clear explanations.", full: "Every bagrut subject covered. Practice with past Ministry of Education exam patterns, get explanations in Hebrew and English.", href: "#",         color: "#a78bfa" },
-  { letter: "Y", name: "Proffy Yael",    tagline: "Hebrew writing", badge: "Soon", live: false, short: "Master Hebrew spelling, grammar and academic writing.",          full: "Master Hebrew spelling, grammar, and academic writing for the Yael section of the Israeli psychometric exam.", href: "#",         color: "#fbbf24" },
+  { letter: "Y", name: "Proffy Yael",    tagline: "Hebrew writing", badge: "Soon", live: false, short: "Master Hebrew spelling, grammar and academic writing.",          full: "Master Hebrew spelling, grammar, and academic writing for the Yael section of the psychometric exam.", href: "#",         color: "#fbbf24" },
   { letter: "P", name: "Proffy Psycho",  tagline: "Psychometric",   badge: "Beta", live: false, short: "Replace a 3,000 prep course with full AI preparation.",        full: "Replace expensive prep courses. Full AI-powered prep for verbal, quantitative, and English sections.", href: "#",         color: "#f87171" },
   { letter: "U", name: "Proffy Uni",     tagline: "University",     badge: "Live", live: true,  short: "Upload slides, ask anything, ace the exam.",                     full: "Upload your course slides and past exams. Proffy learns your professor's style and answers like a top student.", href: "/register", color: "#4f8ef7" },
 ] as const;
@@ -236,7 +236,7 @@ function S1L() {
         <div style={{ fontFamily: DISP, fontSize: "clamp(0.85rem,1.8vw,1.08rem)", fontStyle: "italic", color: INK, lineHeight: 1.65 }}>
           &ldquo;We built the tool we wished we had when we were students.&rdquo;
         </div>
-        <div style={{ fontFamily: BODY, fontSize: "clamp(0.56rem,1.1vw,0.68rem)", color: INK3, marginTop: "0.35rem" }}>Proffy Team, Israel</div>
+        <div style={{ fontFamily: BODY, fontSize: "clamp(0.56rem,1.1vw,0.68rem)", color: INK3, marginTop: "0.35rem" }}>Proffy Team</div>
       </div>
       <div style={{ marginTop: "auto" }}>
         <Image src="/mascot/reading.png" alt="" width={90} height={90} style={{ objectFit: "contain", opacity: 0.36, filter: "sepia(0.5)", float: "right", width: "clamp(55px,9vw,90px)", height: "auto" }} />

@@ -149,7 +149,7 @@ export default function LoginPage() {
         </div>
 
         <div style={{ fontSize: "11px", color: "var(--text-muted)", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "18px" }}>
-          Built for Israeli university students
+          Study smarter, not harder
         </div>
       </motion.div>
 

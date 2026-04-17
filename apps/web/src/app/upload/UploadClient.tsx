@@ -520,7 +520,7 @@ export default function UploadClient({ courses, userPlan = "free", serviceAccoun
       </AnimatePresence>
 
       <p style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "center", marginTop: "1.5rem", lineHeight: 1.7 }}>
-        Files are processed by AI and stored securely on Israeli infrastructure.
+        Files are processed by AI and stored securely.
         Hebrew handwriting in scanned exams is supported.
       </p>
     </div>
