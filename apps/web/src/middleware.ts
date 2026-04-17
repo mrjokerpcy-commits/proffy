@@ -22,7 +22,18 @@ export async function middleware(req: NextRequest) {
       if (callbackUrl) loginUrl.searchParams.set("callbackUrl", callbackUrl);
       return NextResponse.redirect(loginUrl);
     }
-    // Already on proffy.study/login — let it through regardless of auth state
+    // If already authenticated, skip login and go to destination
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET ?? "dev-secret-change-in-prod",
+      cookieName: isProd ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+    });
+    if (token) {
+      const dest = req.nextUrl.searchParams.get("callbackUrl") || "/dashboard";
+      // Only follow safe same-origin callbackUrls
+      const safe = dest.startsWith("/") ? new URL(dest, req.url) : new URL("/dashboard", req.url);
+      return NextResponse.redirect(safe);
+    }
     return NextResponse.next();
   }
 

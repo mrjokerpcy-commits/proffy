@@ -125,21 +125,32 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Quote */}
-        <div>
-          <blockquote style={{ fontSize: "1.05rem", fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.55, marginBottom: "1rem", letterSpacing: "-0.01em" }}>
-            "The students who use Proffy consistently score higher. It's not about working more — it's about studying smarter."
-          </blockquote>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(22,163,74,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "var(--blue)", fontWeight: 700 }}>A</div>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>Amir Cohen</div>
-              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>TAU Computer Science, 3rd year</div>
+        {/* Feature highlights */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          {[
+            { icon: "🤖", label: "AI Tutor", desc: "Ask questions about your syllabus and get instant answers" },
+            { icon: "🃏", label: "Smart Flashcards", desc: "Spaced repetition that schedules reviews for you automatically" },
+            { icon: "📝", label: "Course Notes", desc: "Keep every trick, formula, and insight in one place" },
+          ].map(f => (
+            <div key={f.label} style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
+              <div style={{
+                width: "38px", height: "38px", borderRadius: "10px", flexShrink: 0,
+                background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.2)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "17px",
+              }}>
+                {f.icon}
+              </div>
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "2px" }}>{f.label}</div>
+                <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
 
-        <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>TAU · Technion · HUJI · BGU · Bar Ilan · Ariel</p>
+        <div style={{ fontSize: "11px", color: "var(--text-muted)", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "18px" }}>
+          Built for Israeli university students
+        </div>
       </motion.div>
 
       {/* ── Right form panel ── */}
