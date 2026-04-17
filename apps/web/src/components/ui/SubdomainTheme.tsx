@@ -7,7 +7,7 @@ import type { SubdomainKey } from "@/lib/constants";
 export function getSubdomain(): SubdomainKey {
   if (typeof window === "undefined") return "root";
   const host = window.location.hostname;
-  if (host.startsWith("app.")) return "app";
+  if (host.startsWith("uni.") || host.startsWith("app.")) return "app";
   if (host.startsWith("psycho.")) return "psycho";
   if (host.startsWith("yael.")) return "yael";
   if (host.startsWith("bagrut.")) return "bagrut";

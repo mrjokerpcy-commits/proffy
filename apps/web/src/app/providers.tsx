@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import BetaGate from "@/components/ui/BetaGate";
 import CookieBanner from "@/components/ui/CookieBanner";
 import SubdomainTheme from "@/components/ui/SubdomainTheme";
+import ThemeSync from "@/components/ui/ThemeSync";
 import UploadModal from "@/components/layout/UploadModal";
 import TourOverlay from "@/components/ui/TourOverlay";
 import ExamFingerprintModal from "@/components/ui/ExamFingerprintModal";
@@ -17,6 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange={false}
     >
       <SessionProvider>
+        <ThemeSync />
         <SubdomainTheme />
         <UploadModal />
         <ExamFingerprintModal />
