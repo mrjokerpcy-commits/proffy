@@ -65,5 +65,6 @@ export const config = {
     "/notes/:path*",
     "/flashcards/:path*",
     "/settings/:path*",
+    "/yael/:path*",
   ],
 };

@@ -176,7 +176,7 @@ export default function CheckoutClient({ plan: initialPlan, userEmail }: Props) 
 
             <PayPalScriptProvider options={{ clientId: "AZWKNOrILVkXzT3U_6F12RD2e0QnQrAtlIjk0PzxwKPSijsAVuLGKSNXi3Kr8_0sgbLvSdvcnt2DsOFG", currency: "USD", intent: "capture" }}>
               <PayPalButtons
-                style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay" }}
+                style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay", tagline: false }}
                 disabled={loading}
                 createOrder={async () => {
                   setLoading(true);

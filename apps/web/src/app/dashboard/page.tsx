@@ -7,6 +7,8 @@ import AppShell from "@/components/layout/AppShell";
 import DashboardClient from "./DashboardClient";
 import PlatformHub from "./PlatformHub";
 import BetaGate from "./BetaGate";
+import YaelShell from "@/components/layout/YaelShell";
+import YaelDashboardClient from "@/app/yael/YaelDashboardClient";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://studyai:studyai@localhost:5432/studyai",
@@ -168,7 +170,38 @@ export default async function DashboardPage() {
     );
   }
 
-  // ── Other platforms (psycho, yael, bagrut) — coming soon ──────────────────
+  // ── Yael dashboard ────────────────────────────────────────────────────────
+  if (isYael) {
+    const uid = session.user.id;
+    const [userRes, progressRes, recentRes] = await Promise.all([
+      pool.query("SELECT onboarding_done, email_verified, name FROM users WHERE id = $1", [uid]),
+      pool.query(
+        "SELECT section, total_questions, correct_answers, sessions_done, last_practiced_at FROM yael_progress WHERE user_id = $1",
+        [uid]
+      ).catch(() => ({ rows: [] })),
+      pool.query(
+        "SELECT id, section, score, total, duration_seconds, created_at FROM yael_sessions WHERE user_id = $1 AND completed_at IS NOT NULL ORDER BY created_at DESC LIMIT 8",
+        [uid]
+      ).catch(() => ({ rows: [] })),
+    ]);
+
+    if (!userRes.rows[0]?.email_verified) redirect("/verify-email");
+    if (!userRes.rows[0]?.onboarding_done) redirect("/onboarding");
+
+    const firstName = (userRes.rows[0]?.name ?? "").split(" ")[0] || "there";
+
+    return (
+      <YaelShell>
+        <YaelDashboardClient
+          firstName={firstName}
+          progress={progressRes.rows}
+          recentSessions={recentRes.rows}
+        />
+      </YaelShell>
+    );
+  }
+
+  // ── Other platforms (psycho, bagrut) — coming soon ─────────────────────
   return (
     <div style={{
       minHeight: "100vh", background: "var(--bg-base)",
