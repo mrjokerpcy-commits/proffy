@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import Link from "next/link";
 import HubPage from "@/components/pages/HubPage";
-import UniHome from "@/components/pages/UniHome";
 import { Pool } from "pg";
 
 const pool = new Pool({
@@ -143,28 +142,10 @@ export default async function HomePage() {
   let session = null;
   try { session = await getServerSession(authOptions); } catch {}
 
-  // Logged-in → personal home screen
-  if (session?.user?.id) {
-    const uid = session.user.id;
-    const [coursesRes, fcRes, notesRes, planRes] = await Promise.all([
-      pool.query("SELECT id, name, exam_date, color, created_at FROM courses WHERE user_id = $1 ORDER BY created_at DESC", [uid]),
-      pool.query("SELECT COUNT(*) as c FROM flashcards WHERE user_id = $1 AND next_review_at <= NOW()", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
-      pool.query("SELECT COUNT(*) as c FROM course_notes WHERE user_id = $1", [uid]).catch(() => ({ rows: [{ c: "0" }] })),
-      pool.query("SELECT plan FROM subscriptions WHERE user_id = $1 AND status = 'active'", [uid]).catch(() => ({ rows: [] })),
-    ]);
-    const firstName = (session.user.name ?? "").split(" ")[0] || "there";
-    return (
-      <UniHome
-        firstName={firstName}
-        courses={coursesRes.rows}
-        fcDue={parseInt(fcRes.rows[0]?.c ?? "0", 10)}
-        notesCount={parseInt(notesRes.rows[0]?.c ?? "0", 10)}
-        plan={planRes.rows[0]?.plan ?? "free"}
-      />
-    );
-  }
+  // Logged-in on uni subdomain → go to the real dashboard
+  if (session?.user?.id) redirect("/dashboard");
 
-  // Not logged in → go to login directly
+  // Not logged in → go to login
   redirect("/login");
 
   return (
