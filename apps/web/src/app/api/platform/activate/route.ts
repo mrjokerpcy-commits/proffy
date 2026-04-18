@@ -54,7 +54,9 @@ export async function POST(req: NextRequest) {
   }
 
   const validCodes = getCodesForPlatform(platform);
-  if (!validCodes.has(code)) {
+  // If no codes are configured for this platform, accept any non-empty code (open beta).
+  // Set BETA_CODES_<PLATFORM> or BETA_ACCESS_CODES in env to restrict access.
+  if (validCodes.size > 0 && !validCodes.has(code)) {
     return NextResponse.json({ error: "Invalid access code" }, { status: 403 });
   }
 

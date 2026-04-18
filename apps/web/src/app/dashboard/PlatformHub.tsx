@@ -109,7 +109,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
     <div style={{ minHeight: "100vh", background: "var(--bg-base)", fontFamily: "system-ui, sans-serif", position: "relative", overflow: "hidden" }}>
 
       {/* Ambient glow */}
-      <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "800px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 0%, rgba(79,142,247,0.09) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+      <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "800px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 0%, rgba(34,197,94,0.08) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
 
       {/* ── Header ── */}
       <header style={{ position: "sticky", top: 0, zIndex: 30, height: "60px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", padding: "0 clamp(16px,4vw,40px)", justifyContent: "space-between", background: "var(--nav-bg)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
@@ -143,7 +143,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
 
         {/* Greeting */}
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} style={{ marginBottom: "48px" }}>
-          <div style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue)", marginBottom: "8px" }}>
+          <div style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#22c55e", marginBottom: "8px" }}>
             {greeting}
           </div>
           <h1 style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: "8px", lineHeight: 1.1 }}>

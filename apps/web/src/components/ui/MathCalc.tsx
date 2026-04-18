@@ -176,7 +176,7 @@ type BtnDef = {
   value: string;
   shiftValue?: string;
   color?: "fn" | "op" | "eq" | "del" | "shift" | "mode" | "num";
-  action?: "clear" | "back" | "eval" | "shift" | "mode" | "ans";
+  action?: "clear" | "back" | "eval" | "shift" | "mode" | "ans" | "negate";
   wide?: boolean;
 };
 
@@ -233,7 +233,7 @@ const ROWS: BtnDef[][] = [
   ],
   [
     { label: "0",     value: "0",     color: "num", wide: true },
-    { label: "+/−",   value: "",      color: "num", action: "negate" as any },
+    { label: "+/−",   value: "",      color: "num", action: "negate" },
     { label: "√",     value: "sqrt(", color: "fn" },
     { label: "x!",    value: "!",     color: "fn" },
   ],
@@ -294,7 +294,7 @@ export default function MathCalc({ isOpen, onOpenChange, topBar = false }: Props
     if (active.action === "shift")  { setShifted(s => !s); return; }
     if (active.action === "mode")   { setDegMode(d => !d); return; }
     if (active.action === "ans")    { setExpr(e => e + "ans"); inputRef.current?.focus(); return; }
-    if ((active.action as string) === "negate") {
+    if (active.action === "negate") {
       setExpr(e => {
         if (!e) return "-";
         if (e.startsWith("-")) return e.slice(1);
