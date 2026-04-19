@@ -6,95 +6,90 @@ import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const SECTION_PROMPTS: Record<string, string> = {
-  reading: `Generate a psychometric exam reading comprehension exercise in Hebrew.
+  reading: `Generate a Yael exam (ידע בעברית לאקדמיה) reading comprehension exercise in Hebrew.
 
 Return a JSON object (no markdown, no code block) with this exact structure:
 {
-  "passage": "A Hebrew passage of 200-300 words on an academic or general-interest topic. Use clear, formal Hebrew appropriate for the psychometric exam level.",
+  "passage": "A Hebrew passage of 200-300 words on an academic or general-interest topic. Use clear, formal Hebrew at academic level.",
   "title": "A short Hebrew title for the passage (3-6 words)",
   "questions": [
     {
       "id": "q1",
       "text": "Question in Hebrew",
-      "options": {
-        "A": "Option A in Hebrew",
-        "B": "Option B in Hebrew",
-        "C": "Option C in Hebrew",
-        "D": "Option D in Hebrew"
-      },
+      "options": { "A": "Option A in Hebrew", "B": "Option B in Hebrew", "C": "Option C in Hebrew", "D": "Option D in Hebrew" },
       "correct": "B",
-      "explanation": "Explanation in Hebrew (1-2 sentences) — why this is correct and the others are wrong"
+      "explanation": "Explanation in Hebrew (2-3 sentences) — why this is correct and the others are wrong"
     }
   ]
 }
 
-Generate exactly 5 questions. Question types should include:
+Generate exactly 5 questions covering:
 - Main idea / central theme (רעיון מרכזי)
 - Specific detail from the text (פרט ספציפי)
 - Inference / implication (השלכה / מסקנה)
 - Author's tone or purpose (גישת הכותב)
 - Vocabulary in context (אוצר מילים בהקשר)
 
-Make the passage and questions realistic and at actual psychometric exam difficulty.`,
+At actual Yael exam difficulty.`,
 
-  vocabulary: `Generate a psychometric exam vocabulary exercise in Hebrew.
+  completion: `Generate a Yael exam (ידע בעברית לאקדמיה) sentence completion (השלמת משפטים) exercise in Hebrew.
+
+Each question gives an incomplete Hebrew sentence and the student must choose the word or phrase that best completes it.
 
 Return a JSON object (no markdown, no code block) with this exact structure:
 {
   "passage": null,
-  "title": "אוצר מילים",
+  "title": "השלמת משפטים",
   "questions": [
     {
       "id": "q1",
-      "text": "Question in Hebrew. Format: either 'מה המשמעות של המילה X?' or a sentence completion 'בחר את המילה המתאימה: _____' or a synonym question",
-      "options": {
-        "A": "Option A",
-        "B": "Option B",
-        "C": "Option C",
-        "D": "Option D"
-      },
+      "text": "משפט עם פער: 'הממשלה הכריזה _____ מצב חירום לאחר האסון הטבעי.' — בחר את המילה המתאימה:",
+      "options": { "A": "על", "B": "בדבר", "C": "אל", "D": "כלפי" },
       "correct": "A",
-      "explanation": "Explanation in Hebrew (1-2 sentences)"
+      "explanation": "הסבר בעברית: 'הכריז על' הוא הצירוף הנכון בעברית תקנית. האפשרויות האחרות שגויות דקדוקית."
     }
   ]
 }
 
-Generate exactly 8 questions. Mix of:
-- Find the correct meaning of a word (3 questions)
-- Find the synonym (נרדף) (2 questions)
-- Find the antonym (נגדי) (1 question)
-- Complete the sentence with the right word (2 questions)
+Generate exactly 8 questions. Use _____ to mark the gap. Mix of:
+- Preposition in context — מילת יחס (3 questions)
+- Connective / conjunction — מילת קישור (2 questions)
+- Right word from context — מילה מתאימה (2 questions)
+- Idiomatic expression — ביטוי (1 question)
 
-Use words that appear on the actual psychometric exam. Difficulty: intermediate to advanced Hebrew.`,
+Use formal, academic Hebrew at actual Yael exam level.`,
 
-  grammar: `Generate a psychometric exam language errors exercise in Hebrew.
+  reformulation: `Generate a Yael exam (ידע בעברית לאקדמיה) reformulation (ניסוח מחדש) exercise in Hebrew.
+
+Each question presents a Hebrew sentence, then asks which option expresses EXACTLY the same meaning using different wording.
 
 Return a JSON object (no markdown, no code block) with this exact structure:
 {
   "passage": null,
-  "title": "שגיאות בשפה",
+  "title": "ניסוח מחדש",
   "questions": [
     {
       "id": "q1",
-      "text": "A Hebrew sentence or short paragraph with one grammatical/usage error. Format: present the text, then ask 'איזו מילה/צורה שגויה?' or 'מה השגיאה במשפט?'",
+      "text": "המשפט הנתון:\n'על אף הביקורת הרבה שהושמעה, הממשלה לא שינתה את מדיניותה.'\n\nאיזו מן האפשרויות מביעה באופן הטוב ביותר את אותו הרעיון?",
       "options": {
-        "A": "Option A — possible error or corrected version",
-        "B": "Option B",
-        "C": "Option C",
-        "D": "Option D — no error / the sentence is correct"
+        "A": "הממשלה שינתה את מדיניותה בעקבות הביקורת.",
+        "B": "הממשלה לא הגיבה לביקורת שהושמעה כנגדה.",
+        "C": "חרף הביקורת הרבה, הממשלה עמדה על מדיניותה.",
+        "D": "הממשלה הגיבה לביקורת אך לא שינתה דבר."
       },
-      "correct": "B",
-      "explanation": "Explanation in Hebrew of the grammatical rule and why this is the error"
+      "correct": "C",
+      "explanation": "הסבר: 'חרף' = 'על אף', ו'עמדה על מדיניותה' = 'לא שינתה את מדיניותה'. משמעות זהה. האחרות משנות את המשמעות."
     }
   ]
 }
 
-Generate exactly 6 questions. Types:
-- Wrong verb conjugation (נטיית פועל) (2 questions)
-- Wrong word choice (בחירת מילה) (2 questions)
-- Wrong plural/possessive form (2 questions)
-
-Make errors subtle and realistic — the kind that appear on the actual psychometric exam.`,
+Generate exactly 6 questions.
+Rules:
+- The original sentence and the correct option must convey EXACTLY the same meaning
+- Wrong options must have subtle but real differences in meaning (not just wording)
+- Test: synonyms, syntactic inversion, active/passive, different connectives
+- Difficulty: actual Yael exam level, formal academic Hebrew
+- The original sentence must appear clearly before the question`,
 };
 
 export async function POST(req: Request) {

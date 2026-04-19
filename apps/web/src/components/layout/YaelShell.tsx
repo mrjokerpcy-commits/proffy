@@ -10,9 +10,9 @@ const ACCENT = "#f59e0b";
 const ACCENT_RGB = "245,158,11";
 
 const SECTIONS = [
-  { id: "reading",    labelEn: "Reading",    labelHe: "הבנת הנקרא", href: "/yael/practice?section=reading" },
-  { id: "vocabulary", labelEn: "Vocabulary", labelHe: "אוצר מילים", href: "/yael/practice?section=vocabulary" },
-  { id: "grammar",    labelEn: "Grammar",    labelHe: "שגיאות בשפה", href: "/yael/practice?section=grammar" },
+  { id: "reading",       labelEn: "Reading",       labelHe: "הבנת הנקרא",   href: "/yael/practice?section=reading" },
+  { id: "completion",    labelEn: "Completion",    labelHe: "השלמת משפטים", href: "/yael/practice?section=completion" },
+  { id: "reformulation", labelEn: "Reformulation", labelHe: "ניסוח מחדש",   href: "/yael/practice?section=reformulation" },
 ];
 
 export default function YaelShell({ children }: { children: React.ReactNode }) {
