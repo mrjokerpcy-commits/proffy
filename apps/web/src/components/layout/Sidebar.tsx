@@ -198,7 +198,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   const fingerprintLocked = userPlan === "free";
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--bg-surface)", borderRight: "1px solid var(--border)" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--bg-surface)", borderInlineEnd: "1px solid var(--border)" }}>
 
       {/* ── Brand ── */}
       <div style={{ padding: "0.875rem 1rem", display: "flex", alignItems: "center", gap: "0.625rem", flexShrink: 0, borderBottom: "1px solid var(--border)" }}>

@@ -9,7 +9,7 @@ import CalcButton from "@/components/ui/CalcButton";
 import CalendarButton from "@/components/ui/CalendarButton";
 import OpenUploadButton from "@/components/ui/OpenUploadButton";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import LangToggle from "@/components/ui/LangToggle";
+import LangToggle, { useLang } from "@/components/ui/LangToggle";
 import type { Course } from "@/lib/types";
 
 interface Props {
@@ -26,6 +26,8 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  const [lang] = useLang();
+  const isRTL = lang === "he" || lang === "ar";
 
   useEffect(() => {
     const check = () => {
@@ -54,7 +56,7 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
   const [openPanel, setOpenPanel] = useState<"flashcards" | "notes" | null>(null);
 
   return (
-    <div style={{ display: "flex", height: "100dvh", background: "var(--bg-base)", color: "var(--text-primary)", overflow: "hidden", position: "relative" }}>
+    <div style={{ display: "flex", height: "100dvh", background: "var(--bg-base)", color: "var(--text-primary)", overflow: "hidden", position: "relative", direction: isRTL ? "rtl" : "ltr" }}>
 
       {/* ── Mobile overlay when sidebar open (hidden during tour so it doesn't cover widgets) ── */}
       {sidebarOpen && isMobile && !tourActive && (
@@ -67,7 +69,7 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
         flexShrink: 0, transition: "width 0.2s cubic-bezier(0.4,0,0.2,1)",
         overflow: "hidden",
         position: isMobile ? "fixed" : "relative",
-        top: 0, left: 0, height: "100%",
+        top: 0, [isRTL ? "right" : "left"]: 0, height: "100%",
         zIndex: isMobile ? 20 : "auto",
       }}>
         <Sidebar
@@ -86,23 +88,22 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
           onClick={() => setSidebarOpen(v => !v)}
           style={{
             position: "absolute",
-            left: sidebarOpen ? "232px" : "0px",
+            [isRTL ? "right" : "left"]: sidebarOpen ? "232px" : "0px",
             top: "50%", transform: "translateY(-50%)",
-            zIndex: 20, transition: "left 0.2s cubic-bezier(0.4,0,0.2,1)",
+            zIndex: 20, transition: "left 0.2s cubic-bezier(0.4,0,0.2,1), right 0.2s cubic-bezier(0.4,0,0.2,1)",
             width: "18px", height: "40px",
             display: "flex", alignItems: "center", justifyContent: "center",
-            borderRadius: "0 6px 6px 0",
+            borderRadius: isRTL ? "6px 0 0 6px" : "0 6px 6px 0",
             background: "var(--bg-elevated)",
             border: "1px solid var(--border)",
-            borderLeft: sidebarOpen ? "1px solid var(--border)" : "none",
             cursor: "pointer", color: "var(--text-muted)",
           }}
         >
           <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            {sidebarOpen ? (
-              <><path d="M5 1L1 6L5 11"/></>
+            {(sidebarOpen !== isRTL) ? (
+              <path d="M5 1L1 6L5 11"/>
             ) : (
-              <><path d="M1 1L5 6L1 11"/></>
+              <path d="M1 1L5 6L1 11"/>
             )}
           </svg>
         </button>
