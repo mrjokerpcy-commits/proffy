@@ -141,23 +141,23 @@ const T = {
     cta:"ابدأ مع Proffy Uni",
     missionBadge:"مهمتنا",
     missionTitle:"ذكاء أكاديمي لكل طالب.",
-    missionBody:".Proffy وُجد ليمنح كل طالب الميزة التي يستحقها. نجمع مادة دراستك وسياق الأستاذ وتفكير الذكاء الاصطناعي، لتدرس بذكاء أكبر وتستعد بسرعة أكبر وتدخل كل امتحان بثقة",
+    missionBody:"Proffy وُجد ليمنح كل طالب الميزة التي يستحقها. نجمع مادة دراستك وسياق الأستاذ وتفكير الذكاء الاصطناعي، لتدرس بذكاء أكبر وتستعد بسرعة أكبر وتدخل كل امتحان بثقة.",
     whoBadge:"من نحن",
     whoTitle:"بُني من طلاب، لطلاب.",
-    whoBody:".سئمنا من التخمين بما سيخرج في الامتحان وأي أستاذ نختار وكيف ننظّم وقت دراستنا. فبنينا الأداة التي كنّا نتمنى امتلاكها. كل ميزة في Proffy موجودة لأن طالباً حقيقياً احتاجها",
+    whoBody:"سئمنا من التخمين بما سيخرج في الامتحان وأي أستاذ نختار وكيف ننظّم وقت دراستنا. فبنينا الأداة التي كنّا نتمنى امتلاكها. كل ميزة في Proffy موجودة لأن طالباً حقيقياً احتاجها.",
     howBadge:"كيف يعمل",
     howTitle:"ثلاث خطوات للثقة في الامتحان.",
     howSteps:[
-      { title:"ارفع موادك", body:".أضف شرائحك والمنهج والامتحانات السابقة وملاحظات الأستاذ. Proffy يفهرس كل شيء", icon:"upload" },
-      { title:"اسأل أي شيء", body:".تحدث مع ذكاء اصطناعي يعرف مادتك بالضبط، ليس مدرساً عاماً، مدرسك أنت", icon:"chat" },
-      { title:"ادخل مستعداً", body:".خطط دراسية مركّزة، إجابات بمصادر من مادتك، وملخصات موجّهة للامتحان", icon:"check" },
+      { title:"ارفع موادك", body:"أضف شرائحك والمنهج والامتحانات السابقة وملاحظات الأستاذ. Proffy يفهرس كل شيء.", icon:"upload" },
+      { title:"اسأل أي شيء", body:"تحدث مع ذكاء اصطناعي يعرف مادتك بالضبط، مش مدرس عام، مدرسك أنت.", icon:"chat" },
+      { title:"ادخل مستعداً", body:"خطط دراسية مركّزة، إجابات بمصادر من مادتك، وملخصات موجّهة للامتحان.", icon:"check" },
     ],
     productsBadge:"الشبكة",
     productsTitle:"ذكاء اصطناعي واحد، كل مراحل التعليم.",
     meetBadge:"تعرّف على Proffy",
     meetTitle:"رفيقك في الدراسة.",
-    meetBody:".Proffy ليس محرك بحث. يقرأ مادتك الدراسية الحقيقية، يتعلم أسلوب أستاذك، ويجيب كأفضل طالب اجتاز هذا الكورس الفصل الماضي. لا اختلاقات، لا نصائح عامة، فقط ما تحتاجه للنجاح",
-    meetPoints:["يعرف مادتك وأستاذك وتاريخ امتحانك","يجيب بمصادر من مادتك الخاصة","يبني خططاً دراسية موجّهة للامتحان","متاح 24/7، حتى ليلة الامتحان"],
+    meetBody:"Proffy مش محرك بحث. يقرأ مادتك الفعلية، يتعلم أسلوب أستاذك، ويجيب زي أفضل طالب عدّى هالكورس الفصل اللي فات. لا هلوسات، لا نصايح عامة، بس اللي تحتاجه تنجح.",
+    meetPoints:["يعرف مادتك وأستاذك وموعد امتحانك","يجيب بمصادر من مادتك أنت","يبني خطط دراسة موجّهة للامتحان","متاح 24/7، حتى ليلة الامتحان"],
     ctaTitle:"مستعد للدراسة بذكاء أكبر؟",
     ctaSub:"انضم لآلاف الطلاب حول العالم.",
     ctaBtn:"احصل على وصول مبكر",
@@ -173,7 +173,7 @@ const PRODUCTS = (lang: "en"|"he"|"ar") => [
     desc:lang==="he"?"כל מקצועות הבגרות. שאל שאלות, תרגל, וקבל הסברים על כל נושא.":lang==="ar"?"كل مواد البجروت. اسأل أسئلة، تدرّب، واحصل على شرح لكل موضوع.":"Every bagrut subject. Ask questions, practice, and get explanations." },
   { key:"yael",   color:"#f59e0b", border:"rgba(245,158,11,0.22)",  glow:"rgba(245,158,11,0.11)",
     label:lang==="he"?'Proffy יע"ל':"Proffy Yael", sub:lang==="he"?'יע"ל':lang==="ar"?"ياعيل":"Yael", live:false, href:"https://yael.proffy.study",
-    desc:lang==="he"?'הכנה ליע"ל. כל החלקים, הסברים בעברית.':lang==="ar"?"تحضير ليائيل. كل الأقسام، شرح بالعربي.":"Yael prep. Every section, explained clearly." },
+    desc:lang==="he"?'הכנה ליע"ל. כל החלקים, הסברים בעברית.':lang==="ar"?"تحضير لامتحان ياعيل. كل الأقسام، مشروحة بالعربي.":"Yael prep. Every section, explained clearly." },
   { key:"psycho", color:"#d4a017", border:"rgba(212,160,23,0.22)",  glow:"rgba(212,160,23,0.11)",
     label:"Proffy Psycho",  sub:lang==="he"?"פסיכומטרי":lang==="ar"?"سيكومتري":"Psychometric", live:false, href:"https://psycho.proffy.study",
     desc:lang==="he"?"הכנה לפסיכומטרי. תרגול בכל קטגוריה עד שאתה מוכן.":lang==="ar"?"تحضير للسيكومتري. تدرّب على كل قسم حتى تكون جاهزاً.":"Psychometric prep. Practice every section until you're ready." },
@@ -418,7 +418,7 @@ export default function HubPage() {
                 style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"14px 28px", borderRadius:"13px", fontSize:"16px", fontWeight:600, background:"rgba(22,163,74,0.08)", color:"var(--blue)", textDecoration:"none", border:"1px solid rgba(22,163,74,0.25)", transition:"background 0.12s,border-color 0.12s" }}
                 onMouseEnter={e=>{e.currentTarget.style.background="rgba(22,163,74,0.14)";e.currentTarget.style.borderColor="rgba(22,163,74,0.45)"}}
                 onMouseLeave={e=>{e.currentTarget.style.background="rgba(22,163,74,0.08)";e.currentTarget.style.borderColor="rgba(22,163,74,0.25)"}}>
-                {lang === "he" ? "גלה עוד" : "Learn more"}
+                {lang === "he" ? "גלה עוד" : lang === "ar" ? "اكتشف المزيد" : "Learn more"}
               </a>
             </motion.div>
           </div>
@@ -463,6 +463,11 @@ export default function HubPage() {
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:"חוסך זמן", sub:"קבל תשובות מדויקות תוך שניות, בלי לחפש בגוגל שעות." },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, title:"תשובות עם מקורות", sub:"כל תשובה מקושרת לשקף או לדף הרלוונטי מהחומר שלך." },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, title:"זמין 24/7", sub:"גם בלילה לפני הבחינה, Proffy תמיד כאן." },
+            ] : lang === "ar" ? [
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, title:"ادرس بذكاء", sub:"ذكاء اصطناعي يتكيّف مع مادتك وأسلوب أستاذك وشكل الامتحان." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:"وفّر وقتك", sub:"احصل على إجابات دقيقة بثوانٍ، بدون ساعات بحث." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, title:"إجابات بمصادر", sub:"كل إجابة مربوطة بالشريحة أو الصفحة اللي جت منها." },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, title:"متاح 24/7", sub:"حتى ليلة الامتحان، Proffy دايماً موجود." },
             ] : [
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, title:"Study smarter", sub:"AI that adapts to your material, professor style, and exam format." },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:"Save time", sub:"Get precise answers in seconds, not after hours of searching." },
@@ -488,6 +493,8 @@ export default function HubPage() {
             <p style={{ fontSize:"22px", fontWeight:700, lineHeight:1.6, color:"var(--text-primary)", fontStyle:"italic" }}>
               {lang === "he"
                 ? '"בנינו את הכלי שרצינו שיהיה לנו בתקופת הלימודים שלנו."'
+                : lang === "ar"
+                ? '"بنينا الأداة اللي كنّا نتمنى تكون موجودة لما كنّا طلاب."'
                 : '"We built the tool we wished we had when we were students."'}
             </p>
             <div style={{ display:"flex", alignItems:"center", gap:"12px", marginTop:"24px" }}>
@@ -497,7 +504,7 @@ export default function HubPage() {
               <div>
                 <p style={{ fontSize:"13px", fontWeight:700, color:"var(--text-primary)" }}>Proffy Team</p>
                 <p style={{ fontSize:"12px", color:"var(--text-muted)" }}>
-                  {lang === "he" ? "צוות פרופי" : "Proffy Team"}
+                  {lang === "he" ? "צוות פרופי" : lang === "ar" ? "فريق Proffy" : "Proffy Team"}
                 </p>
               </div>
             </div>
