@@ -122,7 +122,7 @@ function RadialPulseBg() {
   );
 }
 
-// ─── Background: yael.proffy.study — flowing SVG wave ────────────────────────
+// ─── Background: yael.proffy.study — S-curve flowing waves ───────────────────
 function WaveBg() {
   return (
     <div
@@ -135,25 +135,69 @@ function WaveBg() {
         pointerEvents: "none",
         zIndex: 0,
         overflow: "hidden",
-        height: "220px",
+        height: "280px",
       }}
     >
+      {/* Front wave — scrolls left, oscillates vertically */}
       <motion.svg
-        viewBox="0 0 1440 220"
+        viewBox="0 0 1440 280"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="none"
-        style={{ width: "200%", height: "100%", display: "block" }}
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+        style={{ width: "200%", height: "100%", display: "block", position: "absolute", bottom: 0 }}
+        animate={{
+          x: ["0%", "-50%"],
+          y: [0, -22, 0, 22, 0],
+        }}
+        transition={{
+          x: { duration: 20, repeat: Infinity, ease: "linear" },
+          y: { duration: 8, repeat: Infinity, ease: "easeInOut" },
+        }}
       >
         <path
-          d="M0 80 C180 20, 360 140, 540 80 C720 20, 900 140, 1080 80 C1260 20, 1440 140, 1620 80 C1800 20, 1980 140, 2160 80 L2160 220 L0 220 Z"
-          fill="rgba(245,158,11,0.05)"
+          d="M0 90 C180 20, 360 160, 540 90 C720 20, 900 160, 1080 90 C1260 20, 1440 160, 1620 90 C1800 20, 1980 160, 2160 90 L2160 280 L0 280 Z"
+          fill="rgba(245,158,11,0.07)"
         />
+      </motion.svg>
+
+      {/* Back wave — scrolls right, oscillates out of phase */}
+      <motion.svg
+        viewBox="0 0 1440 280"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+        style={{ width: "200%", height: "100%", display: "block", position: "absolute", bottom: 0 }}
+        animate={{
+          x: ["-50%", "0%"],
+          y: [0, 18, 0, -18, 0],
+        }}
+        transition={{
+          x: { duration: 26, repeat: Infinity, ease: "linear" },
+          y: { duration: 10, repeat: Infinity, ease: "easeInOut" },
+        }}
+      >
         <path
-          d="M0 120 C200 60, 400 180, 600 120 C800 60, 1000 180, 1200 120 C1400 60, 1600 180, 1800 120 C2000 60, 2200 180, 2400 120 L2400 220 L0 220 Z"
-          fill="rgba(239,68,68,0.04)"
+          d="M0 130 C200 60, 400 200, 600 130 C800 60, 1000 200, 1200 130 C1400 60, 1600 200, 1800 130 C2000 60, 2200 200, 2400 130 L2400 280 L0 280 Z"
+          fill="rgba(245,158,11,0.04)"
+        />
+      </motion.svg>
+
+      {/* Deep layer — slow S-path using CSS offset-path-like keyframes */}
+      <motion.svg
+        viewBox="0 0 1440 280"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+        style={{ width: "300%", height: "100%", display: "block", position: "absolute", bottom: 0 }}
+        animate={{
+          x: ["0%", "-15%", "-33%", "-15%", "0%"],
+          y: [0, -12, 0, 12, 0],
+        }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <path
+          d="M0 160 C240 90, 480 230, 720 160 C960 90, 1200 230, 1440 160 C1680 90, 1920 230, 2160 160 C2400 90, 2640 230, 2880 160 L2880 280 L0 280 Z"
+          fill="rgba(251,191,36,0.035)"
         />
       </motion.svg>
     </div>

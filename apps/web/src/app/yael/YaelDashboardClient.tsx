@@ -170,7 +170,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                 >
                   <div style={{ marginTop: "20px" }}>
                     {/* Description */}
-                    <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: "20px", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl", textAlign: "right" }}>
+                    <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: "20px", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr", textAlign: isRTL ? "right" : "left" }}>
                       {lang === "he"
                         ? 'בחינת יע"ל (ידע בעברית לאקדמיה) היא בחינת אקדמי הנועדה לבדוק רמת שליטה בעברית לצורך לימודים אקדמיים. הציון נע בין 50 ל-150, ומשמש אוניברסיטאות לקביעת רמת הסטודנט. הבחינה אורכת כשעה וחצי ומחולקת לחלק סגור (שאלות אמריקאיות) וחלק פתוח (חיבור).'
                         : 'The Yael exam (Hebrew Academic Knowledge) tests Hebrew language proficiency for academic studies. Scores range from 50 to 150 and are used by universities to assess student level. The exam lasts about 90 minutes and is divided into a closed section (multiple-choice) and an open section (essay writing).'}
@@ -185,7 +185,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                             <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.color, flexShrink: 0 }} />
                             <span style={{ fontSize: "12px", fontWeight: 700, color: s.color }}>{lang === "he" ? s.titleHe : s.titleEn}</span>
                           </div>
-                          <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.55, margin: 0, fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl", textAlign: "right" }}>
+                          <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.55, margin: 0, fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr", textAlign: isRTL ? "right" : "left" }}>
                             {lang === "he" ? s.descHe : s.descEn}
                           </p>
                         </div>
@@ -197,7 +197,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                       <div style={{ fontSize: "11px", fontWeight: 700, color: ACCENT, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "8px" }}>
                         {lang === "he" ? "טיפים לבחינה" : "Exam tips"}
                       </div>
-                      <ul style={{ margin: 0, padding: isRTL ? "0 16px 0 0" : "0 0 0 16px", fontSize: "12px", color: "var(--text-secondary)", lineHeight: 1.8, fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl", textAlign: "right" }}>
+                      <ul style={{ margin: 0, padding: isRTL ? "0 16px 0 0" : "0 0 0 16px", fontSize: "12px", color: "var(--text-secondary)", lineHeight: 1.8, fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr", textAlign: isRTL ? "right" : "left" }}>
                         {(lang === "he" ? [
                           "קרא כל שאלה בעיון — לעיתים ההבדל בין האפשרויות עדין מאוד",
                           "בהבנת הנקרא: מצא תחילה את הרעיון המרכזי של הקטע",
@@ -274,7 +274,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                     </div>
                   </div>
 
-                  <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.6, flex: 1, marginBottom: "14px", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl", textAlign: "right" }}>
+                  <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.6, flex: 1, marginBottom: "14px", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr", textAlign: isRTL ? "right" : "left" }}>
                     {lang === "he" ? meta.descHe : meta.descEn}
                   </p>
 

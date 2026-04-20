@@ -108,7 +108,7 @@ export default function PracticeClient() {
       const res = await fetch("/api/yael/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, context: buildContext() }),
+        body: JSON.stringify({ messages: apiMessages, context: buildContext(), lang }),
       });
       if (!res.ok || !res.body) return;
       const reader = res.body.getReader();

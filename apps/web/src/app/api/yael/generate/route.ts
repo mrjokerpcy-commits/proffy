@@ -8,88 +8,109 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const SECTION_PROMPTS: Record<string, string> = {
   reading: `Generate a Yael exam (ידע בעברית לאקדמיה) reading comprehension exercise in Hebrew.
 
-Return a JSON object (no markdown, no code block) with this exact structure:
+IMPORTANT — copyright-safe approach:
+Mirror the exact question TYPES found on real Yael exams, but use completely original passages and characters.
+For example: if real exams ask "Why did Waleed choose to leave the city?", your question would be "Why did Dina decide to move to another neighborhood?" — same question purpose (inference about motivation), different content.
+
+Return a JSON object (no markdown, no code block):
 {
-  "passage": "A Hebrew passage of 200-300 words on an academic or general-interest topic. Use clear, formal Hebrew at academic level.",
-  "title": "A short Hebrew title for the passage (3-6 words)",
+  "passage": "An original Hebrew passage of 220-300 words on an academic or social topic. Formal Hebrew at academic level. Use original characters and scenarios (NOT copied from any exam).",
+  "title": "Short Hebrew title (3-6 words)",
   "questions": [
     {
       "id": "q1",
       "text": "Question in Hebrew",
-      "options": { "A": "Option A in Hebrew", "B": "Option B in Hebrew", "C": "Option C in Hebrew", "D": "Option D in Hebrew" },
+      "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
       "correct": "B",
-      "explanation": "Explanation in Hebrew (2-3 sentences) — why this is correct and the others are wrong"
+      "explanation": "2-3 sentence explanation in Hebrew — why correct and why others are wrong"
     }
   ]
 }
 
-Generate exactly 5 questions covering:
-- Main idea / central theme (רעיון מרכזי)
-- Specific detail from the text (פרט ספציפי)
-- Inference / implication (השלכה / מסקנה)
-- Author's tone or purpose (גישת הכותב)
-- Vocabulary in context (אוצר מילים בהקשר)
+Generate exactly 5 questions in this order (same as real Yael exam):
+1. Main idea / central theme (רעיון מרכזי) — "מה הנושא המרכזי של הקטע?"
+2. Specific detail retrieval (פרט ספציפי) — "לפי הקטע, מה קרה כאשר..."
+3. Inference / implication (השלכה / מסקנה) — "מה ניתן להסיק מן הקטע לגבי..."
+4. Author's tone or attitude (גישת הכותב / עמדת המחבר) — "מה עמדת הכותב כלפי..."
+5. Vocabulary in context (אוצר מילים בהקשר) — "המילה '...' בקטע משמעותה"
 
-At actual Yael exam difficulty.`,
+Difficulty: real Yael exam level. Distractors must be plausible — wrong for a clear reason but not obviously wrong.`,
 
   completion: `Generate a Yael exam (ידע בעברית לאקדמיה) sentence completion (השלמת משפטים) exercise in Hebrew.
 
-Each question gives an incomplete Hebrew sentence and the student must choose the word or phrase that best completes it.
+IMPORTANT — copyright-safe approach:
+Mirror the exact grammatical patterns tested on real Yael exams, but write completely original sentences.
+For example: if a real exam tests "הוא ניגש _____ המורה" (preposition after ניגש), your sentence might be
+"היא פנתה _____ הרופא" — same grammatical skill (preposition after verb of approach), different sentence.
 
-Return a JSON object (no markdown, no code block) with this exact structure:
+Return a JSON object (no markdown, no code block):
 {
   "passage": null,
   "title": "השלמת משפטים",
   "questions": [
     {
       "id": "q1",
-      "text": "משפט עם פער: 'הממשלה הכריזה _____ מצב חירום לאחר האסון הטבעי.' — בחר את המילה המתאימה:",
+      "text": "בחר את המילה או הביטוי המשלים את המשפט:\n\n'הממשלה הכריזה _____ מצב חירום לאחר האסון.'",
       "options": { "A": "על", "B": "בדבר", "C": "אל", "D": "כלפי" },
       "correct": "A",
-      "explanation": "הסבר בעברית: 'הכריז על' הוא הצירוף הנכון בעברית תקנית. האפשרויות האחרות שגויות דקדוקית."
+      "explanation": "'הכריז על' הוא הצירוף הנכון. 'בדבר' פחות טבעי עם 'הכריז'. 'אל' ו'כלפי' שגויים דקדוקית כאן."
     }
   ]
 }
 
-Generate exactly 8 questions. Use _____ to mark the gap. Mix of:
-- Preposition in context — מילת יחס (3 questions)
-- Connective / conjunction — מילת קישור (2 questions)
-- Right word from context — מילה מתאימה (2 questions)
-- Idiomatic expression — ביטוי (1 question)
+Generate exactly 8 questions. Use _____ to mark the gap. Distribute like real Yael exams:
+- מילת יחס (preposition after specific verbs/adjectives): 3 questions
+  Examples: שייך _____, מחויב _____, תלוי _____, הסכים _____, ניגש _____
+- מילת קישור / מילת פתיחה (connective/conjunction): 2 questions
+  Examples: על אף / אף כי / אלא / מאחר, לפיכך, אף על פי כן
+- מילה מתאימה להקשר (context-appropriate word): 2 questions
+  Examples: choosing between near-synonyms, formal vs. informal register
+- ביטוי קבוע (fixed phrase/idiom): 1 question
+  Examples: להניח את הדעת, לשים לב, להביא בחשבון
 
-Use formal, academic Hebrew at actual Yael exam level.`,
+Academic formal Hebrew. Each wrong option must be plausibly tempting.`,
 
   reformulation: `Generate a Yael exam (ידע בעברית לאקדמיה) reformulation (ניסוח מחדש) exercise in Hebrew.
 
-Each question presents a Hebrew sentence, then asks which option expresses EXACTLY the same meaning using different wording.
+IMPORTANT — copyright-safe approach:
+Mirror the exact linguistic transformations tested on real Yael exams, but write completely original sentences.
+For example: if a real exam uses "למרות הגשם, יצאנו לטיול", your sentence might be
+"אף על פי שהאוויר היה קר, המשחק נמשך" — same skill (concessive clause with synonym), different content.
 
-Return a JSON object (no markdown, no code block) with this exact structure:
+Return a JSON object (no markdown, no code block):
 {
   "passage": null,
   "title": "ניסוח מחדש",
   "questions": [
     {
       "id": "q1",
-      "text": "המשפט הנתון:\n'על אף הביקורת הרבה שהושמעה, הממשלה לא שינתה את מדיניותה.'\n\nאיזו מן האפשרויות מביעה באופן הטוב ביותר את אותו הרעיון?",
+      "text": "קרא את המשפט הבא:\n\n'על אף הביקורת הרבה, הממשלה לא שינתה את מדיניותה.'\n\nאיזו מן האפשרויות מביעה באופן המדויק ביותר את אותו הרעיון?",
       "options": {
         "A": "הממשלה שינתה את מדיניותה בעקבות הביקורת.",
-        "B": "הממשלה לא הגיבה לביקורת שהושמעה כנגדה.",
-        "C": "חרף הביקורת הרבה, הממשלה עמדה על מדיניותה.",
+        "B": "הממשלה לא הגיבה לביקורת שהושמעה.",
+        "C": "חרף הביקורת הרבה, הממשלה עמדה על עמדתה.",
         "D": "הממשלה הגיבה לביקורת אך לא שינתה דבר."
       },
       "correct": "C",
-      "explanation": "הסבר: 'חרף' = 'על אף', ו'עמדה על מדיניותה' = 'לא שינתה את מדיניותה'. משמעות זהה. האחרות משנות את המשמעות."
+      "explanation": "'חרף' = 'על אף'. 'עמדה על עמדתה' = 'לא שינתה את מדיניותה'. זהות מלאה. A — הפוך. B — חסר: לא אומר שמדיניות לא השתנתה. D — מוסיף מידע שאינו בקטע."
     }
   ]
 }
 
-Generate exactly 6 questions.
-Rules:
-- The original sentence and the correct option must convey EXACTLY the same meaning
-- Wrong options must have subtle but real differences in meaning (not just wording)
-- Test: synonyms, syntactic inversion, active/passive, different connectives
-- Difficulty: actual Yael exam level, formal academic Hebrew
-- The original sentence must appear clearly before the question`,
+Generate exactly 6 questions. Each question tests one of these transformations (vary them):
+1. Concessive clauses — על אף / אף כי / למרות → חרף / אף על פי ש
+2. Causal structures — מפני ש / לפי ש → משום / בשל / נוכח
+3. Active ↔ Passive voice transformation
+4. Synonym substitution in formal register
+5. Syntactic inversion (subject/object order change)
+6. Conditional clause paraphrase
+
+Rules for distractors:
+- One option must change meaning in only one small way (hardest distractor)
+- One option must add information not in the original
+- One option must omit a key element
+
+Difficulty: real Yael exam level. Original sentences must be complex enough to require careful reading.`,
 };
 
 export async function POST(req: Request) {
@@ -115,8 +136,6 @@ export async function POST(req: Request) {
     });
 
     const text = msg.content[0].type === "text" ? msg.content[0].text : "";
-
-    // Strip any accidental markdown code fences
     const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
 
     let data;
