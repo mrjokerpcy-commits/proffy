@@ -13,9 +13,9 @@ type AnswerState = { chosen: string; correct: string; explanation: string; isCor
 interface ChatMsg { role: "user" | "assistant" | "trigger"; content: string; }
 
 const SECTION_META = {
-  reading:       { labelEn: "Reading Comprehension", labelHe: "הבנת הנקרא",   icon: "📄", color: "#4f8ef7", colorRgb: "79,142,247" },
-  completion:    { labelEn: "Sentence Completion",   labelHe: "השלמת משפטים",  icon: "✏️", color: ACCENT,    colorRgb: ACCENT_RGB },
-  reformulation: { labelEn: "Reformulation",         labelHe: "ניסוח מחדש",    icon: "🔄", color: "#a78bfa", colorRgb: "167,139,250" },
+  reading:       { labelEn: "Reading Comprehension", labelHe: "הבנת הנקרא",   labelAr: "الفهم القرائي",   icon: "📄", color: "#4f8ef7", colorRgb: "79,142,247" },
+  completion:    { labelEn: "Sentence Completion",   labelHe: "השלמת משפטים",  labelAr: "إكمال الجمل",    icon: "✏️", color: ACCENT,    colorRgb: ACCENT_RGB },
+  reformulation: { labelEn: "Reformulation",         labelHe: "ניסוח מחדש",    labelAr: "إعادة الصياغة",  icon: "🔄", color: "#a78bfa", colorRgb: "167,139,250" },
 } as const;
 type SectionId = keyof typeof SECTION_META;
 
@@ -38,6 +38,7 @@ export default function PracticeClient() {
     return () => window.removeEventListener("proffy-lang", onLang);
   }, []);
   const isRTL = lang === "he" || lang === "ar";
+  const t = (he: string, en: string, ar: string) => lang === "he" ? he : lang === "ar" ? ar : en;
 
   // exercise
   const [exercise, setExercise] = useState<ExerciseData | null>(null);
@@ -227,10 +228,10 @@ ${opts}
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
           <div style={{ fontSize: "56px", marginBottom: "16px" }}>{emoji}</div>
           <h1 style={{ fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: "8px" }}>
-            {pct >= 80 ? (lang === "he" ? "כל הכבוד!" : "Excellent work!") : pct >= 50 ? (lang === "he" ? "מאמץ טוב!" : "Good effort!") : (lang === "he" ? "תמשיך להתאמן!" : "Keep practicing!")}
+            {pct >= 80 ? t("כל הכבוד!", "Excellent work!", "أحسنت!") : pct >= 50 ? t("מאמץ טוב!", "Good effort!", "جهد جيد!") : t("תמשיך להתאמן!", "Keep practicing!", "واصل التدريب!")}
           </h1>
           <div style={{ fontSize: "48px", fontWeight: 900, color: meta.color, marginBottom: "4px", letterSpacing: "-0.04em" }}>{score}/{total}</div>
-          <div style={{ fontSize: "15px", color: "var(--text-muted)", marginBottom: "32px" }}>{pct}% {lang === "he" ? "נכון" : "correct"}</div>
+          <div style={{ fontSize: "15px", color: "var(--text-muted)", marginBottom: "32px" }}>{pct}% {t("נכון", "correct", "صحيح")}</div>
 
           <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden", marginBottom: "24px", textAlign: isRTL ? "right" : "left" }}>
             {results.map((r, i) => (
@@ -244,7 +245,7 @@ ${opts}
                   </div>
                   {!r.isCorrect && (
                     <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
-                      {lang === "he" ? "נכון: " : "Correct: "}<strong>{r.q.correct}. {r.q.options[r.q.correct as keyof Option]}</strong>
+                      {t("נכון: ", "Correct: ", "الصواب: ")}<strong>{r.q.correct}. {r.q.options[r.q.correct as keyof Option]}</strong>
                     </div>
                   )}
                 </div>
@@ -254,10 +255,10 @@ ${opts}
 
           <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
             <button onClick={startNew} style={{ padding: "12px 24px", borderRadius: "10px", fontSize: "14px", fontWeight: 700, background: `rgba(${meta.colorRgb},0.12)`, border: `1px solid rgba(${meta.colorRgb},0.3)`, color: meta.color, cursor: "pointer" }}>
-              {lang === "he" ? "תרגול חדש" : "New session"}
+              {t("תרגול חדש", "New session", "جلسة جديدة")}
             </button>
             <button onClick={() => router.push("/dashboard")} style={{ padding: "12px 24px", borderRadius: "10px", fontSize: "14px", fontWeight: 700, background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-secondary)", cursor: "pointer" }}>
-              {lang === "he" ? "חזרה לדשבורד" : "Back to dashboard"}
+              {t("חזרה לדשבורד", "Back to dashboard", "العودة للوحة التحكم")}
             </button>
           </div>
         </motion.div>
@@ -271,7 +272,7 @@ ${opts}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" }}>
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           style={{ width: "36px", height: "36px", borderRadius: "50%", border: `3px solid rgba(${meta.colorRgb},0.15)`, borderTopColor: meta.color }} />
-        <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>{lang === "he" ? "מכין תרגול…" : "Preparing your exercise…"}</p>
+        <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>{t("מכין תרגול…", "Preparing your exercise…", "جارٍ تحضير التمرين…")}</p>
       </div>
     );
   }
@@ -283,7 +284,7 @@ ${opts}
         <div style={{ fontSize: "36px" }}>⚠️</div>
         <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>{error || "Something went wrong"}</p>
         <button onClick={() => router.refresh()} style={{ padding: "10px 20px", borderRadius: "9px", background: meta.color, color: "#fff", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "13px" }}>
-          {lang === "he" ? "נסה שנית" : "Try again"}
+          {t("נסה שנית", "Try again", "حاول مجدداً")}
         </button>
       </div>
     );
@@ -306,7 +307,7 @@ ${opts}
         <div style={{ height: "44px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "var(--bg-surface)", borderBottom: "1px solid var(--border)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "14px" }}>{meta.icon}</span>
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-secondary)" }}>{lang === "he" ? meta.labelHe : meta.labelEn}</span>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-secondary)" }}>{t(meta.labelHe, meta.labelEn, meta.labelAr)}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
             <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>{questionIndex + 1} / {total}</span>
@@ -316,7 +317,7 @@ ${opts}
               style={{ display: "flex", alignItems: "center", gap: "5px", padding: "4px 10px", borderRadius: "7px", fontSize: "11px", fontWeight: 700, background: showTutor ? `rgba(${ACCENT_RGB},0.12)` : "var(--bg-elevated)", border: `1px solid ${showTutor ? `rgba(${ACCENT_RGB},0.35)` : "var(--border)"}`, color: showTutor ? ACCENT : "var(--text-muted)", cursor: "pointer", transition: "all 0.15s" }}
             >
               <span style={{ fontSize: "13px" }}>👨‍🏫</span>
-              {lang === "he" ? "מורה" : "Tutor"}
+              {t("מורה", "Tutor", "المدرس")}
             </button>
           </div>
         </div>
@@ -328,7 +329,7 @@ ${opts}
           {section === "reading" && exercise.passage && (
             <div ref={passageRef} style={{ width: "48%", flexShrink: 0, overflowY: "auto", padding: "24px 28px", borderRight: "1px solid var(--border)", background: "var(--bg-base)" }}>
               <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: meta.color, marginBottom: "10px" }}>
-                {lang === "he" ? "קטע לקריאה" : "Reading passage"}
+                {t("קטע לקריאה", "Reading passage", "مقطع القراءة")}
               </div>
               <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--text-primary)", marginBottom: "16px", lineHeight: 1.4 }}>{exercise.title}</h2>
               <div style={{ fontSize: "15px", lineHeight: 2, color: "var(--text-secondary)", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl", textAlign: "right", whiteSpace: "pre-wrap" }}>
@@ -376,7 +377,7 @@ ${opts}
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
                       <div style={{ padding: "14px 16px", borderRadius: "11px", marginBottom: "18px", background: answerState.isCorrect ? "rgba(52,211,153,0.07)" : "rgba(239,68,68,0.06)", border: `1px solid ${answerState.isCorrect ? "rgba(52,211,153,0.25)" : "rgba(239,68,68,0.2)"}` }}>
                         <div style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: answerState.isCorrect ? "var(--green)" : "#f87171", marginBottom: "7px" }}>
-                          {answerState.isCorrect ? (lang === "he" ? "✓ נכון!" : "✓ Correct!") : (lang === "he" ? "✗ לא נכון" : "✗ Incorrect")}
+                          {answerState.isCorrect ? t("✓ נכון!", "✓ Correct!", "✓ صحيح!") : t("✗ לא נכון", "✗ Incorrect", "✗ خطأ")}
                         </div>
                         <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.65, margin: 0, fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl", textAlign: "right" }}>
                           {answerState.explanation}
@@ -390,7 +391,7 @@ ${opts}
                 {answerState && (
                   <motion.button initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} onClick={next}
                     style={{ width: "100%", padding: "12px", borderRadius: "10px", background: `linear-gradient(135deg, ${meta.color}, ${meta.color}cc)`, border: "none", color: "#fff", fontWeight: 700, fontSize: "15px", cursor: "pointer", boxShadow: `0 4px 16px rgba(${meta.colorRgb},0.3)` }}>
-                    {questionIndex + 1 >= total ? (lang === "he" ? "סיים תרגול" : "Finish session") : (lang === "he" ? "← שאלה הבאה" : "Next question →")}
+                    {questionIndex + 1 >= total ? t("סיים תרגול", "Finish session", "إنهاء الجلسة") : t("← שאלה הבאה", "Next question →", "السؤال التالي →")}
                   </motion.button>
                 )}
               </motion.div>
@@ -423,9 +424,9 @@ ${opts}
                 👨‍🏫
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)" }}>{lang === "he" ? 'מורה יע"ל' : "Yael Tutor"}</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)" }}>{t('מורה יע"ל', "Yael Tutor", "مدرس ياعيل")}</div>
                 <div style={{ fontSize: "11px", color: chatStreaming ? ACCENT : "var(--text-muted)" }}>
-                  {chatStreaming ? (lang === "he" ? "מקליד…" : "Typing…") : (lang === "he" ? "מוכן לעזור" : "Ready to help")}
+                  {chatStreaming ? t("מקליד…", "Typing…", "يكتب…") : t("מוכן לעזור", "Ready to help", "جاهز للمساعدة")}
                 </div>
               </div>
               {isMobile && (
@@ -441,9 +442,11 @@ ${opts}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", padding: "24px 16px", textAlign: "center" }}>
                   <span style={{ fontSize: "32px" }}>💬</span>
                   <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.7, margin: 0, fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl" }}>
-                    {lang === "he"
-                      ? 'שאל אותי כל שאלה על החומר.\nאם תטעה — אסביר ואלמד אותך את הכלל הרלוונטי.'
-                      : "Ask me anything about the material.\nIf you get a question wrong, I'll explain and teach you the relevant concept."}
+                    {t(
+                      'שאל אותי כל שאלה על החומר.\nאם תטעה — אסביר ואלמד אותך את הכלל הרלוונטי.',
+                      "Ask me anything about the material.\nIf you get a question wrong, I'll explain and teach you the relevant concept.",
+                      "اسألني أي شيء عن المادة.\nإذا أخطأت، سأشرح لك القاعدة ذات الصلة."
+                    )}
                   </p>
                 </div>
               )}
@@ -489,7 +492,7 @@ ${opts}
                 onChange={e => setChatInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendUserMessage(); } }}
                 disabled={chatStreaming}
-                placeholder={lang === "he" ? "שאל שאלה…" : "Ask something…"}
+                placeholder={t("שאל שאלה…", "Ask something…", "اسأل سؤالاً…")}
                 style={{ flex: 1, padding: "8px 11px", borderRadius: "9px", background: "var(--bg-base)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: "13px", outline: "none", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl" }}
               />
               <button

@@ -10,9 +10,9 @@ const ACCENT = "#f59e0b";
 const ACCENT_RGB = "245,158,11";
 
 const SECTIONS = [
-  { id: "reading",       labelEn: "Reading",       labelHe: "הבנת הנקרא",   href: "/yael/practice?section=reading" },
-  { id: "completion",    labelEn: "Completion",    labelHe: "השלמת משפטים", href: "/yael/practice?section=completion" },
-  { id: "reformulation", labelEn: "Reformulation", labelHe: "ניסוח מחדש",   href: "/yael/practice?section=reformulation" },
+  { id: "reading",       labelEn: "Reading",       labelHe: "הבנת הנקרא",   labelAr: "الفهم القرائي",  href: "/yael/practice?section=reading" },
+  { id: "completion",    labelEn: "Completion",    labelHe: "השלמת משפטים", labelAr: "إكمال الجمل",   href: "/yael/practice?section=completion" },
+  { id: "reformulation", labelEn: "Reformulation", labelHe: "ניסוח מחדש",   labelAr: "إعادة الصياغة", href: "/yael/practice?section=reformulation" },
 ];
 
 export default function YaelShell({ children }: { children: React.ReactNode }) {
@@ -32,6 +32,7 @@ export default function YaelShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const isRTL = lang === "he" || lang === "ar";
+  const t = (he: string, en: string, ar: string) => lang === "he" ? he : lang === "ar" ? ar : en;
   const activeSectionId = SECTIONS.find(s => pathname?.includes(s.id))?.id ?? null;
 
   const userName = session?.user?.name ?? "";
@@ -74,7 +75,7 @@ export default function YaelShell({ children }: { children: React.ReactNode }) {
             fontWeight: 800, fontSize: "14px", letterSpacing: "-0.02em",
             color: "var(--text-primary)",
           }}>
-            {lang === "he" ? 'יע"ל by Proffy' : "Yael by Proffy"}
+            {t('יע"ל by Proffy', "Yael by Proffy", "ياعيل by Proffy")}
           </span>
         </a>
 
@@ -99,7 +100,7 @@ export default function YaelShell({ children }: { children: React.ReactNode }) {
                   position: "relative",
                 }}
               >
-                {lang === "he" ? s.labelHe : s.labelEn}
+                {t(s.labelHe, s.labelEn, s.labelAr)}
                 {active && (
                   <motion.div
                     layoutId="yael-nav-indicator"
@@ -165,7 +166,7 @@ export default function YaelShell({ children }: { children: React.ReactNode }) {
                     style={{ display: "block", padding: "8px 10px", borderRadius: "8px", fontSize: "13px", color: "var(--text-secondary)", textDecoration: "none", cursor: "pointer" }}
                     onClick={() => setShowUserMenu(false)}
                   >
-                    {lang === "he" ? "כל הפלטפורמות" : "All platforms"}
+                    {t("כל הפלטפורמות", "All platforms", "كل المنصات")}
                   </a>
                   <button
                     onClick={() => signOut({ callbackUrl: "/login" })}
@@ -175,7 +176,7 @@ export default function YaelShell({ children }: { children: React.ReactNode }) {
                       color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer",
                     }}
                   >
-                    {lang === "he" ? "התנתקות" : "Sign out"}
+                    {t("התנתקות", "Sign out", "تسجيل الخروج")}
                   </button>
                 </motion.div>
               )}
@@ -226,7 +227,7 @@ export default function YaelShell({ children }: { children: React.ReactNode }) {
                       color: active ? ACCENT : "var(--text-secondary)",
                     }}
                   >
-                    {lang === "he" ? s.labelHe : s.labelEn}
+                    {t(s.labelHe, s.labelEn, s.labelAr)}
                   </button>
                 );
               })}

@@ -34,10 +34,13 @@ const SECTION_META = {
     icon: "📄",
     labelEn: "Reading Comprehension",
     labelHe: "הבנת הנקרא",
+    labelAr: "الفهم القرائي",
     descEn: "Read an academic Hebrew passage and answer comprehension questions on meaning, structure, and vocabulary in context.",
     descHe: "קרא קטע אקדמי בעברית וענה על שאלות הבנה על משמעות, מבנה ואוצר מילים בהקשר.",
+    descAr: "اقرأ مقطعاً أكاديمياً بالعبرية وأجب على أسئلة الفهم حول المعنى والبنية والمفردات في السياق.",
     questionsEn: "5 questions per session",
     questionsHe: "5 שאלות לכל תרגול",
+    questionsAr: "٥ أسئلة لكل جلسة",
     color: "#4f8ef7",
     colorRgb: "79,142,247",
   },
@@ -45,10 +48,13 @@ const SECTION_META = {
     icon: "✏️",
     labelEn: "Sentence Completion",
     labelHe: "השלמת משפטים",
+    labelAr: "إكمال الجمل",
     descEn: "Choose the word or phrase that best completes an incomplete sentence. Tests prepositions, conjunctions, and vocabulary.",
     descHe: "בחר את המילה או הביטוי המשלים בצורה הטובה ביותר משפט חסר. בוחן מילות יחס, קישור ואוצר מילים.",
+    descAr: "اختر الكلمة أو العبارة التي تكمل الجملة الناقصة بشكل أفضل. يختبر حروف الجر والروابط والمفردات.",
     questionsEn: "8 questions per session",
     questionsHe: "8 שאלות לכל תרגול",
+    questionsAr: "٨ أسئلة لكل جلسة",
     color: ACCENT,
     colorRgb: ACCENT_RGB,
   },
@@ -56,20 +62,23 @@ const SECTION_META = {
     icon: "🔄",
     labelEn: "Reformulation",
     labelHe: "ניסוח מחדש",
+    labelAr: "إعادة الصياغة",
     descEn: "Given a Hebrew sentence, choose which option expresses exactly the same meaning using different wording.",
     descHe: "לאחר קריאת משפט בעברית, בחר איזו אפשרות מביעה בצורה הטובה ביותר את אותו הרעיון.",
+    descAr: "بعد قراءة جملة عبرية، اختر الخيار الذي يعبر عن نفس الفكرة بأسلوب مختلف.",
     questionsEn: "6 questions per session",
     questionsHe: "6 שאלות לכל תרגול",
+    questionsAr: "٦ أسئلة لكل جلسة",
     color: "#a78bfa",
     colorRgb: "167,139,250",
   },
 };
 
 const EXAM_SECTIONS = [
-  { icon: "📄", titleHe: "הבנת הנקרא",   titleEn: "Reading Comprehension", descHe: "קריאת טקסט ומענה על שאלות הבנה",              descEn: "Read a passage and answer comprehension questions",     color: "#4f8ef7" },
-  { icon: "✏️", titleHe: "השלמת משפטים", titleEn: "Sentence Completion",   descHe: "בחירת המילה החסרה להשלמת המשפט",               descEn: "Choose the missing word to complete the sentence",      color: ACCENT },
-  { icon: "🔄", titleHe: "ניסוח מחדש",   titleEn: "Reformulation",         descHe: "בחירת המשפט המביע את אותו הרעיון בניסוח אחר", descEn: "Find the sentence that expresses the same idea differently", color: "#a78bfa" },
-  { icon: "📝", titleHe: "כתיבת חיבור",  titleEn: "Essay Writing",         descHe: "חיבור עיוני 12–15 שורות על נושא נתון",         descEn: "Write a 12–15 line analytical essay on a given topic",  color: "#34d399" },
+  { icon: "📄", titleHe: "הבנת הנקרא",   titleEn: "Reading Comprehension", titleAr: "الفهم القرائي",   descHe: "קריאת טקסט ומענה על שאלות הבנה",              descEn: "Read a passage and answer comprehension questions",          descAr: "اقرأ مقطعاً وأجب على أسئلة الفهم",          color: "#4f8ef7" },
+  { icon: "✏️", titleHe: "השלמת משפטים", titleEn: "Sentence Completion",   titleAr: "إكمال الجمل",     descHe: "בחירת המילה החסרה להשלמת המשפט",               descEn: "Choose the missing word to complete the sentence",           descAr: "اختر الكلمة الناقصة لإكمال الجملة",          color: ACCENT },
+  { icon: "🔄", titleHe: "ניסוח מחדש",   titleEn: "Reformulation",         titleAr: "إعادة الصياغة",   descHe: "בחירת המשפט המביע את אותו הרעיון בניסוח אחר", descEn: "Find the sentence that expresses the same idea differently",  descAr: "اجد الجملة التي تعبر عن نفس الفكرة بأسلوب مختلف", color: "#a78bfa" },
+  { icon: "📝", titleHe: "כתיבת חיבור",  titleEn: "Essay Writing",         titleAr: "كتابة المقال",    descHe: "חיבור עיוני 12–15 שורות על נושא נתון",         descEn: "Write a 12–15 line analytical essay on a given topic",       descAr: "اكتب مقالاً تحليلياً من ١٢–١٥ سطراً حول موضوع معين", color: "#34d399" },
 ];
 
 function timeAgo(dateStr: string) {
@@ -107,12 +116,14 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
   const totalAttempted = progress.reduce((s, p) => s + p.total_questions, 0);
   const overallPct = pct(totalCorrect, totalAttempted);
 
+  const t = (he: string, en: string, ar: string) => lang === "he" ? he : lang === "ar" ? ar : en;
+
   const greetingHour = new Date().getHours();
   const greeting = greetingHour < 12
-    ? (lang === "he" ? "בוקר טוב" : "Good morning")
+    ? t("בוקר טוב", "Good morning", "صباح الخير")
     : greetingHour < 18
-    ? (lang === "he" ? "צהריים טובים" : "Good afternoon")
-    : (lang === "he" ? "ערב טוב" : "Good evening");
+    ? t("צהריים טובים", "Good afternoon", "نهارك سعيد")
+    : t("ערב טוב", "Good evening", "مساء الخير");
 
   return (
     <div style={{ maxWidth: "920px", margin: "0 auto", padding: "clamp(20px, 4vw, 48px) clamp(16px, 3vw, 32px)", direction: isRTL ? "rtl" : "ltr" }}>
@@ -123,7 +134,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
           {greeting}, {firstName} 👋
         </h1>
         <p style={{ fontSize: "15px", color: "var(--text-muted)" }}>
-          {lang === "he" ? 'הכנה חכמה לבחינת יע"ל — ידע בעברית לאקדמיה' : 'Smart preparation for the Yael Hebrew proficiency exam'}
+          {t('הכנה חכמה לבחינת יע"ל — ידע בעברית לאקדמיה', 'Smart preparation for the Yael Hebrew proficiency exam', 'تحضير ذكي لامتحان ياعيل — المعرفة بالعبرية للأكاديمية')}
         </p>
       </motion.div>
 
@@ -145,10 +156,10 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                 </div>
                 <div style={{ textAlign: isRTL ? "right" : "left" }}>
                   <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-primary)" }}>
-                    {lang === "he" ? 'מה זה בחינת יע"ל?' : 'What is the Yael Exam?'}
+                    {t('מה זה בחינת יע"ל?', 'What is the Yael Exam?', 'ما هو امتحان ياعيل؟')}
                   </div>
                   <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                    {lang === "he" ? 'ציון 50–150 · ~90 דקות · 4 מרכיבים' : 'Score 50–150 · ~90 minutes · 4 components'}
+                    {t('ציון 50–150 · ~90 דקות · 4 מרכיבים', 'Score 50–150 · ~90 minutes · 4 components', 'درجة 50–150 · ~90 دقيقة · 4 مكونات')}
                   </div>
                 </div>
               </div>
@@ -171,9 +182,11 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                   <div style={{ marginTop: "20px" }}>
                     {/* Description */}
                     <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: "20px", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr", textAlign: isRTL ? "right" : "left" }}>
-                      {lang === "he"
-                        ? 'בחינת יע"ל (ידע בעברית לאקדמיה) היא בחינת אקדמי הנועדה לבדוק רמת שליטה בעברית לצורך לימודים אקדמיים. הציון נע בין 50 ל-150, ומשמש אוניברסיטאות לקביעת רמת הסטודנט. הבחינה אורכת כשעה וחצי ומחולקת לחלק סגור (שאלות אמריקאיות) וחלק פתוח (חיבור).'
-                        : 'The Yael exam (Hebrew Academic Knowledge) tests Hebrew language proficiency for academic studies. Scores range from 50 to 150 and are used by universities to assess student level. The exam lasts about 90 minutes and is divided into a closed section (multiple-choice) and an open section (essay writing).'}
+                      {t(
+                        'בחינת יע"ל (ידע בעברית לאקדמיה) היא בחינת אקדמי הנועדה לבדוק רמת שליטה בעברית לצורך לימודים אקדמיים. הציון נע בין 50 ל-150, ומשמש אוניברסיטאות לקביעת רמת הסטודנט. הבחינה אורכת כשעה וחצי ומחולקת לחלק סגור (שאלות אמריקאיות) וחלק פתוח (חיבור).',
+                        'The Yael exam (Hebrew Academic Knowledge) tests Hebrew language proficiency for academic studies. Scores range from 50 to 150 and are used by universities to assess student level. The exam lasts about 90 minutes and is divided into a closed section (multiple-choice) and an open section (essay writing).',
+                        'امتحان ياعيل (المعرفة بالعبرية للأكاديمية) يختبر مستوى إتقان اللغة العبرية للدراسة الأكاديمية. تتراوح الدرجات بين 50 و150 وتستخدمها الجامعات لتقييم مستوى الطالب. يستمر الامتحان نحو 90 دقيقة وينقسم إلى قسم مغلق (اختيار متعدد) وقسم مفتوح (كتابة مقال).'
+                      )}
                     </p>
 
                     {/* Sections grid */}
@@ -183,10 +196,10 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                             <span style={{ fontSize: "18px" }}>{s.icon}</span>
                             <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.color, flexShrink: 0 }} />
-                            <span style={{ fontSize: "12px", fontWeight: 700, color: s.color }}>{lang === "he" ? s.titleHe : s.titleEn}</span>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: s.color }}>{t(s.titleHe, s.titleEn, s.titleAr)}</span>
                           </div>
                           <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.55, margin: 0, fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr", textAlign: isRTL ? "right" : "left" }}>
-                            {lang === "he" ? s.descHe : s.descEn}
+                            {t(s.descHe, s.descEn, s.descAr)}
                           </p>
                         </div>
                       ))}
@@ -195,7 +208,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                     {/* Tips */}
                     <div style={{ marginTop: "16px", padding: "14px 16px", borderRadius: "12px", background: `rgba(${ACCENT_RGB},0.06)`, border: `1px solid rgba(${ACCENT_RGB},0.15)` }}>
                       <div style={{ fontSize: "11px", fontWeight: 700, color: ACCENT, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "8px" }}>
-                        {lang === "he" ? "טיפים לבחינה" : "Exam tips"}
+                        {t("טיפים לבחינה", "Exam tips", "نصائح للامتحان")}
                       </div>
                       <ul style={{ margin: 0, padding: isRTL ? "0 16px 0 0" : "0 0 0 16px", fontSize: "12px", color: "var(--text-secondary)", lineHeight: 1.8, fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr", textAlign: isRTL ? "right" : "left" }}>
                         {(lang === "he" ? [
@@ -203,6 +216,11 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                           "בהבנת הנקרא: מצא תחילה את הרעיון המרכזי של הקטע",
                           "בניסוח מחדש: חפש אפשרות שמשמעותה זהה, לא רק מילים דומות",
                           "בחיבור: צור מבנה ברור — פתיחה, גוף, סיכום",
+                        ] : lang === "ar" ? [
+                          "اقرأ كل سؤال بعناية، الفرق بين الخيارات قد يكون دقيقاً",
+                          "في الفهم القرائي: حدد الفكرة المحورية أولاً",
+                          "في إعادة الصياغة: ابحث عن تطابق المعنى لا تشابه الكلمات",
+                          "في المقال: ابنِ هيكلاً واضحاً: مقدمة، عرض، خاتمة",
                         ] : [
                           "Read each question carefully — differences between options can be subtle",
                           "In reading comprehension: identify the central idea first",
@@ -224,9 +242,9 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08 }}
           style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "28px" }}>
           {[
-            { label: lang === "he" ? "תרגולים" : "Sessions", value: totalDone },
-            { label: lang === "he" ? "שאלות" : "Questions", value: totalAttempted },
-            { label: lang === "he" ? "דיוק" : "Accuracy", value: overallPct !== null ? `${overallPct}%` : "—" },
+            { label: t("תרגולים", "Sessions", "الجلسات"), value: totalDone },
+            { label: t("שאלות", "Questions", "الأسئلة"), value: totalAttempted },
+            { label: t("דיוק", "Accuracy", "الدقة"), value: overallPct !== null ? `${overallPct}%` : "—" },
           ].map(stat => (
             <div key={stat.label} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px 20px", textAlign: "center" }}>
               <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>{stat.value}</div>
@@ -239,7 +257,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
       {/* ── Section cards ── */}
       <div style={{ marginBottom: "12px" }}>
         <h2 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "14px" }}>
-          {lang === "he" ? "תרגול לפי חלק" : "Practice by section"}
+          {t("תרגול לפי חלק", "Practice by section", "تدرب حسب القسم")}
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px" }}>
           {(["reading", "completion", "reformulation"] as const).map((sectionId, i) => {
@@ -264,22 +282,22 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: "15px", color: "var(--text-primary)", marginBottom: "2px" }}>
-                        {lang === "he" ? meta.labelHe : meta.labelEn}
+                        {t(meta.labelHe, meta.labelEn, meta.labelAr)}
                       </div>
                       <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                         {p && p.sessions_done > 0
-                          ? (lang === "he" ? `${p.sessions_done} תרגולים · דיוק ${accuracy}%` : `${p.sessions_done} sessions · ${accuracy}% accuracy`)
-                          : (lang === "he" ? "לא תורגל עדיין" : "Not practiced yet")}
+                          ? t(`${p.sessions_done} תרגולים · דיוק ${accuracy}%`, `${p.sessions_done} sessions · ${accuracy}% accuracy`, `${p.sessions_done} جلسات · دقة ${accuracy}%`)
+                          : t("לא תורגל עדיין", "Not practiced yet", "لم يُتدرب بعد")}
                       </div>
                     </div>
                   </div>
 
                   <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.6, flex: 1, marginBottom: "14px", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr", textAlign: isRTL ? "right" : "left" }}>
-                    {lang === "he" ? meta.descHe : meta.descEn}
+                    {t(meta.descHe, meta.descEn, meta.descAr)}
                   </p>
 
                   <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "12px" }}>
-                    {lang === "he" ? meta.questionsHe : meta.questionsEn}
+                    {t(meta.questionsHe, meta.questionsEn, meta.questionsAr)}
                   </div>
 
                   {p && p.total_questions > 0 && (
@@ -296,9 +314,11 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = `rgba(${meta.colorRgb},0.2)`; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = `rgba(${meta.colorRgb},0.12)`; }}
                   >
-                    {lang === "he"
-                      ? (p && p.sessions_done > 0 ? "התחל תרגול חדש" : "התחל תרגול")
-                      : (p && p.sessions_done > 0 ? "Start new session" : "Start practicing")}
+                    {t(
+                      p && p.sessions_done > 0 ? "התחל תרגול חדש" : "התחל תרגול",
+                      p && p.sessions_done > 0 ? "Start new session" : "Start practicing",
+                      p && p.sessions_done > 0 ? "ابدأ جلسة جديدة" : "ابدأ التدريب"
+                    )}
                   </button>
                 </div>
               </motion.div>
@@ -311,7 +331,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
       {recentSessions.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.3 }} style={{ marginTop: "36px" }}>
           <h2 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "12px" }}>
-            {lang === "he" ? "תרגולים אחרונים" : "Recent sessions"}
+            {t("תרגולים אחרונים", "Recent sessions", "الجلسات الأخيرة")}
           </h2>
           <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden" }}>
             {recentSessions.map((s, i) => {
@@ -324,7 +344,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
-                      {lang === "he" ? (meta?.labelHe ?? s.section) : (meta?.labelEn ?? s.section)}
+                      {t(meta?.labelHe ?? s.section, meta?.labelEn ?? s.section, meta?.labelAr ?? s.section)}
                     </div>
                     <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                       {timeAgo(s.created_at)}{s.duration_seconds ? ` · ${Math.round(s.duration_seconds / 60)}min` : ""}
