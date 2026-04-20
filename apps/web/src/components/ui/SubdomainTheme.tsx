@@ -122,84 +122,100 @@ function RadialPulseBg() {
   );
 }
 
-// ─── Background: yael.proffy.study — S-curve flowing waves ───────────────────
+// ─── Background: yael.proffy.study — full-page diagonal S ribbon ─────────────
 function WaveBg() {
   return (
     <div
       aria-hidden="true"
       style={{
         position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
+        inset: 0,
         pointerEvents: "none",
         zIndex: 0,
         overflow: "hidden",
-        height: "280px",
       }}
     >
-      {/* Front wave — scrolls left, oscillates vertically */}
-      <motion.svg
-        viewBox="0 0 1440 280"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="none"
-        style={{ width: "200%", height: "100%", display: "block", position: "absolute", bottom: 0 }}
-        animate={{
-          x: ["0%", "-50%"],
-          y: [0, -22, 0, 22, 0],
-        }}
-        transition={{
-          x: { duration: 20, repeat: Infinity, ease: "linear" },
-          y: { duration: 8, repeat: Infinity, ease: "easeInOut" },
-        }}
+      {/* Layer 1 — wide filled S ribbon, slow vertical breathe */}
+      <motion.div
+        style={{ position: "absolute", inset: 0 }}
+        animate={{ y: [0, -50, 0, 50, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
       >
-        <path
-          d="M0 90 C180 20, 360 160, 540 90 C720 20, 900 160, 1080 90 C1260 20, 1440 160, 1620 90 C1800 20, 1980 160, 2160 90 L2160 280 L0 280 Z"
-          fill="rgba(245,158,11,0.07)"
-        />
-      </motion.svg>
+        <svg
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="xMidYMid slice"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="sg1" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%"   stopColor="rgba(245,158,11,0.22)" />
+              <stop offset="50%"  stopColor="rgba(245,158,11,0.14)" />
+              <stop offset="100%" stopColor="rgba(245,158,11,0.02)" />
+            </linearGradient>
+          </defs>
+          {/* Diagonal S ribbon from bottom-left to top-right */}
+          <path
+            d="M -200 1100
+               C  100  900,  400  740,  720  540
+               C 1040  340, 1340  180, 1640 -100
+               L 1820 -100
+               C 1520  180, 1220  340,  900  540
+               C  580  740,  280  900,  -20 1100 Z"
+            fill="url(#sg1)"
+          />
+        </svg>
+      </motion.div>
 
-      {/* Back wave — scrolls right, oscillates out of phase */}
-      <motion.svg
-        viewBox="0 0 1440 280"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="none"
-        style={{ width: "200%", height: "100%", display: "block", position: "absolute", bottom: 0 }}
-        animate={{
-          x: ["-50%", "0%"],
-          y: [0, 18, 0, -18, 0],
-        }}
-        transition={{
-          x: { duration: 26, repeat: Infinity, ease: "linear" },
-          y: { duration: 10, repeat: Infinity, ease: "easeInOut" },
-        }}
+      {/* Layer 2 — narrower ribbon, opposite phase */}
+      <motion.div
+        style={{ position: "absolute", inset: 0 }}
+        animate={{ y: [40, 0, 40, 0, 40] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
       >
-        <path
-          d="M0 130 C200 60, 400 200, 600 130 C800 60, 1000 200, 1200 130 C1400 60, 1600 200, 1800 130 C2000 60, 2200 200, 2400 130 L2400 280 L0 280 Z"
-          fill="rgba(245,158,11,0.04)"
-        />
-      </motion.svg>
+        <svg
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="xMidYMid slice"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M -200 1000
+               C  100  800,  500  640,  720  470
+               C  940  300, 1340  140, 1640  -60
+               L 1720  -60
+               C 1420  140, 1020  300,  800  470
+               C  580  640,  180  800, -120 1000 Z"
+            fill="rgba(245,158,11,0.08)"
+          />
+        </svg>
+      </motion.div>
 
-      {/* Deep layer — slow S-path using CSS offset-path-like keyframes */}
-      <motion.svg
-        viewBox="0 0 1440 280"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="none"
-        style={{ width: "300%", height: "100%", display: "block", position: "absolute", bottom: 0 }}
-        animate={{
-          x: ["0%", "-15%", "-33%", "-15%", "0%"],
-          y: [0, -12, 0, 12, 0],
-        }}
-        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+      {/* Layer 3 — thin bright S stroke edge, slight horizontal drift */}
+      <motion.div
+        style={{ position: "absolute", inset: 0 }}
+        animate={{ x: [0, 18, 0, -18, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       >
-        <path
-          d="M0 160 C240 90, 480 230, 720 160 C960 90, 1200 230, 1440 160 C1680 90, 1920 230, 2160 160 C2400 90, 2640 230, 2880 160 L2880 280 L0 280 Z"
-          fill="rgba(251,191,36,0.035)"
-        />
-      </motion.svg>
+        <svg
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="xMidYMid slice"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M -200 1050
+               C  100  850,  400  700,  720  510
+               C 1040  320, 1340  170, 1640  -80"
+            stroke="rgba(245,158,11,0.45)"
+            strokeWidth="1.5"
+            fill="none"
+          />
+        </svg>
+      </motion.div>
     </div>
   );
 }
