@@ -3,58 +3,54 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import LangToggle from "@/components/ui/LangToggle";
+import LangToggle, { useLang } from "@/components/ui/LangToggle";
 
 const PLATFORMS = [
   {
     id: "uni",
-    name: "Uni by Proffy",
-    nameHe: "אוניברסיטה",
-    tagline: "Your AI study companion",
-    description: "Chat with an AI that knows your course material, professor style, and exam patterns.",
-    icon: "🎓",
-    color: "#4f8ef7",
-    colorRgb: "79,142,247",
+    nameEn: "Uni by Proffy", nameHe: "אוניברסיטה", nameAr: "جامعة",
+    taglineEn: "Your AI study companion", taglineHe: "עוזר הלמידה שלך", taglineAr: "رفيقك في الدراسة",
+    descEn: "Chat with an AI that knows your course material, professor style, and exam patterns.",
+    descHe: "שוחח עם AI שמכיר את חומר הקורס, סגנון המרצה ודפוסי הבחינה שלך.",
+    descAr: "تحدث مع ذكاء اصطناعي يعرف مادتك وأسلوب أستاذك وشكل امتحانك.",
+    icon: "🎓", color: "#4f8ef7", colorRgb: "79,142,247",
     gradient: "linear-gradient(135deg, #4f8ef7 0%, #6366f1 100%)",
     url: process.env.NODE_ENV === "production" ? "https://uni.proffy.study/dashboard" : "/dashboard",
   },
   {
     id: "psycho",
-    name: "Psycho by Proffy",
-    nameHe: "פסיכומטרי",
-    tagline: "Ace the psychometric",
-    description: "Adaptive practice, score prediction, full verbal and quantitative coverage.",
-    icon: "🧠",
-    color: "#a78bfa",
-    colorRgb: "167,139,250",
+    nameEn: "Psycho by Proffy", nameHe: "פסיכומטרי", nameAr: "سيكومتري",
+    taglineEn: "Ace the psychometric", taglineHe: "עבור את הפסיכומטרי", taglineAr: "تفوق في السيكومتري",
+    descEn: "Adaptive practice, score prediction, full verbal and quantitative coverage.",
+    descHe: "תרגול אדפטיבי, חיזוי ציון, כיסוי מלא של חלק מילולי וכמותי.",
+    descAr: "تدريب تكيّفي، توقع الدرجة، تغطية كاملة للجزء اللفظي والكمي.",
+    icon: "🧠", color: "#a78bfa", colorRgb: "167,139,250",
     gradient: "linear-gradient(135deg, #a78bfa 0%, #ec4899 100%)",
     url: process.env.NODE_ENV === "production" ? "https://psycho.proffy.study/dashboard" : "/dashboard",
   },
   {
     id: "yael",
-    name: "Yael by Proffy",
-    nameHe: 'יע"ל',
-    tagline: "Prepare for Yael",
-    description: "Hebrew reading comprehension, vocabulary, and proven exam strategies.",
-    icon: "📖",
-    color: "#34d399",
-    colorRgb: "52,211,153",
+    nameEn: "Yael by Proffy", nameHe: 'יע"ל', nameAr: "ياعيل",
+    taglineEn: "Prepare for Yael", taglineHe: 'הכנה ליע"ל', taglineAr: "تحضير لامتحان ياعيل",
+    descEn: "Hebrew reading comprehension, vocabulary, and proven exam strategies.",
+    descHe: "הבנת הנקרא, אוצר מילים, ואסטרטגיות מוכחות לבחינה.",
+    descAr: "فهم قرائي عبري، مفردات، وأساليب مجربة للامتحان.",
+    icon: "📖", color: "#34d399", colorRgb: "52,211,153",
     gradient: "linear-gradient(135deg, #34d399 0%, #059669 100%)",
     url: process.env.NODE_ENV === "production" ? "https://yael.proffy.study/dashboard" : "/dashboard",
   },
   {
     id: "bagrut",
-    name: "Bagrut by Proffy",
-    nameHe: "בגרות",
-    tagline: "Matriculation prep",
-    description: "Every bagrut subject. Practice, revise, and walk into your exam ready.",
-    icon: "📝",
-    color: "#fbbf24",
-    colorRgb: "251,191,36",
+    nameEn: "Bagrut by Proffy", nameHe: "בגרות", nameAr: "بجروت",
+    taglineEn: "Matriculation prep", taglineHe: "הכנה לבגרות", taglineAr: "تحضير للبجروت",
+    descEn: "Every bagrut subject. Practice, revise, and walk into your exam ready.",
+    descHe: "כל מקצועות הבגרות. תרגל, חזור ותיכנס לבחינה מוכן.",
+    descAr: "كل مواد البجروت. تدرّب، راجع، وادخل امتحانك وأنت مستعد.",
+    icon: "📝", color: "#fbbf24", colorRgb: "251,191,36",
     gradient: "linear-gradient(135deg, #fbbf24 0%, #f97316 100%)",
     url: process.env.NODE_ENV === "production" ? "https://bagrut.proffy.study/dashboard" : "/dashboard",
   },
-] as const;
+];
 
 interface Props {
   firstName: string;
@@ -84,10 +80,13 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activating, setActivating] = useState<string | null>(null);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
+  const [lang] = useLang();
+  const isRTL = lang === "he" || lang === "ar";
+  const t = (he: string, en: string, ar: string) => lang === "he" ? he : lang === "ar" ? ar : en;
 
   async function activate(platformId: string) {
     const code = codeInputs[platformId] ?? "";
-    if (!code.trim()) { setErrors(e => ({ ...e, [platformId]: "Enter your access code" })); return; }
+    if (!code.trim()) { setErrors(e => ({ ...e, [platformId]: t("הזן קוד גישה", "Enter your access code", "أدخل رمز الوصول") })); return; }
     setActivating(platformId);
     setErrors(e => ({ ...e, [platformId]: "" }));
     try {
@@ -97,16 +96,22 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
         body: JSON.stringify({ platform: platformId, code: code.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) setErrors(e => ({ ...e, [platformId]: data.error ?? "Invalid code" }));
+      if (!res.ok) setErrors(e => ({ ...e, [platformId]: data.error ?? t("קוד לא תקין", "Invalid code", "رمز غير صحيح") }));
       else window.location.reload();
     } finally { setActivating(null); }
   }
 
   const hour = new Date().getHours();
-  const greeting = hour < 5 ? "Still up?" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 5
+    ? t("עוד ער?", "Still up?", "لسا صاحي؟")
+    : hour < 12
+    ? t("בוקר טוב", "Good morning", "صباح الخير")
+    : hour < 17
+    ? t("צהריים טובים", "Good afternoon", "نهارك سعيد")
+    : t("ערב טוב", "Good evening", "مساء الخير");
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-base)", fontFamily: "system-ui, sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-base)", fontFamily: "system-ui, sans-serif", position: "relative", overflow: "hidden", direction: isRTL ? "rtl" : "ltr" }}>
 
       {/* Ambient glow */}
       <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "800px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 0%, rgba(34,197,94,0.08) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
@@ -133,7 +138,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
           <button onClick={() => signOut({ callbackUrl: "/login" })} style={{ fontSize: "12px", color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: "6px", padding: "5px 11px", cursor: "pointer", transition: "border-color 0.15s, color 0.15s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-light)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
-            Sign out
+            {t("התנתקות", "Sign out", "تسجيل الخروج")}
           </button>
         </div>
       </header>
@@ -147,10 +152,12 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
             {greeting}
           </div>
           <h1 style={{ fontSize: "clamp(26px,4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: "8px", lineHeight: 1.1 }}>
-            {firstName ? `Welcome back, ${firstName}.` : "Welcome back."}
+            {firstName
+              ? t(`ברוך שובך, ${firstName}.`, `Welcome back, ${firstName}.`, `أهلاً بعودتك، ${firstName}.`)
+              : t("ברוך שובך.", "Welcome back.", "أهلاً بعودتك.")}
           </h1>
           <p style={{ fontSize: "15px", color: "var(--text-secondary)" }}>
-            Which platform are you studying with today?
+            {t("באיזו פלטפורמה תלמד היום?", "Which platform are you studying with today?", "أي منصة ستدرس عليها اليوم؟")}
           </p>
         </motion.div>
 
@@ -205,8 +212,8 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                         {p.icon}
                       </div>
                       <div>
-                        <div style={{ fontSize: "15px", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{p.name}</div>
-                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "1px" }}>{p.nameHe} · {p.tagline}</div>
+                        <div style={{ fontSize: "15px", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{t(p.nameHe, p.nameEn, p.nameAr)}</div>
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "1px" }}>{t(p.taglineHe, p.taglineEn, p.taglineAr)}</div>
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
@@ -214,7 +221,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                       {!isActivated && (
                         <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", fontWeight: 700, color: "var(--text-disabled)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                          Locked
+                          {t("נעול", "Locked", "مقفل")}
                         </span>
                       )}
                     </div>
@@ -222,16 +229,16 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
 
                   {/* Description */}
                   <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.65, marginBottom: "18px" }}>
-                    {p.description}
+                    {t(p.descHe, p.descEn, p.descAr)}
                   </p>
 
                   {/* Stats — Uni only */}
                   {isActivated && p.id === "uni" && uniStats && (
                     <div style={{ display: "flex", gap: "0", marginBottom: "18px", background: "var(--bg-elevated)", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--border)" }}>
                       {[
-                        { value: uniStats.courses, label: "Courses" },
-                        { value: uniStats.fc_due, label: "Cards due", highlight: uniStats.fc_due > 0 },
-                        { value: uniStats.messages, label: "Messages" },
+                        { value: uniStats.courses, label: t("קורסים", "Courses", "مقررات") },
+                        { value: uniStats.fc_due, label: t("כרטיסיות להיום", "Cards due", "بطاقات اليوم"), highlight: uniStats.fc_due > 0 },
+                        { value: uniStats.messages, label: t("הודעות", "Messages", "رسائل") },
                       ].map((stat, si) => (
                         <div key={si} style={{ flex: 1, padding: "10px 0", textAlign: "center", borderRight: si < 2 ? "1px solid var(--border)" : "none" }}>
                           <div style={{ fontSize: "18px", fontWeight: 800, color: stat.highlight ? "#fbbf24" : "var(--text-primary)", lineHeight: 1 }}>{stat.value}</div>
@@ -249,7 +256,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                       onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "translateY(-1px)"; }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = ""; }}
                     >
-                      Open {p.name}
+                      {t(`פתח ${p.nameHe}`, `Open ${p.nameEn}`, `افتح ${p.nameAr}`)}
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </a>
                   ) : (
@@ -261,7 +268,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                         onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--bg-elevated)"; }}
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        Unlock with access code
+                        {t("פתח עם קוד גישה", "Unlock with access code", "افتح برمز الوصول")}
                       </button>
 
                       <AnimatePresence>
@@ -279,7 +286,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                                 value={codeInputs[p.id] ?? ""}
                                 onChange={e => setCodeInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
                                 onKeyDown={e => e.key === "Enter" && activate(p.id)}
-                                placeholder="Access code"
+                                placeholder={t("קוד גישה", "Access code", "رمز الوصول")}
                                 autoFocus
                                 style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", fontSize: "13px", background: "var(--bg-elevated)", border: `1px solid ${errors[p.id] ? "var(--red)" : "var(--border)"}`, color: "var(--text-primary)", outline: "none", letterSpacing: "0.04em" }}
                               />
@@ -288,7 +295,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                                 disabled={activating === p.id}
                                 style={{ padding: "9px 16px", borderRadius: "8px", background: p.gradient, color: "#fff", fontWeight: 700, fontSize: "13px", border: "none", cursor: activating === p.id ? "not-allowed" : "pointer", opacity: activating === p.id ? 0.7 : 1, flexShrink: 0 }}
                               >
-                                {activating === p.id ? "…" : "Unlock"}
+                                {activating === p.id ? "…" : t("פתח", "Unlock", "افتح")}
                               </button>
                             </div>
                             {errors[p.id] && (
@@ -307,7 +314,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
 
         {/* Footer note */}
         <p style={{ textAlign: "center", fontSize: "12px", color: "var(--text-disabled)", marginTop: "48px" }}>
-          More platforms coming soon · <a href="https://proffy.study" style={{ color: "var(--text-muted)", textDecoration: "none" }}>proffy.study</a>
+          {t("פלטפורמות נוספות בקרוב", "More platforms coming soon", "منصات إضافية قريباً")} · <a href="https://proffy.study" style={{ color: "var(--text-muted)", textDecoration: "none" }}>proffy.study</a>
         </p>
       </main>
     </div>
