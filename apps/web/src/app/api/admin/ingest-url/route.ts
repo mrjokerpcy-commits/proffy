@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   if (deny) return deny;
 
   const contentType = req.headers.get("content-type") ?? "";
-  let url = "", pastedText = "", university = "Technion", label = "reference";
+  let url = "", pastedText = "", university = "Technion", label = "reference", platform = "";
   let fileBuffer: Buffer | null = null;
 
   if (contentType.includes("multipart/form-data")) {
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     const file = fd.get("file") as File | null;
     university = (fd.get("university") as string) || "Technion";
     label      = (fd.get("label") as string) || "reference";
+    platform   = (fd.get("platform") as string) || "";
     if (file) fileBuffer = Buffer.from(await file.arrayBuffer());
   } else {
     const body = await req.json().catch(() => ({}));
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
     pastedText = body.text ?? "";
     university = body.university ?? "Technion";
     label      = body.label ?? "reference";
+    platform   = body.platform ?? "";
   }
 
   if (!url && !pastedText && !fileBuffer) return NextResponse.json({ error: "url, text, or file required" }, { status: 400 });
@@ -279,7 +281,7 @@ ${slice}`,
           payload: {
             text,
             filename:      label,
-            type:          "reference",
+            type:          platform || "reference",
             university,
             course:        null,
             course_number: null,

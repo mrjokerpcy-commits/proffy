@@ -323,19 +323,21 @@ export default function AdminClient({
     setIngestError("");
     try {
       let r: Response;
+      const platform = selectedSite !== "platform" ? selectedSite : undefined;
       if (ingestMode === "file" && ingestFile) {
         const fd = new FormData();
         fd.append("file", ingestFile);
         fd.append("university", ingestUniversity);
         fd.append("label", ingestLabel);
+        if (platform) fd.append("platform", platform);
         r = await fetch("/api/admin/ingest-url", { method: "POST", body: fd });
       } else {
         r = await fetch("/api/admin/ingest-url", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(ingestMode === "text"
-            ? { text: ingestText.trim(), university: ingestUniversity, label: ingestLabel }
-            : { url: ingestUrl.trim(), university: ingestUniversity, label: ingestLabel }),
+            ? { text: ingestText.trim(), university: ingestUniversity, label: ingestLabel, platform }
+            : { url: ingestUrl.trim(), university: ingestUniversity, label: ingestLabel, platform }),
         });
       }
       const d = await r.json();

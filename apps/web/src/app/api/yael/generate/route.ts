@@ -2,8 +2,19 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Anthropic from "@anthropic-ai/sdk";
+import { QdrantClient } from "@qdrant/js-client-rest";
+import OpenAI from "openai";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client  = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const openai  = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "placeholder" });
+const qdrant  = new QdrantClient({ url: process.env.QDRANT_URL || "http://localhost:6333", ...(process.env.QDRANT_API_KEY ? { apiKey: process.env.QDRANT_API_KEY } : {}) });
+
+// ── Section metadata ─────────────────────────────────────────────────────────
+const SECTION_QUERIES: Record<string, string> = {
+  reading:       "הבנת הנקרא קטע אקדמי שאלות הבנה רעיון מרכזי אוצר מילים",
+  completion:    "השלמת משפטים מילת יחס מילת קישור ביטוי קבוע",
+  reformulation: "ניסוח מחדש משפט נרדף שינוי ניסוח משמעות זהה",
+};
 
 const SECTION_PROMPTS: Record<string, string> = {
   reading: `Generate a Yael exam (ידע בעברית לאקדמיה) reading comprehension exercise in Hebrew.
@@ -11,6 +22,8 @@ const SECTION_PROMPTS: Record<string, string> = {
 IMPORTANT — copyright-safe approach:
 Mirror the exact question TYPES found on real Yael exams, but use completely original passages and characters.
 For example: if real exams ask "Why did Waleed choose to leave the city?", your question would be "Why did Dina decide to move to another neighborhood?" — same question purpose (inference about motivation), different content.
+
+{{MATERIAL_CONTEXT}}
 
 Return a JSON object (no markdown, no code block):
 {
@@ -43,6 +56,8 @@ Mirror the exact grammatical patterns tested on real Yael exams, but write compl
 For example: if a real exam tests "הוא ניגש _____ המורה" (preposition after ניגש), your sentence might be
 "היא פנתה _____ הרופא" — same grammatical skill (preposition after verb of approach), different sentence.
 
+{{MATERIAL_CONTEXT}}
+
 Return a JSON object (no markdown, no code block):
 {
   "passage": null,
@@ -60,13 +75,9 @@ Return a JSON object (no markdown, no code block):
 
 Generate exactly 8 questions. Use _____ to mark the gap. Distribute like real Yael exams:
 - מילת יחס (preposition after specific verbs/adjectives): 3 questions
-  Examples: שייך _____, מחויב _____, תלוי _____, הסכים _____, ניגש _____
 - מילת קישור / מילת פתיחה (connective/conjunction): 2 questions
-  Examples: על אף / אף כי / אלא / מאחר, לפיכך, אף על פי כן
 - מילה מתאימה להקשר (context-appropriate word): 2 questions
-  Examples: choosing between near-synonyms, formal vs. informal register
 - ביטוי קבוע (fixed phrase/idiom): 1 question
-  Examples: להניח את הדעת, לשים לב, להביא בחשבון
 
 Academic formal Hebrew. Each wrong option must be plausibly tempting.`,
 
@@ -74,8 +85,8 @@ Academic formal Hebrew. Each wrong option must be plausibly tempting.`,
 
 IMPORTANT — copyright-safe approach:
 Mirror the exact linguistic transformations tested on real Yael exams, but write completely original sentences.
-For example: if a real exam uses "למרות הגשם, יצאנו לטיול", your sentence might be
-"אף על פי שהאוויר היה קר, המשחק נמשך" — same skill (concessive clause with synonym), different content.
+
+{{MATERIAL_CONTEXT}}
 
 Return a JSON object (no markdown, no code block):
 {
@@ -92,26 +103,61 @@ Return a JSON object (no markdown, no code block):
         "D": "הממשלה הגיבה לביקורת אך לא שינתה דבר."
       },
       "correct": "C",
-      "explanation": "'חרף' = 'על אף'. 'עמדה על עמדתה' = 'לא שינתה את מדיניותה'. זהות מלאה. A — הפוך. B — חסר: לא אומר שמדיניות לא השתנתה. D — מוסיף מידע שאינו בקטע."
+      "explanation": "'חרף' = 'על אף'. 'עמדה על עמדתה' = 'לא שינתה את מדיניותה'. זהות מלאה. A — הפוך. B — חסר. D — מוסיף מידע שאינו בקטע."
     }
   ]
 }
 
-Generate exactly 6 questions. Each question tests one of these transformations (vary them):
-1. Concessive clauses — על אף / אף כי / למרות → חרף / אף על פי ש
+Generate exactly 6 questions. Each tests one of these transformations:
+1. Concessive clauses — על אף / למרות → חרף / אף על פי ש
 2. Causal structures — מפני ש / לפי ש → משום / בשל / נוכח
-3. Active ↔ Passive voice transformation
+3. Active ↔ Passive voice
 4. Synonym substitution in formal register
-5. Syntactic inversion (subject/object order change)
+5. Syntactic inversion
 6. Conditional clause paraphrase
 
 Rules for distractors:
-- One option must change meaning in only one small way (hardest distractor)
-- One option must add information not in the original
-- One option must omit a key element
+- One option changes meaning in only one small way (hardest distractor)
+- One option adds information not in the original
+- One option omits a key element
 
-Difficulty: real Yael exam level. Original sentences must be complex enough to require careful reading.`,
+Difficulty: real Yael exam level.`,
 };
+
+// ── Fetch relevant Yael material chunks from Qdrant ──────────────────────────
+async function fetchYaelContext(section: string): Promise<string> {
+  try {
+    const query = SECTION_QUERIES[section] ?? section;
+    const embRes = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: query,
+    });
+    const vector = embRes.data[0].embedding;
+
+    const results = await qdrant.search("studyai_chunks", {
+      vector,
+      limit: 6,
+      filter: {
+        must: [{ key: "type", match: { value: "yael" } }],
+      },
+      with_payload: true,
+    });
+
+    if (!results.length) return "";
+
+    const chunks = results
+      .filter(r => r.score > 0.3)
+      .map(r => (r.payload as any)?.text ?? "")
+      .filter(Boolean)
+      .join("\n\n---\n\n");
+
+    return chunks
+      ? `REFERENCE MATERIAL from past Yael exams (use these patterns as inspiration — do NOT copy verbatim, create copyright-safe variations):\n\n${chunks}\n\n`
+      : "";
+  } catch {
+    return "";
+  }
+}
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -125,14 +171,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid section" }, { status: 400 });
   }
 
+  // Fetch relevant Yael exam material for RAG context
+  const materialContext = await fetchYaelContext(section);
+  const prompt = SECTION_PROMPTS[section].replace("{{MATERIAL_CONTEXT}}", materialContext);
+
   try {
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 4096,
-      messages: [{
-        role: "user",
-        content: SECTION_PROMPTS[section],
-      }],
+      messages: [{ role: "user", content: prompt }],
     });
 
     const text = msg.content[0].type === "text" ? msg.content[0].text : "";
