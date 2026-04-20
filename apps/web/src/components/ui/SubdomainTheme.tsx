@@ -150,9 +150,9 @@ function WaveBg() {
         >
           <defs>
             <linearGradient id="sg1" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0%"   stopColor="rgba(245,158,11,0.22)" />
-              <stop offset="50%"  stopColor="rgba(245,158,11,0.14)" />
-              <stop offset="100%" stopColor="rgba(245,158,11,0.02)" />
+              <stop offset="0%"   stopColor="rgba(245,158,11,0.12)" />
+              <stop offset="50%"  stopColor="rgba(245,158,11,0.07)" />
+              <stop offset="100%" stopColor="rgba(245,158,11,0)" />
             </linearGradient>
           </defs>
           {/* Diagonal S ribbon from bottom-left to top-right */}
@@ -188,7 +188,7 @@ function WaveBg() {
                L 1720  -60
                C 1420  140, 1020  300,  800  470
                C  580  640,  180  800, -120 1000 Z"
-            fill="rgba(245,158,11,0.08)"
+            fill="rgba(245,158,11,0.04)"
           />
         </svg>
       </motion.div>
@@ -210,7 +210,7 @@ function WaveBg() {
             d="M -200 1050
                C  100  850,  400  700,  720  510
                C 1040  320, 1340  170, 1640  -80"
-            stroke="rgba(245,158,11,0.45)"
+            stroke="rgba(245,158,11,0.25)"
             strokeWidth="1.5"
             fill="none"
           />
