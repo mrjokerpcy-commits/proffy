@@ -98,6 +98,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
   const router = useRouter();
   const [lang, setLang] = useState("en");
   const [examInfoOpen, setExamInfoOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("proffy_lang") ?? "en";
@@ -105,6 +106,13 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
     const onLang = (e: Event) => setLang((e as CustomEvent).detail);
     window.addEventListener("proffy-lang", onLang);
     return () => window.removeEventListener("proffy-lang", onLang);
+  }, []);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
   const isRTL = lang === "he" || lang === "ar";
@@ -144,7 +152,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
           {/* Top accent */}
           <div style={{ height: "3px", background: `linear-gradient(90deg, ${ACCENT}, #d97706)` }} />
 
-          <div style={{ padding: "20px 24px" }}>
+          <div style={{ padding: isMobile ? "16px" : "20px 24px" }}>
             {/* Clickable header */}
             <button
               onClick={() => setExamInfoOpen(v => !v)}
@@ -246,9 +254,9 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
             { label: t("שאלות", "Questions", "الأسئلة"), value: totalAttempted },
             { label: t("דיוק", "Accuracy", "الدقة"), value: overallPct !== null ? `${overallPct}%` : "—" },
           ].map(stat => (
-            <div key={stat.label} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px 20px", textAlign: "center" }}>
-              <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>{stat.value}</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{stat.label}</div>
+            <div key={stat.label} style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: isMobile ? "12px 8px" : "16px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>{stat.value}</div>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{stat.label}</div>
             </div>
           ))}
         </motion.div>
@@ -275,7 +283,7 @@ export default function YaelDashboardClient({ firstName, progress, recentSession
                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; }}
               >
                 <div style={{ height: "3px", background: `linear-gradient(90deg, ${meta.color}, ${meta.color}88)` }} />
-                <div style={{ padding: "22px 22px 20px", flex: 1, display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: isMobile ? "16px 16px 14px" : "22px 22px 20px", flex: 1, display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "12px" }}>
                     <div style={{ width: "44px", height: "44px", borderRadius: "12px", flexShrink: 0, background: `rgba(${meta.colorRgb},0.1)`, border: `1px solid rgba(${meta.colorRgb},0.2)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
                       {meta.icon}

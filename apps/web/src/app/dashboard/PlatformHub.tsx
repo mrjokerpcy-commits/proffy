@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -80,9 +80,17 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activating, setActivating] = useState<string | null>(null);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const [lang] = useLang();
   const isRTL = lang === "he" || lang === "ar";
   const t = (he: string, en: string, ar: string) => lang === "he" ? he : lang === "ar" ? ar : en;
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   async function activate(platformId: string) {
     const code = codeInputs[platformId] ?? "";
@@ -112,6 +120,12 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-base)", fontFamily: "system-ui, sans-serif", position: "relative", overflow: "hidden", direction: isRTL ? "rtl" : "ltr" }}>
+      <style>{`
+        @media (max-width: 480px) {
+          .platform-hub-signout { display: none !important; }
+          .platform-hub-header-right { gap: 4px !important; }
+        }
+      `}</style>
 
       {/* Ambient glow */}
       <div aria-hidden="true" style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "800px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 0%, rgba(34,197,94,0.08) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
@@ -123,7 +137,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
           <img src="/logo-owl.png" alt="Proffy" style={{ width: "34px", height: "34px", objectFit: "contain" }} />
           <span style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--text-primary)", letterSpacing: "-0.02em" }}>Proffy</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="platform-hub-header-right" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <LangToggle />
           <ThemeToggle />
           <div style={{ width: "1px", height: "20px", background: "var(--border)", margin: "0 4px" }} />
@@ -135,7 +149,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
               {userName.charAt(0).toUpperCase()}
             </div>
           )}
-          <button onClick={() => signOut({ callbackUrl: "/login" })} style={{ fontSize: "12px", color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: "6px", padding: "5px 11px", cursor: "pointer", transition: "border-color 0.15s, color 0.15s" }}
+          <button onClick={() => signOut({ callbackUrl: "/login" })} className="platform-hub-signout" style={{ fontSize: "12px", color: "var(--text-muted)", background: "none", border: "1px solid var(--border)", borderRadius: "6px", padding: "8px 14px", cursor: "pointer", transition: "border-color 0.15s, color 0.15s", minHeight: "36px" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-light)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
             {t("התנתקות", "Sign out", "تسجيل الخروج")}
@@ -147,7 +161,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
       <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "clamp(32px,5vw,60px) clamp(16px,4vw,40px)", position: "relative", zIndex: 1 }}>
 
         {/* Greeting */}
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} style={{ marginBottom: "48px" }}>
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} style={{ marginBottom: isMobile ? "24px" : "48px" }}>
           <div style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#22c55e", marginBottom: "8px" }}>
             {greeting}
           </div>
@@ -203,7 +217,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                   <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.03)", pointerEvents: "none", zIndex: 1, borderRadius: "18px" }} />
                 )}
 
-                <div style={{ padding: "26px 26px 22px", position: "relative", zIndex: 2 }}>
+                <div style={{ padding: isMobile ? "20px 20px 18px" : "26px 26px 22px", position: "relative", zIndex: 2 }}>
 
                   {/* Top row: icon + name + plan badge */}
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
@@ -240,7 +254,7 @@ export default function PlatformHub({ firstName, userName, userEmail, userImage,
                         { value: uniStats.fc_due, label: t("כרטיסיות להיום", "Cards due", "بطاقات اليوم"), highlight: uniStats.fc_due > 0 },
                         { value: uniStats.messages, label: t("הודעות", "Messages", "رسائل") },
                       ].map((stat, si) => (
-                        <div key={si} style={{ flex: 1, padding: "10px 0", textAlign: "center", borderRight: si < 2 ? "1px solid var(--border)" : "none" }}>
+                        <div key={si} style={{ flex: 1, padding: "10px 0", textAlign: "center", borderInlineEnd: si < 2 ? "1px solid var(--border)" : "none" }}>
                           <div style={{ fontSize: "18px", fontWeight: 800, color: stat.highlight ? "#fbbf24" : "var(--text-primary)", lineHeight: 1 }}>{stat.value}</div>
                           <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "3px", fontWeight: 500 }}>{stat.label}</div>
                         </div>

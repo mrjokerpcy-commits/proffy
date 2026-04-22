@@ -224,7 +224,7 @@ ${opts}
     const pct = total > 0 ? Math.round((score / total) * 100) : 0;
     const emoji = pct >= 80 ? "🎉" : pct >= 50 ? "💪" : "📖";
     return (
-      <div style={{ maxWidth: "540px", margin: "0 auto", padding: "40px 24px", direction: isRTL ? "rtl" : "ltr", textAlign: "center" }}>
+      <div style={{ maxWidth: "540px", margin: "0 auto", padding: isMobile ? "24px 16px" : "40px 24px", direction: isRTL ? "rtl" : "ltr", textAlign: "center" }}>
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
           <div style={{ fontSize: "56px", marginBottom: "16px" }}>{emoji}</div>
           <h1 style={{ fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: "8px" }}>
@@ -253,11 +253,11 @@ ${opts}
             ))}
           </div>
 
-          <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-            <button onClick={startNew} style={{ padding: "12px 24px", borderRadius: "10px", fontSize: "14px", fontWeight: 700, background: `rgba(${meta.colorRgb},0.12)`, border: `1px solid rgba(${meta.colorRgb},0.3)`, color: meta.color, cursor: "pointer" }}>
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+            <button onClick={startNew} style={{ padding: "13px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 700, background: `rgba(${meta.colorRgb},0.12)`, border: `1px solid rgba(${meta.colorRgb},0.3)`, color: meta.color, cursor: "pointer", minWidth: "140px" }}>
               {t("תרגול חדש", "New session", "جلسة جديدة")}
             </button>
-            <button onClick={() => router.push("/dashboard")} style={{ padding: "12px 24px", borderRadius: "10px", fontSize: "14px", fontWeight: 700, background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-secondary)", cursor: "pointer" }}>
+            <button onClick={() => router.push("/dashboard")} style={{ padding: "13px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 700, background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-secondary)", cursor: "pointer", minWidth: "140px" }}>
               {t("חזרה לדשבורד", "Back to dashboard", "العودة للوحة التحكم")}
             </button>
           </div>
@@ -314,20 +314,20 @@ ${opts}
             <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--green)" }}>{score} ✓</span>
             <button
               onClick={() => setShowTutor(v => !v)}
-              style={{ display: "flex", alignItems: "center", gap: "5px", padding: "4px 10px", borderRadius: "7px", fontSize: "11px", fontWeight: 700, background: showTutor ? `rgba(${ACCENT_RGB},0.12)` : "var(--bg-elevated)", border: `1px solid ${showTutor ? `rgba(${ACCENT_RGB},0.35)` : "var(--border)"}`, color: showTutor ? ACCENT : "var(--text-muted)", cursor: "pointer", transition: "all 0.15s" }}
+              style={{ display: "flex", alignItems: "center", gap: isMobile ? "0" : "5px", padding: isMobile ? "6px 8px" : "4px 10px", borderRadius: "7px", fontSize: "11px", fontWeight: 700, background: showTutor ? `rgba(${ACCENT_RGB},0.12)` : "var(--bg-elevated)", border: `1px solid ${showTutor ? `rgba(${ACCENT_RGB},0.35)` : "var(--border)"}`, color: showTutor ? ACCENT : "var(--text-muted)", cursor: "pointer", transition: "all 0.15s", minHeight: "32px" }}
             >
-              <span style={{ fontSize: "13px" }}>👨‍🏫</span>
-              {t("מורה", "Tutor", "المدرس")}
+              <span style={{ fontSize: "15px" }}>👨‍🏫</span>
+              {!isMobile && t("מורה", "Tutor", "المدرس")}
             </button>
           </div>
         </div>
 
         {/* Content split */}
-        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: isMobile && section === "reading" ? "column" : "row", overflow: isMobile && section === "reading" ? "auto" : "hidden" }}>
 
           {/* Passage — reading only */}
           {section === "reading" && exercise.passage && (
-            <div ref={passageRef} style={{ width: "48%", flexShrink: 0, overflowY: "auto", padding: "24px 28px", borderRight: "1px solid var(--border)", background: "var(--bg-base)" }}>
+            <div ref={passageRef} style={{ width: isMobile ? "100%" : "48%", flexShrink: 0, overflowY: isMobile ? "visible" : "auto", padding: isMobile ? "16px" : "24px 28px", borderRight: isMobile ? "none" : "1px solid var(--border)", borderBottom: isMobile ? "1px solid var(--border)" : "none", background: "var(--bg-base)" }}>
               <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: meta.color, marginBottom: "10px" }}>
                 {t("קטע לקריאה", "Reading passage", "مقطع القراءة")}
               </div>
@@ -339,7 +339,7 @@ ${opts}
           )}
 
           {/* Questions */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "24px", maxWidth: section === "reading" ? undefined : "600px", margin: section === "reading" ? undefined : "0 auto", width: "100%" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px" : "24px", maxWidth: section === "reading" ? undefined : "600px", margin: section === "reading" ? undefined : "0 auto", width: "100%" }}>
             <AnimatePresence mode="wait">
               <motion.div key={questionIndex} initial={{ opacity: 0, x: isRTL ? -16 : 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? 16 : -16 }} transition={{ duration: 0.22 }}>
 
@@ -359,7 +359,7 @@ ${opts}
                     }
                     return (
                       <button key={letter} onClick={() => choose(letter)} disabled={!!answerState}
-                        style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 15px", borderRadius: "10px", background: bg, border: `1px solid ${border}`, color, cursor: answerState ? "default" : "pointer", textAlign: "right", transition: "all 0.12s", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", fontSize: "14px", lineHeight: 1.55, direction: "rtl" }}>
+                        style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 15px", borderRadius: "10px", background: bg, border: `1px solid ${border}`, color, cursor: answerState ? "default" : "pointer", textAlign: "right", transition: "all 0.12s", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", fontSize: "14px", lineHeight: 1.55, direction: "rtl" }}>
                         <span style={{ flex: 1 }}>{text}</span>
                         <span style={{ width: "28px", height: "28px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "12px", fontWeight: 700,
                           background: answerState ? (letter === answerState.correct ? "rgba(52,211,153,0.2)" : letter === answerState.chosen ? "rgba(239,68,68,0.15)" : "var(--bg-surface)") : `rgba(${meta.colorRgb},0.1)`,
@@ -430,7 +430,7 @@ ${opts}
                 </div>
               </div>
               {isMobile && (
-                <button onClick={() => setShowTutor(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px" }}>
+                <button onClick={() => setShowTutor(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "10px", minWidth: "44px", minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               )}
@@ -493,12 +493,12 @@ ${opts}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendUserMessage(); } }}
                 disabled={chatStreaming}
                 placeholder={t("שאל שאלה…", "Ask something…", "اسأل سؤالاً…")}
-                style={{ flex: 1, padding: "8px 11px", borderRadius: "9px", background: "var(--bg-base)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: "13px", outline: "none", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: "rtl" }}
+                style={{ flex: 1, padding: "10px 12px", borderRadius: "9px", background: "var(--bg-base)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: "14px", outline: "none", fontFamily: "'Noto Sans Hebrew', system-ui, sans-serif", direction: isRTL ? "rtl" : "ltr" }}
               />
               <button
                 onClick={sendUserMessage}
                 disabled={!chatInput.trim() || chatStreaming}
-                style={{ width: "36px", height: "36px", borderRadius: "9px", background: chatInput.trim() && !chatStreaming ? ACCENT : "var(--bg-elevated)", border: "none", color: "#fff", cursor: chatInput.trim() && !chatStreaming ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}
+                style={{ width: "44px", height: "44px", borderRadius: "9px", background: chatInput.trim() && !chatStreaming ? ACCENT : "var(--bg-elevated)", border: "none", color: "#fff", cursor: chatInput.trim() && !chatStreaming ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>

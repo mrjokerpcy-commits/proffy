@@ -127,12 +127,13 @@ export default function YaelShell({ children }: { children: React.ReactNode }) {
             <button
               onClick={() => setShowUserMenu(v => !v)}
               style={{
-                width: "32px", height: "32px", borderRadius: "50%",
+                width: "38px", height: "38px", borderRadius: "50%",
                 background: userImage ? "transparent" : `rgba(${ACCENT_RGB},0.15)`,
                 border: `2px solid rgba(${ACCENT_RGB},0.3)`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 cursor: "pointer", overflow: "hidden", padding: 0,
-                fontSize: "11px", fontWeight: 700, color: ACCENT,
+                fontSize: "12px", fontWeight: 700, color: ACCENT,
+                flexShrink: 0,
               }}
             >
               {userImage
@@ -190,7 +191,9 @@ export default function YaelShell({ children }: { children: React.ReactNode }) {
             style={{
               display: "none",
               background: "none", border: "none", cursor: "pointer",
-              color: "var(--text-muted)", padding: "4px",
+              color: "var(--text-muted)", padding: "10px",
+              minWidth: "44px", minHeight: "44px",
+              alignItems: "center", justifyContent: "center",
             }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

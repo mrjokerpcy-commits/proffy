@@ -123,9 +123,9 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
             <button
               onClick={() => setSidebarOpen(v => !v)}
               style={{
-                marginRight: "auto", background: "none", border: "none",
-                cursor: "pointer", color: "var(--text-muted)", padding: "4px 2px",
-                display: "flex", alignItems: "center",
+                marginInlineEnd: "auto", background: "none", border: "none",
+                cursor: "pointer", color: "var(--text-muted)", padding: "10px 12px",
+                display: "flex", alignItems: "center", minHeight: "44px",
               }}
             >
               <svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

@@ -565,6 +565,15 @@ html, body { overflow-x: hidden; }
   /* Feature bar — 2 per row on mobile */
   .hub-feature-bar { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important; }
   .hub-feature-bar > div { justify-content: center; padding: 8px 12px !important; font-size: 12px !important; }
+
+  /* Who we are quote card — reduce padding on mobile */
+  .hub-who-card { padding: 24px !important; }
+
+  /* Nav — hide Login link to prevent overflow, keep Get Access */
+  .hub-nav-login { display: none !important; }
+
+  /* Nav toggles tighter on small screens */
+  [data-hub] .hub-nav-toggles { gap: 6px !important; }
 }
 
 /* ─── Noise overlay ─────────────────────────────────────────────────────────── */

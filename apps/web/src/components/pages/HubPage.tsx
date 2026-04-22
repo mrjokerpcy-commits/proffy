@@ -331,7 +331,7 @@ function NavActions({ onGetAccess, getAccessLabel }: { onGetAccess: () => void; 
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-      <Link href="/login" style={{
+      <Link href="/login" className="hub-nav-login" style={{
         padding: "8px 16px", borderRadius: "10px", fontSize: "13px", fontWeight: 600,
         color: "var(--text-primary)", border: "1px solid var(--border)",
         textDecoration: "none", whiteSpace: "nowrap" as const,
@@ -489,7 +489,7 @@ export default function HubPage() {
       {/* ── Who We Are ── */}
       <Section style={{ padding:"80px max(32px,4vw)" }}>
         <div className="hub-two-col">
-          <div style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"24px", padding:"40px", boxShadow:"var(--card-shadow)" }}>
+          <div className="hub-who-card" style={{ background:"var(--bg-surface)", border:"1px solid var(--border)", borderRadius:"24px", padding:"40px", boxShadow:"var(--card-shadow)" }}>
             <p style={{ fontSize:"22px", fontWeight:700, lineHeight:1.6, color:"var(--text-primary)", fontStyle:"italic" }}>
               {lang === "he"
                 ? '"בנינו את הכלי שרצינו שיהיה לנו בתקופת הלימודים שלנו."'
