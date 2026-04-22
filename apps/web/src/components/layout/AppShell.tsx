@@ -139,7 +139,7 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
           <TimerButton />
           <CalcButton />
           {!isMobile && <CalendarButton />}
-          {!isMobile && <OpenUploadButton />}
+          <OpenUploadButton />
         </div>
         {children}
       </main>
