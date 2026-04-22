@@ -114,9 +114,10 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
         {/* ── Global tool bar ── */}
         <div style={{
           flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-end",
-          gap: "6px", padding: "8px 14px",
+          gap: isMobile ? "2px" : "6px", padding: isMobile ? "6px 10px" : "8px 14px",
           borderBottom: "1px solid var(--border)",
           background: "var(--bg-surface)",
+          overflow: "hidden",
         }}>
           {/* Hamburger on mobile */}
           {isMobile && (
@@ -137,8 +138,8 @@ export default function AppShell({ children, courses, activeCourse, flashcardsDu
           <ThemeToggle />
           <TimerButton />
           <CalcButton />
-          <CalendarButton />
-          <OpenUploadButton />
+          {!isMobile && <CalendarButton />}
+          {!isMobile && <OpenUploadButton />}
         </div>
         {children}
       </main>

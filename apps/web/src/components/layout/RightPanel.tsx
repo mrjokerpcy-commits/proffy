@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import type { Course } from "@/lib/types";
+import { useLang } from "@/components/ui/LangToggle";
 
 interface Props {
   course: Course;
@@ -44,10 +45,14 @@ function Card({ children, delay = 0, urgent = false }: { children: React.ReactNo
 }
 
 export default function RightPanel({ course, flashcardsDue = 0, professorPatterns, userPlan = "free" }: Props) {
+  const [lang] = useLang();
+  const isRTL = lang === "he" || lang === "ar";
+  const t = (he: string, en: string, ar: string) => lang === "he" ? he : lang === "ar" ? ar : en;
+  const locale = lang === "he" ? "he-IL" : lang === "ar" ? "ar-SA" : "en-IL";
+
   const days = daysUntil(course.exam_date);
   const isUrgent = days !== null && days <= 7;
 
-  // Computed progress: fewer days = more prepared (proxy)
   const preparedPct = days !== null
     ? Math.min(100, Math.max(5, Math.round(100 - (days / 60) * 100)))
     : null;
@@ -57,21 +62,41 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
     : days <= 14 ? "var(--amber)"
     : "var(--blue)";
 
+  const profLabel = course.professor
+    ? `${course.professor} ${t("תמיד שואל", "always asks", "دائمًا يسأل")}`
+    : t("תבניות פרופסור", "Professor patterns", "أنماط الأستاذ");
+
+  const studyModeText = isUrgent
+    ? t("🔥 הכנה לבחינה — התמקד בשאלות ממבחנים ישנים ונקודות חולשה בלבד.", "🔥 Exam prep — focus on past exam questions and weak spots only.", "🔥 الاستعداد للامتحان — ركز على أسئلة الامتحانات السابقة ونقاط الضعف فقط.")
+    : days !== null && days <= 14
+    ? t("⚡ אינטנסיבי — הגבר קצב, תעדף נושאים בעלי תשואה גבוהה.", "⚡ Intensive — pick up the pace, prioritize high-yield topics.", "⚡ مكثف — ارفع الوتيرة وأعطِ الأولوية للموضوعات عالية التأثير.")
+    : t("📖 למידה — בנה הבנה, בקש מ-Proffy לבחון אותך.", "📖 Learning — build understanding, ask Proffy to quiz you as you go.", "📖 تعلم — ابنِ الفهم واطلب من Proffy اختبارك.");
+
+  const courseInfoRows: [string, string | null | undefined][] = [
+    [t("פרופסור", "Professor", "الأستاذ"), course.professor],
+    [t("אוניברסיטה", "University", "الجامعة"), course.university],
+    [t("סמסטר", "Semester", "الفصل"), course.semester],
+    [t("מטרה", "Goal", "الهدف"), course.goal],
+    [t("רמה", "Level", "المستوى"), course.user_level],
+    [t("שעות/שבוע", "Hours/week", "ساعات/أسبوع"), course.hours_per_week ? `${course.hours_per_week}h` : null],
+  ];
+
   return (
     <div style={{
       height: "100%", overflowY: "auto",
       padding: "1rem 0.875rem",
       display: "flex", flexDirection: "column", gap: "0.75rem",
       background: "var(--bg-surface)",
+      direction: isRTL ? "rtl" : "ltr",
     }}>
 
       {/* ── 1. Exam Countdown ── */}
       <Card delay={0.05} urgent={isUrgent}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.875rem" }}>
-          <SectionLabel>Exam countdown</SectionLabel>
+          <SectionLabel>{t("ספירה לאחור לבחינה", "Exam countdown", "العد التنازلي للامتحان")}</SectionLabel>
           {isUrgent && (
             <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--red)", background: "rgba(248,113,113,0.12)", padding: "2px 7px", borderRadius: "999px", marginTop: "-4px" }}>
-              🔥 SOON
+              🔥 {t("בקרוב", "SOON", "قريبًا")}
             </span>
           )}
         </div>
@@ -80,11 +105,11 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
           <>
             <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", marginBottom: "4px" }}>
               <div style={{ fontSize: "2.5rem", fontWeight: 800, lineHeight: 1, color: prepColor }}>{Math.max(0, days)}</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", paddingBottom: "4px" }}>days left</div>
+              <div style={{ fontSize: "12px", color: "var(--text-muted)", paddingBottom: "4px" }}>{t("ימים נותרו", "days left", "أيام متبقية")}</div>
             </div>
             <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "12px" }}>
-              {new Date(course.exam_date).toLocaleDateString("en-IL", { day: "numeric", month: "short" })}
-              {days <= 0 ? " — Today!" : days === 1 ? " — Tomorrow" : ""}
+              {new Date(course.exam_date).toLocaleDateString(locale, { day: "numeric", month: "short" })}
+              {days <= 0 ? ` — ${t("היום!", "Today!", "اليوم!")}` : days === 1 ? ` — ${t("מחר", "Tomorrow", "غدًا")}` : ""}
             </div>
             {preparedPct !== null && (
               <>
@@ -97,7 +122,7 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
                   />
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "var(--text-muted)" }}>
-                  <span>Progress</span>
+                  <span>{t("התקדמות", "Progress", "التقدم")}</span>
                   <span>{preparedPct}%</span>
                 </div>
               </>
@@ -105,14 +130,14 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
           </>
         ) : (
           <p style={{ fontSize: "12px", lineHeight: 1.6, color: "var(--text-muted)" }}>
-            No exam date set.<br />Ask Proffy to set one.
+            {t("לא הוגדר תאריך בחינה.", "No exam date set.", "لم يُحدَّد تاريخ الامتحان.")}<br />
+            {t("בקש מ-Proffy להגדיר אחד.", "Ask Proffy to set one.", "اطلب من Proffy تحديده.")}
           </p>
         )}
       </Card>
 
       {/* ── 2. Professor Patterns ── */}
       {userPlan === "free" ? (
-        /* Locked for free users */
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -123,7 +148,6 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
             position: "relative", overflow: "hidden",
           }}
         >
-          {/* Blur overlay */}
           <div style={{
             position: "absolute", inset: 0, zIndex: 2,
             background: "rgba(13,13,24,0.5)",
@@ -144,10 +168,10 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "3px" }}>
-                Pro feature
+                {t("תכונת Pro", "Pro feature", "ميزة Pro")}
               </div>
               <div style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.5, maxWidth: "140px" }}>
-                Unlock professor fingerprinting
+                {t("פתח טביעת אצבע של הפרופסור", "Unlock professor fingerprinting", "افتح بصمة الأستاذ")}
               </div>
             </div>
             <a
@@ -159,20 +183,17 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
                 color: "#000",
               }}
             >
-              Upgrade to Pro →
+              {t("שדרג ל-Pro →", "Upgrade to Pro →", "الترقية إلى Pro →")}
             </a>
           </div>
 
-          {/* Ghost content behind blur */}
           <div style={{ opacity: 0.25 }}>
-            <SectionLabel>
-              {course.professor ? `${course.professor} always asks` : "Professor patterns"}
-            </SectionLabel>
+            <SectionLabel>{profLabel}</SectionLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {[["Proofs & derivations", 72], ["Edge cases", 58], ["Theory", 45]].map(([t, pct]) => (
-                <div key={t as string}>
+              {[["Proofs & derivations", 72], ["Edge cases", 58], ["Theory", 45]].map(([tp, pct]) => (
+                <div key={tp as string}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{t}</span>
+                    <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{tp}</span>
                     <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{pct}%</span>
                   </div>
                   <div style={{ height: "3px", borderRadius: "3px", background: "var(--border)", overflow: "hidden" }}>
@@ -185,9 +206,7 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
         </motion.div>
       ) : (
         <Card delay={0.1}>
-          <SectionLabel>
-            {course.professor ? `${course.professor} always asks` : "Professor patterns"}
-          </SectionLabel>
+          <SectionLabel>{profLabel}</SectionLabel>
 
           {professorPatterns && professorPatterns.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -211,9 +230,11 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
           ) : (
             <div>
               <p style={{ fontSize: "11px", lineHeight: 1.65, color: "var(--text-muted)", marginBottom: "10px" }}>
-                Upload past exams and Proffy will learn{" "}
-                {course.professor ? `Prof. ${course.professor}'s` : "your professor's"} exact
-                patterns — topics that appear every year, trick questions, and point distribution.
+                {t(
+                  `העלה מבחנים ישנים ו-Proffy ילמד את התבניות${course.professor ? ` של פרופ' ${course.professor}` : ""}.`,
+                  `Upload past exams and Proffy will learn${course.professor ? ` Prof. ${course.professor}'s` : " your professor's"} exact patterns — topics that appear every year, trick questions, and point distribution.`,
+                  `ارفع الامتحانات السابقة وسيتعلم Proffy أنماط${course.professor ? ` الأستاذ ${course.professor}` : " أستاذك"} الدقيقة.`
+                )}
               </p>
               <button
                 onClick={() => window.dispatchEvent(new Event("proffy:open-upload"))}
@@ -227,7 +248,7 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
-                Upload past exams
+                {t("העלה מבחנים ישנים", "Upload past exams", "ارفع امتحانات سابقة")}
               </button>
             </div>
           )}
@@ -236,16 +257,16 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
 
       {/* ── 3. Flashcards Due ── */}
       <Card delay={0.15}>
-        <SectionLabel>Flashcards due</SectionLabel>
+        <SectionLabel>{t("כרטיסיות לחזרה", "Flashcards due", "البطاقات المستحقة")}</SectionLabel>
 
         {flashcardsDue > 0 ? (
           <>
             <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", marginBottom: "4px" }}>
               <div style={{ fontSize: "2.5rem", fontWeight: 800, lineHeight: 1, color: "var(--purple)" }}>{flashcardsDue}</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", paddingBottom: "4px" }}>to review</div>
+              <div style={{ fontSize: "12px", color: "var(--text-muted)", paddingBottom: "4px" }}>{t("לחזרה", "to review", "للمراجعة")}</div>
             </div>
             <p style={{ fontSize: "10px", color: "var(--text-muted)", marginBottom: "12px" }}>
-              Spaced repetition keeps these fresh.
+              {t("חזרה מרווחת שומרת על רעננות הזיכרון.", "Spaced repetition keeps these fresh.", "المراجعة المتباعدة تحافظ على الذاكرة.")}
             </p>
             <a
               href="/flashcards"
@@ -256,13 +277,13 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
                 border: "1px solid rgba(167,139,250,0.25)", textDecoration: "none",
               }}
             >
-              Start review →
+              {t("התחל חזרה →", "Start review →", "ابدأ المراجعة →")}
             </a>
           </>
         ) : (
           <div>
             <p style={{ fontSize: "11px", lineHeight: 1.65, color: "var(--text-muted)", marginBottom: "10px" }}>
-              No flashcards yet. Ask Proffy to generate some from your material.
+              {t("אין כרטיסיות עדיין. בקש מ-Proffy ליצור מהחומר שלך.", "No flashcards yet. Ask Proffy to generate some from your material.", "لا توجد بطاقات بعد. اطلب من Proffy إنشاءها من مادتك.")}
             </p>
             <div style={{ display: "flex", gap: "3px" }}>
               {[...Array(8)].map((_, i) => (
@@ -275,31 +296,20 @@ export default function RightPanel({ course, flashcardsDue = 0, professorPattern
 
       {/* ── 4. Study mode ── */}
       <Card delay={0.2} urgent={isUrgent}>
-        <SectionLabel>Study mode</SectionLabel>
+        <SectionLabel>{t("מצב לימוד", "Study mode", "وضع الدراسة")}</SectionLabel>
         <p style={{ fontSize: "11px", lineHeight: 1.7, color: "var(--text-secondary)" }}>
-          {isUrgent
-            ? "🔥 Exam prep — focus on past exam questions and weak spots only."
-            : days !== null && days <= 14
-            ? "⚡ Intensive — pick up the pace, prioritize high-yield topics."
-            : "📖 Learning — build understanding, ask Proffy to quiz you as you go."}
+          {studyModeText}
         </p>
       </Card>
 
       {/* ── 5. Course info ── */}
       <Card delay={0.25}>
-        <SectionLabel>Course info</SectionLabel>
+        <SectionLabel>{t("פרטי הקורס", "Course info", "معلومات المقرر")}</SectionLabel>
         <dl style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-          {([
-            ["Professor", course.professor],
-            ["University", course.university],
-            ["Semester", course.semester],
-            ["Goal", course.goal],
-            ["Level", course.user_level],
-            ["Hours/week", course.hours_per_week ? `${course.hours_per_week}h` : null],
-          ] as [string, string | null | undefined][]).filter(([, v]) => v).map(([label, value]) => (
+          {courseInfoRows.filter(([, v]) => v).map(([label, value]) => (
             <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
               <dt style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0 }}>{label}</dt>
-              <dd style={{ fontSize: "11px", textAlign: "right", textTransform: "capitalize", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <dd style={{ fontSize: "11px", textAlign: isRTL ? "left" : "right", textTransform: "capitalize", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {String(value)}
               </dd>
             </div>

@@ -252,7 +252,7 @@ export default function DashboardClient({
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.22 }}
         style={{ marginBottom: "24px" }}>
         <button
-          onClick={() => router.push("/chat")}
+          onClick={() => router.push(`/chat?new=${Date.now()}`)}
           style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 24px", borderRadius: "12px", background: `linear-gradient(135deg, ${BLUE}, #6366f1)`, border: "none", color: "#fff", fontSize: "14px", fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 20px rgba(${BLUE_RGB},0.3)`, transition: "opacity 0.15s, transform 0.15s" }}
           onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "translateY(-1px)"; }}
           onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = ""; }}

@@ -8,6 +8,7 @@ import Image from "next/image";
 import type { Course } from "@/lib/types";
 import { SUBDOMAIN_SITES } from "@/lib/constants";
 import UpgradeModal from "./UpgradeModal";
+import { useLang } from "@/components/ui/LangToggle";
 
 function detectSubdomain(): string {
   if (typeof window === "undefined") return "root";
@@ -19,7 +20,6 @@ function detectSubdomain(): string {
   return "root";
 }
 
-// ── Version — update this when releasing Proffy 1.0, 2.0, etc. ──
 const PROFFY_VERSION = "beta";
 
 interface Props {
@@ -90,25 +90,20 @@ function SidebarLogo() {
   );
 }
 
-const SEMESTERS = [
-  { key: "a", label: "A" },
-  { key: "b", label: "B" },
-  { key: "s", label: "Summer" },
+const TIPS: { emoji: string; he: string; en: string; ar: string }[] = [
+  { emoji: "🧠", he: "חזרה מרווחת עדיפה על שינון. חזור על כרטיסיות אתמול לפני הוספת חדשות.", en: "Spaced repetition beats cramming every time. Review yesterday's cards before adding new ones.", ar: "المراجعة المتباعدة أفضل من الحفظ. راجع بطاقات الأمس قبل إضافة جديدة." },
+  { emoji: "⏱️", he: "25 דקות ריכוז עם הפסקות של 5 דקות עדיפות על שעות מתמשכות.", en: "25-minute focused blocks with 5-minute breaks outperform marathon sessions.", ar: "جلسات 25 دقيقة مع استراحة 5 دقائق أفضل من الجلسات الطويلة." },
+  { emoji: "📝", he: "כתיבת סיכום במילים שלך מחזקת את הזיכרון יותר מקריאה חוזרת.", en: "Writing a summary in your own words locks it in better than re-reading.", ar: "كتابة الملخص بكلماتك تثبّت المعلومات أكثر من القراءة المتكررة." },
+  { emoji: "🎯", he: "הכר את תבניות הבחינה של הפרופסור. מבחנים ישנים הם המדריך הטוב ביותר.", en: "Know the professor's exam pattern. Past exams are your best study guide.", ar: "اعرف نمط امتحانات الأستاذ. الامتحانات السابقة أفضل دليل دراسة." },
+  { emoji: "💤", he: "השינה מאחדת את הזיכרון. אל תישאר ער לאורך כל הלילה לפני הבחינה.", en: "Sleep is when memory consolidates. Don't pull all-nighters before exams.", ar: "النوم يرسّخ الذاكرة. لا تسهر طوال الليل قبل الامتحانات." },
+  { emoji: "🔍", he: "שאל 'למה זה עובד?' לא רק 'מה זה?'. הבנה עמוקה נשארת.", en: "Ask 'why does this work?' not just 'what is this?' Deep understanding sticks.", ar: "اسأل 'لماذا يعمل هذا؟' وليس فقط 'ما هذا؟'. الفهم العميق يبقى." },
+  { emoji: "📊", he: "התחל עם הנושא הקשה ביותר כשהאנרגיה גבוהה, לא עם הקל ביותר.", en: "Start with the hardest topic when energy is high, not the easiest.", ar: "ابدأ بالموضوع الأصعب عندما تكون طاقتك عالية، وليس بالأسهل." },
+  { emoji: "🗣️", he: "הסבר מושג בקול רם — אפילו לעצמך — מגלה מה אינך יודע.", en: "Explaining a concept out loud — even to yourself — reveals what you don't know.", ar: "شرح المفهوم بصوت عالٍ، حتى لنفسك، يكشف ما لا تعرفه." },
 ];
 
-const TIPS = [
-  { emoji: "🧠", text: "Spaced repetition beats cramming every time. Review yesterday's cards before adding new ones." },
-  { emoji: "⏱️", text: "25-minute focused blocks with 5-minute breaks outperform marathon sessions." },
-  { emoji: "📝", text: "Writing a summary in your own words locks it in better than re-reading." },
-  { emoji: "🎯", text: "Know the professor's exam pattern. Past exams are your best study guide." },
-  { emoji: "💤", text: "Sleep is when memory consolidates. Don't pull all-nighters before exams." },
-  { emoji: "🔍", text: "Ask 'why does this work?' not just 'what is this?' Deep understanding sticks." },
-  { emoji: "📊", text: "Start with the hardest topic when energy is high, not the easiest." },
-  { emoji: "🗣️", text: "Explaining a concept out loud — even to yourself — reveals what you don't know." },
-];
-
-function DailyTip() {
+function DailyTip({ lang, t }: { lang: string; t: (he: string, en: string, ar: string) => string }) {
   const tip = TIPS[new Date().getDate() % TIPS.length];
+  const tipText = lang === "he" ? tip.he : lang === "ar" ? tip.ar : tip.en;
   return (
     <div style={{
       margin: "8px 10px",
@@ -120,8 +115,10 @@ function DailyTip() {
     }}>
       <span style={{ fontSize: "18px", lineHeight: 1.3, flexShrink: 0 }}>{tip.emoji}</span>
       <div>
-        <div style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue)", marginBottom: "4px" }}>Daily tip</div>
-        <p style={{ fontSize: "11px", color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>{tip.text}</p>
+        <div style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue)", marginBottom: "4px" }}>
+          {t("טיפ יומי", "Daily tip", "نصيحة اليوم")}
+        </div>
+        <p style={{ fontSize: "11px", color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>{tipText}</p>
       </div>
     </div>
   );
@@ -130,8 +127,13 @@ function DailyTip() {
 export default function Sidebar({ courses, activeCourseId, flashcardsDue: initialFcDue = 0, userPlan = "free", onOpenFlashcards, onOpenNotes }: Props) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [lang] = useLang();
+  const isRTL = lang === "he" || lang === "ar";
+  const t = (he: string, en: string, ar: string) => lang === "he" ? he : lang === "ar" ? ar : en;
+  const locale = lang === "he" ? "he-IL" : lang === "ar" ? "ar-SA" : "en-IL";
+
   const userInitial = session?.user?.name?.[0]?.toUpperCase() ?? session?.user?.email?.[0]?.toUpperCase() ?? "?";
-  const userName = session?.user?.name ?? session?.user?.email ?? "Account";
+  const userName = session?.user?.name ?? session?.user?.email ?? t("חשבון", "Account", "الحساب");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -146,7 +148,12 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   const [historyDetail, setHistoryDetail] = useState<{ session: any; messages: any[] } | null>(null);
   const router = useRouter();
 
-  // Semester filter: derive default from courses (most common semester letter), fallback "a"
+  const SEMESTERS = [
+    { key: "a", label: "A" },
+    { key: "b", label: "B" },
+    { key: "s", label: t("קיץ", "Summer", "صيف") },
+  ];
+
   function defaultSemester(): string {
     if (courses.length === 0) return "a";
     const counts: Record<string, number> = {};
@@ -156,7 +163,6 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
     }
     return Object.entries(counts).sort((x, y) => y[1] - x[1])[0]?.[0] ?? "a";
   }
-  // Sync selected semester with URL params on dashboard
   function getSemesterFromUrl(): string | null {
     if (typeof window === "undefined") return null;
     const s = new URLSearchParams(window.location.search).get("semester");
@@ -164,13 +170,11 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   }
   const [selectedSemester, setSelectedSemester] = useState<string>(() => getSemesterFromUrl() ?? defaultSemester());
 
-  // Keep semester in sync when navigating
   useEffect(() => {
     const fromUrl = getSemesterFromUrl();
     if (fromUrl) setSelectedSemester(fromUrl);
   }, [pathname]);
 
-  // Filter courses to current semester (courses with no semester set always show)
   const filteredCourses = courses.filter(c => {
     if (!c.semester) return true;
     return c.semester.slice(-1).toLowerCase() === selectedSemester;
@@ -198,7 +202,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
   const fingerprintLocked = userPlan === "free";
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--bg-surface)", borderInlineEnd: "1px solid var(--border)" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--bg-surface)", borderInlineEnd: "1px solid var(--border)", direction: isRTL ? "rtl" : "ltr" }}>
 
       {/* ── Brand ── */}
       <div style={{ padding: "0.875rem 1rem", display: "flex", alignItems: "center", gap: "0.625rem", flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
@@ -208,7 +212,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
         </span>
         <button
           onClick={() => router.push(`/chat?new=${Date.now()}&semester=${selectedSemester}`)}
-          title="New chat"
+          title={t("שיחה חדשה", "New chat", "محادثة جديدة")}
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: "28px", height: "28px", borderRadius: "7px",
@@ -230,7 +234,6 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           {SEMESTERS.map((s) => (
             <button key={s.key} onClick={() => {
               setSelectedSemester(s.key);
-              // On dashboard, navigate to ?semester=X to load a separate chat session
               if (pathname === "/chat") {
                 router.push(`/chat?semester=${s.key}`);
               }
@@ -271,12 +274,12 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                 letterSpacing: "0.05em", textTransform: "uppercase",
               }}
             >
-              {tab === "courses" ? "Courses" : "History"}
+              {tab === "courses" ? t("קורסים", "Courses", "المواد") : t("היסטוריה", "History", "السجل")}
             </button>
           ))}
           {mainTab === "courses" && (
-            <Link href="/courses/new" style={{ fontSize: "12px", fontWeight: 700, color: "var(--blue)", textDecoration: "none", paddingLeft: "4px" }}>
-              + Add
+            <Link href="/courses/new" style={{ fontSize: "12px", fontWeight: 700, color: "var(--blue)", textDecoration: "none", paddingInlineStart: "4px" }}>
+              {t("+ הוסף", "+ Add", "+ إضافة")}
             </Link>
           )}
         </div>
@@ -284,15 +287,14 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
         {/* ── History panel ── */}
         {mainTab === "history" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px", overflow: "hidden" }}>
-            {/* Search */}
             <div style={{ position: "relative" }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                style={{ position: "absolute", left: "9px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                style={{ position: "absolute", insetInlineStart: "9px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
               <input
                 type="text"
-                placeholder="Search history..."
+                placeholder={t("חפש...", "Search history...", "بحث...")}
                 value={historySearch}
                 onChange={e => setHistorySearch(e.target.value)}
                 style={{
@@ -305,10 +307,13 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
             </div>
             <div style={{ flex: 1, overflowY: "auto" }}>
               {historyLoading ? (
-                <div style={{ padding: "20px", textAlign: "center", fontSize: "12px", color: "var(--text-muted)" }}>Loading...</div>
+                <div style={{ padding: "20px", textAlign: "center", fontSize: "12px", color: "var(--text-muted)" }}>
+                  {t("טוען...", "Loading...", "جاري التحميل...")}
+                </div>
               ) : historySessions.length === 0 ? (
                 <div style={{ padding: "20px 8px", textAlign: "center", fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.7 }}>
-                  No chat history yet.<br/>Start a conversation in any course.
+                  {t("אין היסטוריה עדיין.", "No chat history yet.", "لا توجد محادثات بعد.")}<br/>
+                  {t("התחל שיחה בקורס כלשהו.", "Start a conversation in any course.", "ابدأ محادثة في أي مقرر.")}
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -332,13 +337,13 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                         display: "flex", flexDirection: "column", alignItems: "flex-start",
                         gap: "4px", padding: "8px 10px", borderRadius: "7px",
                         background: "transparent", border: "1px solid transparent",
-                        cursor: "pointer", textAlign: "left", width: "100%",
+                        cursor: "pointer", textAlign: isRTL ? "right" : "left", width: "100%",
                         transition: "all 0.15s",
                       }}
                       className="sidebar-item"
                     >
                       <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
-                        {s.course_name ?? "General chat"}
+                        {s.course_name ?? t("שיחה כללית", "General chat", "محادثة عامة")}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
                         {s.course_number && (
@@ -352,10 +357,10 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                           </span>
                         )}
                         <span style={{ fontSize: "10px", color: "var(--text-disabled)" }}>
-                          {new Date(s.last_message_at ?? s.created_at).toLocaleDateString("en-IL", { day: "numeric", month: "short" })}
+                          {new Date(s.last_message_at ?? s.created_at).toLocaleDateString(locale, { day: "numeric", month: "short" })}
                         </span>
                         <span style={{ fontSize: "10px", color: "var(--text-disabled)" }}>·</span>
-                        <span style={{ fontSize: "10px", color: "var(--text-disabled)" }}>{s.message_count} msgs</span>
+                        <span style={{ fontSize: "10px", color: "var(--text-disabled)" }}>{s.message_count} {t("הודעות", "msgs", "رسالة")}</span>
                       </div>
                     </button>
                   ))}
@@ -390,20 +395,19 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                   width: "100%", maxWidth: "600px", maxHeight: "80vh",
                   background: "var(--bg-surface)", border: "1px solid var(--border)",
                   borderRadius: "16px", display: "flex", flexDirection: "column",
-                  overflow: "hidden",
+                  overflow: "hidden", direction: isRTL ? "rtl" : "ltr",
                 }}
               >
-                {/* Header */}
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "16px 20px", borderBottom: "1px solid var(--border)", flexShrink: 0,
                 }}>
                   <div>
                     <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-primary)" }}>
-                      {historyDetail.session.course_name ?? "General chat"}
+                      {historyDetail.session.course_name ?? t("שיחה כללית", "General chat", "محادثة عامة")}
                     </div>
                     <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
-                      {new Date(historyDetail.session.created_at).toLocaleDateString("en-IL", { day: "numeric", month: "short", year: "numeric" })} · {historyDetail.messages.length} messages
+                      {new Date(historyDetail.session.created_at).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })} · {historyDetail.messages.length} {t("הודעות", "messages", "رسالة")}
                     </div>
                   </div>
                   <button
@@ -413,7 +417,6 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 </div>
-                {/* Messages */}
                 <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: "12px" }}>
                   {historyDetail.messages.map((msg: any) => (
                     <div
@@ -433,7 +436,6 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                     </div>
                   ))}
                 </div>
-                {/* Footer with link to course */}
                 {historyDetail.session.course_id && (
                   <div style={{ padding: "12px 20px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
                     <a
@@ -444,7 +446,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                         textDecoration: "none",
                       }}
                     >
-                      Continue in {historyDetail.session.course_name} →
+                      {t(`המשך ב-${historyDetail.session.course_name} →`, `Continue in ${historyDetail.session.course_name} →`, `متابعة في ${historyDetail.session.course_name} →`)}
                     </a>
                   </div>
                 )}
@@ -453,18 +455,20 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           )}
         </AnimatePresence>
 
-        {/* ── Courses list (hidden when history tab active) ── */}
+        {/* ── Courses list ── */}
         {mainTab === "courses" && <AnimatePresence initial={false}>
           {courses.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               style={{ padding: "1.5rem 0.5rem", textAlign: "center", fontSize: "13px", lineHeight: 1.7, color: "var(--text-muted)" }}>
-              No courses yet.<br/>
-              <Link href="/courses/new" style={{ color: "var(--blue)", textDecoration: "none", fontWeight: 600 }}>Add your first →</Link>
+              {t("אין קורסים עדיין.", "No courses yet.", "لا توجد مقررات بعد.")}<br/>
+              <Link href="/courses/new" style={{ color: "var(--blue)", textDecoration: "none", fontWeight: 600 }}>
+                {t("הוסף את הראשון →", "Add your first →", "أضف الأول →")}
+              </Link>
             </motion.div>
           ) : filteredCourses.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               style={{ padding: "1.5rem 0.5rem", textAlign: "center", fontSize: "12px", lineHeight: 1.7, color: "var(--text-muted)" }}>
-              No courses in semester {selectedSemester.toUpperCase()}.
+              {t(`אין קורסים בסמסטר ${selectedSemester.toUpperCase()}.`, `No courses in semester ${selectedSemester.toUpperCase()}.`, `لا توجد مقررات في الفصل ${selectedSemester.toUpperCase()}.`)}
             </motion.div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -474,7 +478,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                 return (
                   <motion.div
                     key={course.id}
-                    initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.035 }}
+                    initial={{ opacity: 0, x: isRTL ? 6 : -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.035 }}
                     style={{ position: "relative" }}
                     onMouseEnter={() => setHoveredId(course.id)}
                     onMouseLeave={() => setHoveredId(null)}
@@ -487,7 +491,8 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                         padding: "7px 10px", borderRadius: "7px", textDecoration: "none",
                         background: isActive ? "rgba(79,142,247,0.1)" : "transparent",
                         border: `1px solid ${isActive ? "rgba(79,142,247,0.2)" : "transparent"}`,
-                        transition: "all 0.15s", paddingRight: isHovered ? "32px" : "10px",
+                        transition: "all 0.15s",
+                        paddingInlineEnd: isHovered ? "32px" : "10px",
                       }}
                     >
                       <div style={{ width: "6px", height: "6px", borderRadius: "50%", flexShrink: 0, background: isActive ? "var(--blue)" : "var(--text-muted)", opacity: isActive ? 1 : 0.5 }} />
@@ -504,7 +509,6 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                       <ExamBadge examDate={course.exam_date} />
                     </Link>
 
-                    {/* Trash button — shows on hover */}
                     {isHovered && (
                       <button
                         onClick={async (e) => {
@@ -520,7 +524,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                         }}
                         title="Delete course"
                         style={{
-                          position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)",
+                          position: "absolute", insetInlineEnd: "6px", top: "50%", transform: "translateY(-50%)",
                           background: "none", border: "none", cursor: "pointer", padding: "4px",
                           color: deletingId === course.id ? "var(--text-muted)" : "#f87171",
                           display: "flex", alignItems: "center", borderRadius: "5px",
@@ -571,11 +575,13 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: "13px", fontWeight: 700, color: "#4f8ef7", lineHeight: 1.25, display: "flex", alignItems: "center", gap: "6px" }}>
-              Study Groups
-              <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#f59e0b", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "4px", padding: "1px 5px" }}>Soon</span>
+              {t("קבוצות לימוד", "Study Groups", "مجموعات الدراسة")}
+              <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#f59e0b", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "4px", padding: "1px 5px" }}>
+                {t("בקרוב", "Soon", "قريبًا")}
+              </span>
             </div>
             <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
-              Chat with your coursemates
+              {t("שוחח עם חברי הקורס", "Chat with your coursemates", "تحدث مع زملائك")}
             </div>
           </div>
         </a>
@@ -600,12 +606,12 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "15px",
           }}>🧬</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, textAlign: isRTL ? "right" : "left" }}>
             <div style={{ fontSize: "13px", fontWeight: 700, color: "#f87171", lineHeight: 1.25 }}>
-              Prof. Fingerprint
+              {t("טביעת האצבע", "Prof. Fingerprint", "بصمة الأستاذ")}
             </div>
             <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
-              Map exam patterns · Max
+              {t("מיפוי תבניות · Max", "Map exam patterns · Max", "خريطة الامتحانات · Max")}
             </div>
           </div>
         </button>
@@ -633,15 +639,19 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
               <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
             </svg>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, textAlign: isRTL ? "right" : "left" }}>
             <div style={{ fontSize: "14px", fontWeight: 700, color: fcDue > 0 ? "#a78bfa" : "var(--text-secondary)", lineHeight: 1.25, display: "flex", alignItems: "center", gap: "6px" }}>
-              Flashcards
+              {t("כרטיסיות", "Flashcards", "البطاقات")}
               {fcDue > 0 && (
                 <span style={{ fontSize: "13px", fontWeight: 800, color: "#f87171" }}>{fcDue}</span>
               )}
             </div>
             <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
-              {fcDue > 0 ? "due for review" : fcTotal > 0 ? `${fcTotal} cards total` : "Spaced repetition"}
+              {fcDue > 0
+                ? t("לחזרה", "due for review", "للمراجعة")
+                : fcTotal > 0
+                ? `${fcTotal} ${t("כרטיסיות", "cards total", "بطاقات")}`
+                : t("חזרה מרווחת", "Spaced repetition", "المراجعة المتباعدة")}
             </div>
           </div>
         </button>
@@ -671,30 +681,32 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
               <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, textAlign: isRTL ? "right" : "left" }}>
             <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-secondary)", lineHeight: 1.25, display: "flex", alignItems: "center", gap: "6px" }}>
-              Course Notes
+              {t("הערות קורס", "Course Notes", "ملاحظات")}
               {notesTotal > 0 && (
                 <span style={{ fontSize: "13px", fontWeight: 800, color: "#f87171" }}>{notesTotal}</span>
               )}
             </div>
             <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
-              {notesTotal > 0 ? "saved by Proffy" : "Saved by Proffy AI"}
+              {notesTotal > 0
+                ? t("נשמרו ע\"י Proffy", "saved by Proffy", "محفوظة بواسطة Proffy")
+                : t("נשמרו ע\"י Proffy AI", "Saved by Proffy AI", "محفوظة بذكاء Proffy")}
             </div>
           </div>
         </button>
 
       </div>
 
-      {/* ── Other Proffy sites — only shown on app.proffy.study ── */}
+      {/* ── Other Proffy sites ── */}
       {subdomain === "app" && (
         <div style={{
           flexShrink: 0,
           borderTop: "1px solid var(--border)",
           padding: "12px 12px 10px",
         }}>
-          <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-disabled)", marginBottom: "8px", paddingLeft: "2px" }}>
-            Proffy Network
+          <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-disabled)", marginBottom: "8px", paddingInlineStart: "2px" }}>
+            {t("רשת Proffy", "Proffy Network", "شبكة Proffy")}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             {(Object.entries(SUBDOMAIN_SITES) as [string, typeof SUBDOMAIN_SITES[keyof typeof SUBDOMAIN_SITES]][])
@@ -732,7 +744,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
       )}
 
       {/* ── Daily tip ── */}
-      <DailyTip />
+      <DailyTip lang={lang} t={t} />
 
       {/* ── Bottom user menu ── */}
       <div ref={menuRef} style={{ flexShrink: 0, borderTop: "1px solid var(--border)", position: "relative" }}>
@@ -744,25 +756,23 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
               exit={{ opacity: 0, y: 8, scale: 0.97 }}
               transition={{ duration: 0.15 }}
               style={{
-                position: "absolute", bottom: "calc(100% + 6px)", left: "10px", right: "10px",
+                position: "absolute", bottom: "calc(100% + 6px)", insetInlineStart: "10px", insetInlineEnd: "10px",
                 background: "var(--bg-elevated)", border: "1px solid var(--border)",
                 borderRadius: "12px", overflow: "hidden", zIndex: 100,
                 boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
               }}
             >
-              {/* Email header */}
               <div style={{ padding: "12px 14px 10px", borderBottom: "1px solid var(--border)" }}>
                 <div style={{ fontSize: "12px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {session?.user?.email ?? ""}
                 </div>
               </div>
 
-              {/* Menu items */}
               {[
-                { label: "Settings", icon: "⚙️", href: "/settings" },
-                { label: "Get help", icon: "❓", href: "/help" },
+                { labelHe: "הגדרות", labelEn: "Settings", labelAr: "الإعدادات", icon: "⚙️", href: "/settings" },
+                { labelHe: "עזרה", labelEn: "Get help", labelAr: "المساعدة", icon: "❓", href: "/help" },
               ].map(item => (
-                <Link key={item.label} href={item.href} onClick={() => setMenuOpen(false)} style={{
+                <Link key={item.labelEn} href={item.href} onClick={() => setMenuOpen(false)} style={{
                   display: "flex", alignItems: "center", gap: "10px", padding: "9px 14px",
                   fontSize: "13px", color: "var(--text-secondary)", textDecoration: "none",
                   transition: "background 0.1s",
@@ -770,7 +780,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                   className="sidebar-item"
                 >
                   <span style={{ fontSize: "14px" }}>{item.icon}</span>
-                  {item.label}
+                  {t(item.labelHe, item.labelEn, item.labelAr)}
                 </Link>
               ))}
 
@@ -778,11 +788,11 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
                 <button onClick={() => { setMenuOpen(false); setUpgradeOpen(true); }} style={{
                   display: "flex", alignItems: "center", gap: "10px", padding: "9px 14px",
                   fontSize: "13px", fontWeight: 600, color: "#a78bfa", width: "100%",
-                  background: "none", border: "none", cursor: "pointer", textAlign: "left",
+                  background: "none", border: "none", cursor: "pointer", textAlign: isRTL ? "right" : "left",
                   transition: "background 0.1s",
                 }} className="sidebar-item">
                   <span style={{ fontSize: "14px" }}>⭐</span>
-                  Upgrade plan
+                  {t("שדרג תוכנית", "Upgrade plan", "ترقية الخطة")}
                 </button>
               )}
 
@@ -791,17 +801,16 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
               <button onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }); }} style={{
                 display: "flex", alignItems: "center", gap: "10px", width: "100%",
                 padding: "9px 14px", fontSize: "13px", color: "var(--text-muted)",
-                background: "none", border: "none", cursor: "pointer", textAlign: "left",
+                background: "none", border: "none", cursor: "pointer", textAlign: isRTL ? "right" : "left",
                 transition: "background 0.1s",
               }} className="sidebar-item">
                 <span style={{ fontSize: "14px" }}>↪</span>
-                Log out
+                {t("התנתק", "Log out", "تسجيل الخروج")}
               </button>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* User row trigger */}
         <button
           onClick={() => setMenuOpen(v => !v)}
           style={{
@@ -819,7 +828,7 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           }}>
             {userInitial}
           </div>
-          <span style={{ flex: 1, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "13px", fontWeight: 500 }}>
+          <span style={{ flex: 1, textAlign: isRTL ? "right" : "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "13px", fontWeight: 500 }}>
             {userName}
           </span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
@@ -827,7 +836,6 @@ export default function Sidebar({ courses, activeCourseId, flashcardsDue: initia
           </svg>
         </button>
 
-        {/* Powered by Claude */}
         <div style={{ padding: "4px 12px 10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.3 }}>
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
